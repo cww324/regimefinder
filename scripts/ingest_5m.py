@@ -1,5 +1,6 @@
+import argparse
 import time
-from typing import List
+from typing import List, Optional
 
 from app.config import get_settings
 from app.data.coinbase_client import fetch_candles
@@ -13,6 +14,10 @@ def align_to_granularity(ts: int, granularity: int) -> int:
 def get_last_candle_ts(conn) -> int:
     row = conn.execute("SELECT MAX(ts) AS max_ts FROM candles_5m").fetchone()
     return int(row["max_ts"] or 0)
+
+def get_first_candle_ts(conn) -> int:
+    row = conn.execute("SELECT MIN(ts) AS min_ts FROM candles_5m").fetchone()
+    return int(row["min_ts"] or 0)
 
 
 def expected_timestamps(start_ts: int, end_ts: int, step: int) -> List[int]:
@@ -40,7 +45,34 @@ def log_data_quality(conn, ts: int, bar_count_ok: bool, data_gap: bool, source_l
     conn.commit()
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Ingest 5m candles into SQLite.")
+    parser.add_argument(
+        "--lookback-bars",
+        type=int,
+        default=200,
+        help="Number of 5m bars to backfill when DB is empty.",
+    )
+    parser.add_argument(
+        "--backfill-bars",
+        type=int,
+        default=0,
+        help="Backfill N 5m bars ending at the current last closed bar (even if DB has data).",
+    )
+    parser.add_argument(
+        "--backfill-older-bars",
+        type=int,
+        default=0,
+        help="Backfill N 5m bars ending at the current earliest stored bar.",
+    )
+    return parser.parse_args()
+
+
+def main(
+    lookback_bars: Optional[int] = None,
+    backfill_bars: int = 0,
+    backfill_older_bars: int = 0,
+) -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     init_db(conn)
@@ -50,7 +82,18 @@ def main() -> None:
     last_closed = align_to_granularity(safe_now, settings.granularity_sec)
 
     last_ts = get_last_candle_ts(conn)
-    start_ts = last_ts + settings.granularity_sec if last_ts else last_closed - (settings.granularity_sec * 200)
+    first_ts = get_first_candle_ts(conn)
+
+    if backfill_older_bars and backfill_older_bars > 0 and first_ts:
+        start_ts = first_ts - (settings.granularity_sec * int(backfill_older_bars))
+        last_closed = first_ts - settings.granularity_sec
+    elif backfill_bars and backfill_bars > 0:
+        start_ts = last_closed - (settings.granularity_sec * int(backfill_bars))
+    elif last_ts:
+        start_ts = last_ts + settings.granularity_sec
+    else:
+        bars = int(lookback_bars or 200)
+        start_ts = last_closed - (settings.granularity_sec * bars)
 
     if start_ts > last_closed:
         log_data_quality(conn, last_closed, True, False, now - last_closed, "no_new_bars")
@@ -75,4 +118,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.lookback_bars, args.backfill_bars, args.backfill_older_bars)

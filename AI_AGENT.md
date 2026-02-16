@@ -229,6 +229,7 @@ E) No Trade (optional)
 - ONE expert strategy (**Trend first**)
 - Level 1 fill model (conservative)
 - Daily summary report
+- Forward-test mode (incremental) with persistent state
 
 **Exit criteria:**
 - 30 days of clean paper logs
@@ -348,6 +349,32 @@ MVP is done when you have:
 - Best/worst trade (PnL and R)
 - Regime performance breakdown
 - Data quality summary (gaps, lag breaches)
+
+---
+
+## Appendix D) Phase 1 Trend Expert (Level 1)
+
+**Signal (no lookahead):**
+- Breakout level = `max(high[t-20:t])` (exclude current bar)
+- Enter long when `close[t] > breakout_level + (BREAKOUT_ATR_BUFFER * ATR)`
+  - Default `BREAKOUT_ATR_BUFFER = 0.2`
+
+**Regime filter:**
+- Trend only: `ER >= 0.35`
+
+**Fill convention (Level 1):**
+- Entry fill at **next bar open** + half-spread + slippage
+- Exit fill at **next bar open** (same cost model)
+
+**Cooldown:**
+- After exit, wait **1 bar** before re-entry
+
+**Logging fields:**
+- `entry_time`, `entry_price`, `breakout_level`, `ER`, `ATR`, `exit_reason`
+
+**Forward-test idempotency:**
+- Persist `last_processed_candle_ts` in `bot_state`
+- Use unique constraint to prevent duplicate `paper_trades` inserts
 
 ---
 

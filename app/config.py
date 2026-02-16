@@ -21,6 +21,15 @@ class Settings:
     # Coinbase Exchange (classic) - unused for now
     api_passphrase: str = os.getenv("COINBASE_API_PASSPHRASE", "")
 
+    # Paper fill costs (bps)
+    half_spread_bps: float = float(os.getenv("HALF_SPREAD_BPS", "5"))
+    slippage_bps: float = float(os.getenv("SLIPPAGE_BPS", "5"))
+
+    # Strategy controls
+    allow_shorts: bool = os.getenv("ALLOW_SHORTS", "false").lower() == "true"
+    cooldown_bars: int = int(os.getenv("COOLDOWN_BARS", "1"))
+    breakout_atr_buffer: float = float(os.getenv("BREAKOUT_ATR_BUFFER", "0.2"))
+
 
 def get_settings() -> Settings:
     return Settings()
