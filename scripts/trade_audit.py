@@ -76,7 +76,6 @@ def main(trade_id: int) -> None:
         )
         print(f"exit_regime={exit_regime}")
 
-        # Hysteresis counter simulation between entry signal bar and exit check bar
         entry_regime = (
             trend_regime(float(signal_row["er20"])) if signal_row is not None else "unknown"
         )
@@ -90,6 +89,53 @@ def main(trade_id: int) -> None:
             else:
                 switch_count = 0
         print(f"hysteresis_counter={switch_count}")
+
+    # Math audit
+    risk_pct = settings.risk_pct
+    initial_equity = settings.initial_equity
+    prior_pnl = conn.execute(
+        "SELECT COALESCE(SUM(pnl), 0) AS pnl FROM paper_trades WHERE exit_ts < ?",
+        (entry_ts,),
+    ).fetchone()["pnl"]
+    equity_at_entry = initial_equity + float(prior_pnl)
+
+    atr = float(trade["atr"])
+    stop_dist = 1.2 * atr
+    risk_usd = abs(equity_at_entry * risk_pct)
+    qty = risk_usd / stop_dist if stop_dist > 0 else 0.0
+    notional = qty * float(trade["entry_price"])
+
+    bps = settings.half_spread_bps + settings.slippage_bps
+    entry_cost = float(trade["entry_price"]) * qty * (bps / 10000.0)
+    exit_cost = float(trade["exit_price"]) * qty * (bps / 10000.0)
+    total_cost = entry_cost + exit_cost
+
+    pnl = qty * (float(trade["exit_price"]) - float(trade["entry_price"])) - total_cost
+    r_multiple = pnl / max(risk_usd, 1e-9)
+    equity_after = equity_at_entry + pnl
+
+    print("-- math audit --")
+    print(f"equity_at_entry = {initial_equity:.2f} + {prior_pnl:.2f} = {equity_at_entry:.2f}")
+    print(f"risk_pct = {risk_pct:.4f} -> risk_$ = {risk_usd:.2f}")
+    print(f"ATR = {atr:.2f}")
+    print(f"stop_dist_price = 1.2 * ATR = {stop_dist:.2f}")
+    print(f"qty = risk_$ / stop_dist_price = {risk_usd:.2f} / {stop_dist:.2f} = {qty:.6f}")
+    print(f"notional = qty * entry_price = {qty:.6f} * {trade['entry_price']:.2f} = {notional:.2f}")
+    print(f"spread_bps + slippage_bps = {bps:.2f} bps (bps / 10000)")
+    print(f"entry_cost_$ = entry_price * qty * (bps/10000) = {entry_cost:.2f}")
+    print(f"exit_cost_$  = exit_price * qty * (bps/10000) = {exit_cost:.2f}")
+    print(f"total_cost_$ = {total_cost:.2f}")
+    print(f"pnl_$ = qty*(exit-entry) - costs = {pnl:.2f}")
+    print(f"R = pnl_$ / risk_$ = {r_multiple:.3f}")
+    print(f"equity_after = equity_at_entry + pnl_$ = {equity_after:.2f}")
+    if "mae_r" in trade.keys():
+        print(f"MAE_R = {trade['mae_r']:.3f} | MFE_R = {trade['mfe_r']:.3f}")
+    if "bars_to_stop" in trade.keys() and trade["bars_to_stop"] is not None:
+        print(f"bars_to_stop = {trade['bars_to_stop']}")
+    if "stop_price_used" in trade.keys():
+        print(
+            f"stop_price_used = {trade['stop_price_used']} | exit_price_used = {trade['exit_price_used']} | risk_per_unit = {trade['risk_per_unit']}"
+        )
 
 
 if __name__ == "__main__":

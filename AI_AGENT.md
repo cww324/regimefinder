@@ -174,6 +174,19 @@ E) No Trade (optional)
 - **Slippage model:** add fixed bps or ATR fraction on fills
 - **Fees:** always apply fees even if fee tier is zero
 
+---
+
+## 6.5) Diagnostics (Phase 1+)
+
+**Per-trade diagnostics (store on each trade):**
+- `mae_r`, `mfe_r` (in R units)
+- `bars_to_stop` (only for stop exits)
+- `stop_price_used`, `exit_price_used`, `risk_per_unit`
+
+**Stop model note:**
+- Stops trigger on bar `t`, but fills at **next bar open** (Level 1).
+- This can produce losses worse than -1R if price gaps.
+
 > **Gate:** do not go live until Level 2 is stable and forward-tested.
 
 ---
@@ -238,6 +251,10 @@ E) No Trade (optional)
 - **Data quality: zero unhandled gaps, zero duplicate candles**
 - No “mystery” fills or missing data
 - You can explain every trade from logs
+
+**Diagnostics required in Phase 1:**
+- MAE/MFE R statistics
+- Stop-exit time-to-stop histogram
 
 ### Phase 2 — Level 2 Paper Trading (execution-realistic)
 **Goal:** simulate real execution behavior.
@@ -375,6 +392,51 @@ MVP is done when you have:
 **Forward-test idempotency:**
 - Persist `last_processed_candle_ts` in `bot_state`
 - Use unique constraint to prevent duplicate `paper_trades` inserts
+
+---
+
+## Appendix E) Entry Toggles (Rule-Based)
+
+**Breakout confirmation:**
+- `BREAKOUT_ATR_BUFFER` (default `0.2`)
+- `BREAKOUT_REQUIRES_CLOSE` (default `false`)
+
+**Trend strength:**
+- `ENTRY_ER_MIN` (default `0.35`)
+- `ER_NO_TRADE_BAND_LOW/HIGH` (optional band)
+
+**Volatility filter:**
+- `SKIP_TOP_DECILE_RV` (default `false`)
+- `RV_QUANTILE_WINDOW` (default `2000` bars, backward-looking only)
+
+**ATR freeze (for consistent 1R):**
+- `FREEZE_ATR_AT_ENTRY` (default `false`)
+
+**Retest entry (optional):**
+- `ENABLE_RETEST` (default `false`)
+- `RETEST_ATR_BAND` (default `0.2`)
+- `RETEST_MAX_BARS` (default `6`)
+
+**EMA confirmation (optional):**
+- `REQUIRE_EMA_CONFIRM` (default `false`)
+- `EMA_FAST_PERIOD` (default `20`)
+- `EMA_SLOW_PERIOD` (default `50`)
+- `EMA_SLOPE_BARS` (default `3`)
+- `EMA_SLOPE_MIN` (default `0.0`)
+
+---
+
+## Appendix F) Drift Studies (Structural)
+
+**ER drift study:**
+- Bucket ER20 and compute forward returns for `H={5,10,20}` bars.
+
+**Breakout-event drift study:**
+- Event `E_N`: `close > rolling_high(N) + buffer*ATR` for `N={12,24}` and `buffer={0.0,0.5}`
+- Compute forward return stats for `H={5,10,20}`
+
+**Stop-exit stats:**
+- Track mean/median `R` on stop exits to verify fill model.
 
 ---
 

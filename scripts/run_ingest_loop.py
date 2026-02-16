@@ -1,3 +1,4 @@
+import argparse
 import time
 from datetime import datetime, timezone
 
@@ -21,7 +22,13 @@ def latest_ts(conn) -> int:
     return int(row["max_ts"] or 0)
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run ingest + features + forward loop.")
+    parser.add_argument("--once", action="store_true", help="Run a single cycle and exit")
+    return parser.parse_args()
+
+
+def main(run_once: bool) -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     init_db(conn)
@@ -32,13 +39,17 @@ def main() -> None:
 
         ingest_main()
         compute_main(last_ts if last_ts else 0)
-        forward_main()
+        forward_main(verbose=False)
 
         ended = datetime.now(timezone.utc).isoformat()
         print(f"loop: start={started} end={ended} last_ts={last_ts}")
+
+        if run_once:
+            break
 
         sleep_until_next_bar(settings.granularity_sec, settings.safety_lag_sec)
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.once)

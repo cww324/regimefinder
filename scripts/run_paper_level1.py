@@ -24,6 +24,8 @@ def main(reset: bool) -> None:
 
     if reset:
         conn.execute("DELETE FROM paper_trades")
+        conn.execute("DELETE FROM paper_state")
+        conn.execute("DELETE FROM bot_state")
         conn.commit()
 
     df = pd.read_sql_query(
@@ -43,8 +45,11 @@ def main(reset: bool) -> None:
         """
         INSERT OR IGNORE INTO paper_trades (
             strategy_name, entry_ts, exit_ts, entry_price, exit_price,
-            breakout_level, er, atr, exit_reason, pnl, pnl_pct
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            breakout_level, er, atr, exit_reason, pnl, pnl_pct,
+            qty, risk_usd, stop_dist, entry_cost, exit_cost, total_cost,
+            equity_before, equity_after, r_multiple, mae_r, mfe_r, bars_to_stop,
+            stop_price_used, exit_price_used, risk_per_unit
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         trades,
     )

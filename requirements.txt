@@ -4,3 +4,4 @@ numpy
 python-dotenv
 PyJWT==2.8.0
 cryptography==42.0.5
+rich==13.7.1

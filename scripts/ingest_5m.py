@@ -6,6 +6,8 @@ from app.config import get_settings
 from app.data.coinbase_client import fetch_candles
 from app.data.db import connect, init_db
 
+MAX_CANDLES_PER_REQ = 350
+
 
 def align_to_granularity(ts: int, granularity: int) -> int:
     return (ts // granularity) * granularity
@@ -14,6 +16,7 @@ def align_to_granularity(ts: int, granularity: int) -> int:
 def get_last_candle_ts(conn) -> int:
     row = conn.execute("SELECT MAX(ts) AS max_ts FROM candles_5m").fetchone()
     return int(row["max_ts"] or 0)
+
 
 def get_first_candle_ts(conn) -> int:
     row = conn.execute("SELECT MIN(ts) AS min_ts FROM candles_5m").fetchone()
@@ -45,6 +48,18 @@ def log_data_quality(conn, ts: int, bar_count_ok: bool, data_gap: bool, source_l
     conn.commit()
 
 
+def fetch_candles_chunked(settings, start_ts: int, end_ts: int) -> List[dict]:
+    candles: List[dict] = []
+    step = settings.granularity_sec
+    chunk_span = step * (MAX_CANDLES_PER_REQ - 1)
+    cur = start_ts
+    while cur <= end_ts:
+        chunk_end = min(cur + chunk_span, end_ts)
+        candles.extend(fetch_candles(settings, cur, chunk_end))
+        cur = chunk_end + step
+    return candles
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Ingest 5m candles into SQLite.")
     parser.add_argument(
@@ -68,11 +83,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main(
-    lookback_bars: Optional[int] = None,
-    backfill_bars: int = 0,
-    backfill_older_bars: int = 0,
-) -> None:
+def main(lookback_bars: Optional[int] = None, backfill_bars: int = 0, backfill_older_bars: int = 0) -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     init_db(conn)
@@ -99,7 +110,7 @@ def main(
         log_data_quality(conn, last_closed, True, False, now - last_closed, "no_new_bars")
         return
 
-    candles = fetch_candles(settings, start_ts, last_closed)
+    candles = fetch_candles_chunked(settings, start_ts, last_closed)
     if not candles:
         log_data_quality(conn, last_closed, False, True, now - last_closed, "no_candles_returned")
         return

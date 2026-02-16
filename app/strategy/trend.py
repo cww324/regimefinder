@@ -24,7 +24,11 @@ def trend_regime(er: float) -> str:
 
 
 def breakout_signal(
-    df: pd.DataFrame, idx: int, lookback: int = 20, atr_buffer: float = 0.0
+    df: pd.DataFrame,
+    idx: int,
+    lookback: int = 20,
+    atr_buffer: float = 0.0,
+    requires_close: bool = True,
 ) -> Optional[TrendSignal]:
     if idx < lookback:
         return None
@@ -37,6 +41,8 @@ def breakout_signal(
         return None
     if np.isnan(atr):
         return None
-    if close > breakout_level + (atr_buffer * atr):
+    # Current behavior uses close; requires_close keeps explicit intent.
+    price = close
+    if price > breakout_level + (atr_buffer * atr):
         return TrendSignal(breakout_level=breakout_level, er=er)
     return None
