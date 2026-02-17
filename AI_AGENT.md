@@ -1,443 +1,188 @@
-# AI_AGENT.md (v2)
-## Crypto Regime Trading App — Coinbase + BTC (Paper Engine → Live Bot)
+# AI_AGENT.md (compact handoff)
+## Regime Crypto Bot — Current Operating Brief
 
-> **Primary goal:** build a *truthful* system that can’t fool you (no leakage, realistic execution, strict risk).
-> **Secondary goal:** once it’s proven on paper, graduate to small live size, then scale capital.
->
-> This is **not HFT** and does **not** compete on microseconds. We trade **5–120 minute holds** on **5-minute candles**.
+Last Updated: 2026-02-17 UTC
 
----
+## 1) Mission
+- Build a truthful, no-leakage crypto trading system.
+- Validate hypotheses on historical data first, then forward paper only after strict OOS gates.
+- Current instrument/timeframe: BTC-USD spot, Coinbase, 5m candles.
 
-## 0.5) Key Decisions (Locked for Phase 0–1)
+## 2) Current Dataset Constraint
+- Available working dataset: ~180 days (about 51k 5m bars).
+- Date range in findings: 2025-08-20 to 2026-02-16 (UTC).
+- Implication: enough for early filtering, not enough for strong statistical confidence on subtle edges.
 
-- **Direction-aware logic:** all stop/target rules must support long and short.
-- **Phase 1 trading:** **long-only** (set `ALLOW_SHORTS = false`); architecture must support shorts for later.
-- **VWAP definition:** **rolling VWAP** over `N = 48` bars (4 hours on 5m).
-- **Exit timing consistency:** in backtest/paper, exits fill at **next bar open** unless Level 2 execution is enabled.
-- **Regime switch hysteresis:** require **2 consecutive bars** in a new regime before forcing exit, or allow **1 bar** of “trend → uncertain” without exit.
+## 3) Tech Stack (Current)
+- Language/runtime: Python 3.x in `.venv`
+- Core data libs: `pandas`, `numpy`
+- API/http/env: `requests`, `python-dotenv`, `PyJWT`, `cryptography`
+- Console/reporting: `rich`
+- Data store: SQLite (`data/market.sqlite`)
+- Exchange/data source: Coinbase Advanced API (BTC-USD, 5m candles)
+- Strategy/research entry points: `scripts/*.py`, `scripts/experts/*.py`
+- Exact dependency list/versions: `requirements.txt`
 
----
+## 4) Canonical Files (Use These in Order)
+1. `FINDINGS_SIMPLIFIED.md` (quick truth: what was run, pass/fail/partial, next queue)
+2. `FINDINGS.md` (human summary log)
+3. `FINDINGS_TECHNICAL.md` (full commands + outputs + tables)
+4. `AI_AGENT.md` (this file; operational handoff)
 
-## 0) Non‑Negotiables (Read this first)
+## 5) Locked Research Protocol
+- One hypothesis per execution where applicable.
+- No lookahead leakage.
+- No random splits; use holdout/walkforward only.
+- Keep findings append-only.
+- Always include friction in serious OOS decisions.
+- Small, principled parameter changes only.
 
-- **No leakage.** Features must be computable only from information available at decision time.
-- **No random train/test splits.** Use **walk‑forward** validation only.
-- **No brute-force parameter hunts.** Only small, principled tuning after a baseline works.
-- **No ML until plumbing is proven.** ML is Phase 3.
-- **Risk before returns.** Hard daily loss caps, max trades/day, stop trading when uncertain.
-- **Everything logged.** Decisions, features, regime, orders, fills, PnL, drawdown.
+## 6) What Has Been Tested
+- Initial hypothesis set (1–13) has been run.
+- See `FINDINGS_SIMPLIFIED.md` for simple statuses.
+- Core result on current 180d sample: no robust directional edge confirmed.
 
----
+### 6.1 Hypothesis Status Snapshot (Quick)
+1. Trend/breakout drift: failed
+2. VWAP-z mean reversion drift: failed
+3. RV regime directional drift: failed
+4. Time-of-day/day-of-week drift: failed
+5. Daily prior-return drift: failed
+6. Vol compression -> expansion: partial (vol signal, not direction)
+7. Shock continuation/reversion: weak/inconsistent
+8. Shock asymmetry: partial promise (spawned H2S/H2S-VOL branch)
+9. Return autocorrelation: no directional edge
+10. Vol persistence after large moves: yes for risk/vol forecasting
+11. Range dynamics: partial (vol relation, not direction)
+12. MTF EMA alignment: failed
+13. Volume spike effects: failed
 
-## 1) Scope
+## 7) H2/H2S/H2S-VOL Decision
+- Status: archived as watchlist (not deployable now).
+- Why:
+  - OOS friction-on results unstable across splits.
+  - Bootstrap CIs for mean return mostly overlap zero.
+  - No tested config passed acceptance gate.
+- Reopen only if:
+  - larger sample (target >1 year), and ideally replication on multiple assets.
+  - same acceptance gate passes without relaxed standards.
 
-### Instrument
-- **BTC-USD spot** on **Coinbase Advanced** (via Coinbase API)
+## 8) Active Track Now
+- Track: H14 Strategy Ablation (non-H2 branch).
+- Latest read:
+  - trend ablation variants remained negative.
+  - MR1 variant still negative.
+- Interpretation:
+  - currently no viable strategy from tested ablations on 180d sample.
 
-### Timeframe & holding period
-- Candle: **5-minute**
-- Typical hold: **5–120 minutes**
+## 9) Acceptance Gate (Deployability Candidate)
+Use this gate before promoting any strategy to forward paper deployment:
+- Friction on: `fee_bps=2`, `slippage_bps=2` per side.
+- OOS trade count threshold: >= 100 per evaluated horizon.
+- Mean return 95% bootstrap CI lower bound > 0.
+- `P(mean_return > 0)` >= 0.70.
+- Sharpe-like > 0 and not single-fold dependent.
+- Stability across multiple walkforward geometries.
 
-### What “paper trading” means here
-- **Level 1 Paper (Forward-test signals):**
-  - Live data → signal → simulated fill → log PnL
-  - Simple fill model (conservative)
-- **Level 2 Paper (Execution-realistic):**
-  - Limit-first execution simulation, spread/slippage, timeouts, partial fills, reconciliation
-  - This is the version required before live trading
+If a strategy fails this gate, it stays research-only.
 
----
+## 10) Important Scripts
+- Hypothesis studies:
+  - `scripts/hypothesis_studies.py`
+- H2 expert branch:
+  - `scripts/experts/h2s_vol_expert.py`
+  - `scripts/h2s_vol_uncertainty.py`
+- Ablation track:
+  - `scripts/ablation.py`
+- Reporting/dashboard:
+  - `scripts/dashboard.py`
 
-## 2) System Architecture
+### 10.1 Data/Feature Pipeline Scripts
+- `scripts/backfill_5m.py` (historical fetch/backfill)
+- `scripts/ingest_5m.py` and `scripts/run_ingest_loop.py` (ongoing ingest)
+- `scripts/compute_features.py` (feature materialization)
+- `scripts/sanity_report.py` and `scripts/summary_report.py` (health summaries)
 
-### 2.1 Data Layer
-- Pull BTC-USD 5m candles (REST and/or websocket aggregation)
-- Store in SQLite (recommended):
-  - `candles_5m`
-  - `features_5m`
-  - `signals`
-  - `paper_orders`
-  - `paper_fills`
-  - `equity_curve`
-  - `model_registry` (later)
+## 11) Resume Commands (Most Useful)
+### 11.1 H2S-VOL (archived track; rerun only when needed)
+- Friction-on walkforward matrix example:
+  - `.venv/bin/python -m scripts.experts.h2s_vol_expert --days 180 --window 2000 --variant B --horizons 10,20 --split-mode walkforward --train-days 60 --test-days 15 --step-days 15 --fee_bps 2 --slippage_bps 2 --equity-csv-prefix logs/h2s_vol_expert_vb_wf_60_15_15_fee2_slip2`
+- Uncertainty example:
+  - `.venv/bin/python -m scripts.h2s_vol_uncertainty --label wf_60_15_15_base --horizons 10,20 --train-days 60 --test-days 15 --step-days 15 --rv-pct-min 0.70 --rv-pct-max 0.90 --shock-atr-min 1.50 --shock-atr-max 2.50 --fee_bps 2 --slippage_bps 2 --bootstrap-iters 3000`
 
-### 2.1.1 Data Integrity (must pass every loop)
-- **Closed-bar only:** act only on fully closed 5m candles
-- **Gap detection:** if expected bar missing, flag `data_gap = true` and halt trading
-- **Duplicate detection:** ignore or overwrite duplicates based on timestamp primary key
-- **Clock drift:** track `source_lag_seconds`; halt if lag exceeds threshold
-- **Quality flags:** persist `bar_count_ok`, `data_gap`, `source_lag_seconds` in logs
+### 11.2 Active H14 ablation
+- `.venv/bin/python -m scripts.ablation --days 180`
 
-### 2.2 Feature Layer (minimal strong set)
-Compute each loop (every 5 minutes):
+### 11.3 Core Drift Studies (reference reruns)
+- Trend/breakout drift:
+  - `.venv/bin/python -m scripts.drift_study --days 180 --timeframes 5m,15m,1h,4h,1d`
+- Mean-reversion drift:
+  - `.venv/bin/python -m scripts.mr_drift_study --days 180 --timeframes 5m,1h,4h --dev-window 48`
+- RV drift:
+  - `.venv/bin/python -m scripts.rv_drift_study --days 180 --window 2000`
+- Time effects:
+  - `.venv/bin/python -m scripts.time_effects_study --days 180`
+- Daily drift:
+  - `.venv/bin/python -m scripts.daily_drift_study --days 720`
 
-**Returns**
-- `r1 = log(close/prev_close)`
-- Rolling stats on returns
+## 12) Update Rules (Keep Organization Clean)
+When you run anything meaningful:
+1. Add one short line in `FINDINGS_SIMPLIFIED.md` (status update).
+2. Append concise summary block to `FINDINGS.md`.
+3. Append command + output tables to `FINDINGS_TECHNICAL.md`.
+4. Update this file only if session state changes (active track, acceptance gate, resume commands).
 
-**Efficiency Ratio (ER) — directionality**
-- Lookback `n = 20` bars (~100 minutes)
-- `net = abs(close[t] - close[t-n])`
-- `gross = sum(abs(close[i] - close[i-1]))`
-- `ER = net / gross` in [0, 1]
+Do not rewrite old findings blocks; append new dated entries.
 
-**Realized Volatility (RV)**
-- Rolling stdev of returns over `n = 48` bars (~4 hours)
+### 12.1 Logging Style Rules
+- Use explicit UTC timestamps in new findings blocks.
+- Include exact command strings used.
+- Include whether friction was on/off.
+- For OOS conclusions, always include split geometry (`train/test/step`).
+- If results are negative, still log them fully (no silent drops).
 
-**Optional helpers (Phase 2+)**
-- VWAP (rolling, `N = 48`)
-- MA slope (e.g., EMA(20) slope)
-- Distance from VWAP / MA
-- Range expansion (ATR or high-low)
+## 13) Practical Next Queue
+1. Continue H14 with controlled ablation (small parameter deltas, no broad search).
+2. If possible, expand data horizon beyond 180d and rerun acceptance gate.
+3. Replicate key tests on ETH-USD to check portability.
+4. Only reopen H2 after #2/#3 conditions are met.
 
----
+### 13.1 Stop/Continue Logic
+- Continue current branch only if evidence quality increases (more data, tighter CI, stable folds).
+- Pause branch when repeated friction-on OOS runs stay CI-overlap-zero.
+- Escalate to new branch when prior branch is archived or saturated.
 
-## 3) Regime Definitions (Rules First)
+## 14) Guardrails
+- No overfitting from tiny windows.
+- No parameter hunt without a clear hypothesis.
+- No deployment claims from single split or CI-overlapping-zero results.
+- Prefer robust, boring truth over attractive but fragile backtests.
 
-We use a **4-regime grid**: (Trend vs Mean Reversion) × (High vs Low/Normal Vol).  
-Optional 5th regime: **No Trade**.
+## 15) Quick Session Start Checklist
+At start of any new AI session:
+1. Read `FINDINGS_SIMPLIFIED.md`.
+2. Read latest sections at bottom of `FINDINGS.md` and `FINDINGS_TECHNICAL.md`.
+3. Confirm active track (currently H14).
+4. Run one focused test.
+5. Log all three findings files.
 
-### 3.1 Trend vs Mean Reversion (using ER)
-- **Trend:** `ER >= 0.35`
-- **Mean Reversion / Chop:** `ER <= 0.25`
-- **Uncertain band:** `0.25 < ER < 0.35` → **no trade or reduced size**
+## 16) Known Limitations Right Now
+- Sample length is short for robust market-regime generalization.
+- Current universe is mostly BTC-USD only; weak cross-asset validation.
+- 5m bars can be noisy; small edges are fragile under fees/slippage.
+- Some hypothesis runners are H1/H2-family specific and not full generic frameworks.
 
-### 3.2 Volatility regime (percentiles)
-Compute RV percentile over a rolling long window (e.g., 60 days):
-- **High Vol:** `RV > 70th percentile`
-- **Low/Normal Vol:** otherwise
-- Optional: **Ultra-high** at `> 90th percentile` → trade smaller or stand down
+## 17) Preferred Next Data Upgrade
+- Expand beyond 180d history (target >= 1 year first).
+- Add ETH-USD mirror dataset and run same core drift + gating pipeline.
+- Keep same acceptance gate to prevent post-hoc standard changes.
 
-### 3.3 No‑Trade Filter (saves accounts)
-- **No Trade:** `ER < 0.20` AND `RV > 80th percentile`
-
-### 3.4 Final regimes
-A) Trend + Low/Normal Vol  
-B) Trend + High Vol  
-C) Mean Reversion + Low/Normal Vol  
-D) Mean Reversion + High Vol  
-E) No Trade (optional)
-
----
-
-## 4) Strategy Routing
-
-- If regime ∈ {A, B} → **Trend Expert**
-- If regime ∈ {C, D} → **Mean Reversion Expert**
-- If regime = E or Uncertain → **No trade** (or reduce risk)
-
-> Early build: experts are rule-based prototypes.  
-> Later build: experts can be ML policies per regime.
-
----
-
-## 5) Risk Management Rules
-
-- Risk per trade: **0.5%–1.0%**
-- Max daily drawdown: **3%** (hard stop)
-- Max trades/day: **3**
-- If state is uncertain (missing data, API errors, unknown fill status): **halt** (paper) or **flatten/halt** (live later)
-- Max concurrent positions: start with **1**
-- **Position sizing:** must be tied to stop distance (ATR-based), not arbitrary notional
-
----
-
-## 6) Paper Engine Requirements
-
-### Level 1 Paper Fill Model (minimum viable)
-- Use conservative assumptions:
-  - Buy fills at **ask**, sell fills at **bid** (or mid + half-spread proxy)
-  - Apply fee model (even if “fee free,” assume costs via spread)
-  - Add fixed slippage buffer (small, configurable)
-- Log:
-  - timestamp, regime, signal, assumed fill, pnl, equity
-
-### Level 2 Paper Engine (execution-realistic)
-- Limit-first order logic:
-  - place limit near bid/ask
-  - timeout after N candles; optionally cross the spread
-- Track:
-  - open orders
-  - partial fills (if modeled)
-  - cancel/replace
-- Reconciliation:
-  - on restart, re-load state from DB and resume safely
-- **Execution timing:** if Level 2 is disabled, fills occur at **next bar open** only
-
-**Explicit Level 2 rules (define before coding):**
-- **Limit placement:** join best bid/ask or improve by one tick (configurable)
-- **Timeout:** cancel after `N` candles without fill
-- **Crossing:** after timeout, optionally cross spread to fill
-- **Partial fills:** assume either full-fill or configurable partial ratio
-- **Queue priority:** assume worst-case (fill only if price trades through limit)
-- **Gaps:** if price gaps beyond limit, fill at first tradable price per model
-- **Slippage model:** add fixed bps or ATR fraction on fills
-- **Fees:** always apply fees even if fee tier is zero
-
----
-
-## 6.5) Diagnostics (Phase 1+)
-
-**Per-trade diagnostics (store on each trade):**
-- `mae_r`, `mfe_r` (in R units)
-- `bars_to_stop` (only for stop exits)
-- `stop_price_used`, `exit_price_used`, `risk_per_unit`
-
-**Stop model note:**
-- Stops trigger on bar `t`, but fills at **next bar open** (Level 1).
-- This can produce losses worse than -1R if price gaps.
-
-> **Gate:** do not go live until Level 2 is stable and forward-tested.
+## 18) Session Preflight (Quick)
+Run these before new research runs:
+1. `.venv/bin/python -V`
+2. `.venv/bin/python -m scripts.health`
+3. Verify data coverage quickly (latest findings range in `FINDINGS_SIMPLIFIED.md`).
+4. Use one focused command from Section 11 and log all outputs in findings files.
 
 ---
-
-## 7) ML Rules (Do not start until Phase 3)
-
-### 7.1 What ML is allowed to do (initially)
-- **Regime classifier** predicts `P(trend)` (and optionally `P(high_vol)`).
-- It does **not** predict next-candle direction at first.
-
-### 7.2 Allowed models (start simple)
-- Logistic Regression
-- Random Forest
-- Gradient Boosting (later)
-
-### 7.3 Validation rules (hard)
-- **Walk-forward only** (rolling windows)
-- Maintain a **champion/challenger**:
-  - champion stays live
-  - challenger trains on new data
-  - promote only if it wins out-of-sample and doesn’t increase drawdown beyond cap
-- Use an uncertainty band:
-  - if `0.45 < P(trend) < 0.55` → no trade (or reduce size)
-
-### 7.4 Retraining schedule
-- Weekly or bi-weekly (not hourly)
-- Never auto-deploy without passing gates
-
----
-
-## 8) Build Plan (Phased Shipping Plan)
-
-### Phase 0 — Plumbing Only (no strategy)
-**Goal:** reliable data + DB + indicators.
-- Candle ingestion loop (every 5 minutes)
-- SQLite storage
-- Feature computation (ER, RV)
-- Unit tests / sanity checks (spot-check ER/RV against charts)
-
-**Exit criteria:**
-- Can run 24+ hours without crashing
-- Features update correctly
-- Restart-safe (no duplicate candles)
-- **Phase 0 checklist:**
-  - `candles_5m` table has continuous 5m bars (no gaps across 24h window)
-  - Indicators match manual chart spot-checks
-  - Data integrity flags are logged per loop
-  - API error handling does not crash the loop
-
-### Phase 1 — Level 1 Paper Trading (forward-test)
-**Goal:** generate trades and log equity curve.
-- Rule-based regime classification
-- ONE expert strategy (**Trend first**)
-- Level 1 fill model (conservative)
-- Daily summary report
-- Forward-test mode (incremental) with persistent state
-
-**Exit criteria:**
-- 30 days of clean paper logs
-- **Max peak-to-trough drawdown <= 5%**
-- **Max loss streak <= 5 trades**
-- **Data quality: zero unhandled gaps, zero duplicate candles**
-- No “mystery” fills or missing data
-- You can explain every trade from logs
-
-**Diagnostics required in Phase 1:**
-- MAE/MFE R statistics
-- Stop-exit time-to-stop histogram
-
-### Phase 2 — Level 2 Paper Trading (execution-realistic)
-**Goal:** simulate real execution behavior.
-- Limit-first order simulation
-- Timeouts + cancel/replace
-- Slippage/spread modeling improvements
-- Full state reconciliation on restart
-
-**Exit criteria:**
-- 30+ days forward test with Level 2 engine
-- **Max peak-to-trough drawdown <= 6%**
-- **Max loss streak <= 6 trades**
-- **Slippage/fee assumptions applied on every fill**
-- No state corruption during restarts
-
-### Phase 3 — ML Regime Classifier
-**Goal:** smoother/more robust regime detection than thresholds.
-- Train ML to predict regime labels (from rule-based labels)
-- Walk-forward validation only
-- Champion/challenger promotion
-
-**Exit criteria:**
-- ML improves OOS metrics without worsening drawdown
-- Uncertainty band prevents overtrading
-
-### Phase 4 — ML Experts per Regime (optional)
-**Goal:** per-regime policies.
-- Train separate expert models on regime-filtered data
-- Soft routing optional (probability-weighted actions)
-
-**Exit criteria:**
-- Demonstrable improvement with conservative assumptions
-
-### Phase 5 — Small Live Deployment (later)
-- Only after all gates pass
-- Start tiny size, same risk caps
-
----
-
-## 9) Change Control (avoid self-sabotage)
-- All parameter changes require:
-  - reason
-  - before/after backtest
-  - walk-forward comparison
-  - commit message + log entry
-- Never change rules mid-drawdown without evidence.
-
----
-
-## 10) Definition of “Done” for MVP
-MVP is done when you have:
-- A stable data pipeline
-- A working Level 2 paper engine
-- 60+ days of forward-test logs
-- A single strategy routed by regimes with controlled drawdowns
-- Clear daily/weekly reports
-
----
-
-## Appendix A) Exit and Stop Rules (Direction-Aware)
-
-**ATR Stop (5m):**
-- Use `ATR(14)` for adaptive sizing
-- Stop distance: `1.2 * ATR`
-- **Long stop:** `entry - 1.2 * ATR`
-- **Short stop:** `entry + 1.2 * ATR`
-
-**Trend Expert Take Profit:**
-- Target: `2.0 * ATR`
-- **Long target:** `entry + 2.0 * ATR`
-- **Short target:** `entry - 2.0 * ATR`
-
-**Mean Reversion Take Profit:**
-- Target return to **rolling VWAP (N=48)**, or ATR fallback at `1.5 * ATR`
-- **Long:** price below VWAP, target up to VWAP
-- **Short:** price above VWAP, target down to VWAP
-
-**Time Stop:**
-- Exit after `10` candles **since entry bar close** if price fails to move in favor
-
-**Regime Switch Exit:**
-- If regime changes away from entry regime, apply hysteresis:
-  - Require **2 consecutive bars** in new regime, or
-  - Allow **1 bar** of “trend → uncertain” without forcing exit
-
-**Move to Break-Even:**
-- After `+1.0 * ATR` in favor, move stop to entry
-
----
-
-## Appendix B) Reporting Spec (Daily)
-
-**Required fields:**
-- Date (UTC)
-- Trades count, win/loss count, win rate
-- Gross PnL, net PnL, fees, slippage
-- Max drawdown (day and rolling)
-- Avg R per trade, expectancy
-- Regime exposure (% time in each regime)
-- Data quality flags (gaps, lag breaches)
-- Open positions at EOD (if any)
-
-## Appendix C) Reporting Spec (Weekly)
-
-**Required fields:**
-- Week start/end dates (UTC)
-- Total trades, win rate, net PnL
-- Max drawdown (weekly and rolling)
-- Best/worst trade (PnL and R)
-- Regime performance breakdown
-- Data quality summary (gaps, lag breaches)
-
----
-
-## Appendix D) Phase 1 Trend Expert (Level 1)
-
-**Signal (no lookahead):**
-- Breakout level = `max(high[t-20:t])` (exclude current bar)
-- Enter long when `close[t] > breakout_level + (BREAKOUT_ATR_BUFFER * ATR)`
-  - Default `BREAKOUT_ATR_BUFFER = 0.2`
-
-**Regime filter:**
-- Trend only: `ER >= 0.35`
-
-**Fill convention (Level 1):**
-- Entry fill at **next bar open** + half-spread + slippage
-- Exit fill at **next bar open** (same cost model)
-
-**Cooldown:**
-- After exit, wait **1 bar** before re-entry
-
-**Logging fields:**
-- `entry_time`, `entry_price`, `breakout_level`, `ER`, `ATR`, `exit_reason`
-
-**Forward-test idempotency:**
-- Persist `last_processed_candle_ts` in `bot_state`
-- Use unique constraint to prevent duplicate `paper_trades` inserts
-
----
-
-## Appendix E) Entry Toggles (Rule-Based)
-
-**Breakout confirmation:**
-- `BREAKOUT_ATR_BUFFER` (default `0.2`)
-- `BREAKOUT_REQUIRES_CLOSE` (default `false`)
-
-**Trend strength:**
-- `ENTRY_ER_MIN` (default `0.35`)
-- `ER_NO_TRADE_BAND_LOW/HIGH` (optional band)
-
-**Volatility filter:**
-- `SKIP_TOP_DECILE_RV` (default `false`)
-- `RV_QUANTILE_WINDOW` (default `2000` bars, backward-looking only)
-
-**ATR freeze (for consistent 1R):**
-- `FREEZE_ATR_AT_ENTRY` (default `false`)
-
-**Retest entry (optional):**
-- `ENABLE_RETEST` (default `false`)
-- `RETEST_ATR_BAND` (default `0.2`)
-- `RETEST_MAX_BARS` (default `6`)
-
-**EMA confirmation (optional):**
-- `REQUIRE_EMA_CONFIRM` (default `false`)
-- `EMA_FAST_PERIOD` (default `20`)
-- `EMA_SLOW_PERIOD` (default `50`)
-- `EMA_SLOPE_BARS` (default `3`)
-- `EMA_SLOPE_MIN` (default `0.0`)
-
----
-
-## Appendix F) Drift Studies (Structural)
-
-**ER drift study:**
-- Bucket ER20 and compute forward returns for `H={5,10,20}` bars.
-
-**Breakout-event drift study:**
-- Event `E_N`: `close > rolling_high(N) + buffer*ATR` for `N={12,24}` and `buffer={0.0,0.5}`
-- Compute forward return stats for `H={5,10,20}`
-
-**Stop-exit stats:**
-- Track mean/median `R` on stop exits to verify fill model.
-
----
-
-**End of AI_AGENT.md v2**
+Archive note: previous full playbook version saved at `archive/AI_AGENT_full_2026-02-17.md`.

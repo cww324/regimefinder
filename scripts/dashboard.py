@@ -14,6 +14,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Trading dashboard.")
     parser.add_argument("--days", type=int, default=30, help="Lookback window in days.")
     parser.add_argument("--last-trades", type=int, default=10, help="Number of last trades to show.")
+    parser.add_argument(
+        "--strategy-name",
+        default="",
+        help="Optional strategy_name filter (e.g., h2s_vol_expert_l0_h10).",
+    )
     return parser.parse_args()
 
 
@@ -43,22 +48,33 @@ def max_loss_streak(pnls):
     return max_streak
 
 
-def main(days: int, last_trades: int) -> None:
+def main(days: int, last_trades: int, strategy_name: str) -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     init_db(conn)
 
     cutoff_ts = int(datetime.now(timezone.utc).timestamp()) - (days * 86400)
 
-    trades = pd.read_sql_query(
-        """
-        SELECT * FROM paper_trades
-        WHERE exit_ts >= ?
-        ORDER BY exit_ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+    if strategy_name:
+        trades = pd.read_sql_query(
+            """
+            SELECT * FROM paper_trades
+            WHERE exit_ts >= ? AND strategy_name = ?
+            ORDER BY exit_ts
+            """,
+            conn,
+            params=(cutoff_ts, strategy_name),
+        )
+    else:
+        trades = pd.read_sql_query(
+            """
+            SELECT * FROM paper_trades
+            WHERE exit_ts >= ?
+            ORDER BY exit_ts
+            """,
+            conn,
+            params=(cutoff_ts,),
+        )
 
     console = Console()
 
@@ -236,4 +252,4 @@ def main(days: int, last_trades: int) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.days, args.last_trades)
+    main(args.days, args.last_trades, args.strategy_name)

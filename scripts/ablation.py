@@ -133,7 +133,7 @@ def main(days: int) -> None:
     conn = connect(settings.db_path)
     init_db(conn)
 
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
+    cutoff_ts = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
     df = pd.read_sql_query(
         """
         SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
