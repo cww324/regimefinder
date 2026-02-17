@@ -18,6 +18,13 @@ BREAKOUT_BUFFERS = [0.0, 0.5]
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Structural drift study on 5m data.")
     parser.add_argument("--days", type=int, default=30, help="Lookback window in days.")
+    parser.add_argument(
+        "--timeframes",
+        type=str,
+        default="5m,15m,1h",
+        help="Comma-separated timeframes (e.g., 5m,15m,1h).",
+    )
+    parser.add_argument("--save", action="store_true", help="Save outputs to logs/")
     return parser.parse_args()
 
 
@@ -105,13 +112,67 @@ def stop_exit_r_stats(df_trades: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def main(days: int) -> None:
+def _compute_features(df: pd.DataFrame) -> pd.DataFrame:
+    data = df.copy()
+    data = data.sort_values("ts")
+    close = data["close"].astype(float)
+    high = data["high"].astype(float)
+    low = data["low"].astype(float)
+    volume = data["volume"].astype(float)
+
+    data["r1"] = np.log(close / close.shift(1))
+    prev_close = close.shift(1)
+    tr = pd.concat(
+        [
+            (high - low).abs(),
+            (high - prev_close).abs(),
+            (low - prev_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+    data["atr14"] = tr.rolling(14).mean()
+    n_er = 20
+    net = (close - close.shift(n_er)).abs()
+    gross = close.diff().abs().rolling(n_er).sum()
+    data["er20"] = net / gross.replace(0, np.nan)
+    data["rv48"] = data["r1"].rolling(48).std()
+    data["volume"] = volume
+    return data
+
+
+def _resample(df: pd.DataFrame, tf: str) -> pd.DataFrame:
+    minutes = 5
+    if tf.endswith("m"):
+        minutes = int(tf[:-1])
+    elif tf.endswith("h"):
+        minutes = int(tf[:-1]) * 60
+    elif tf.endswith("d"):
+        minutes = int(tf[:-1]) * 60 * 24
+    rule = f"{minutes}min"
+    data = df.copy()
+    data["dt"] = pd.to_datetime(data["ts"], unit="s", utc=True)
+    data = data.set_index("dt")
+    agg = data.resample(rule, label="right", closed="right").agg(
+        {
+            "open": "first",
+            "high": "max",
+            "low": "min",
+            "close": "last",
+            "volume": "sum",
+        }
+    )
+    agg = agg.dropna().reset_index()
+    agg["ts"] = agg["dt"].astype("int64") // 10**9
+    return agg[["ts", "open", "high", "low", "close", "volume"]]
+
+
+def main(days: int, timeframes: List[str], save: bool) -> None:
     settings = get_settings()
     conn = connect(settings.db_path)
     init_db(conn)
 
     cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
+    base = pd.read_sql_query(
         """
         SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
                f.atr14, f.er20, f.rv48
@@ -124,19 +185,37 @@ def main(days: int) -> None:
         params=(cutoff_ts,),
     )
 
-    if df.empty:
+    if base.empty:
         print("no data")
         return
 
-    print("ER drift study (forward returns):")
-    er_table = er_drift(df)
-    print(er_table.to_string(index=False))
-    print()
+    for tf in timeframes:
+        if tf == "5m":
+            df = base.copy()
+        else:
+            df = _resample(base[["ts", "open", "high", "low", "close", "volume"]], tf)
+            df = _compute_features(df)
 
-    print("Breakout-event drift study:")
-    br_table = breakout_events(df)
-    print(br_table.to_string(index=False))
-    print()
+        print(f"=== Timeframe: {tf} ===")
+        print("ER drift study (forward returns):")
+        er_table = er_drift(df)
+        print(er_table.to_string(index=False))
+        print()
+
+        print("Breakout-event drift study:")
+        br_table = breakout_events(df)
+        print(br_table.to_string(index=False))
+        print()
+
+        if save:
+            import os
+            from datetime import datetime, timezone
+            os.makedirs("logs", exist_ok=True)
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            er_table.to_csv(f"logs/er_drift_{tf}_{ts}.csv", index=False)
+            br_table.to_csv(f"logs/breakout_drift_{tf}_{ts}.csv", index=False)
+            with open("logs/summary.log", "a", encoding="utf-8") as f:
+                f.write(f"[{ts}] drift_study tf={tf} days={days} rows_er={len(er_table)} rows_br={len(br_table)}\n")
 
     trades = pd.read_sql_query(
         """
@@ -154,4 +233,6 @@ def main(days: int) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.days)
+    tfs = [t.strip() for t in args.timeframes.split(",") if t.strip()]
+    save = args.save
+    main(args.days, tfs, save)

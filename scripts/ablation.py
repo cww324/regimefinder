@@ -5,7 +5,7 @@ import pandas as pd
 
 from app.config import get_settings
 from app.data.db import connect, init_db
-from app.execution.paper import run_trend_level1
+from app.execution.paper import run_trend_level1, run_meanrev_level1
 
 
 COLUMNS = [
@@ -116,7 +116,10 @@ def summarize(df: pd.DataFrame, granularity_sec: int):
 
 
 def run_case(df: pd.DataFrame, settings, label: str):
-    trades = run_trend_level1(df, settings)
+    if label.startswith("MR"):
+        trades = run_meanrev_level1(df, settings)
+    else:
+        trades = run_trend_level1(df, settings)
     if trades:
         out = pd.DataFrame(trades, columns=COLUMNS)
     else:
@@ -211,6 +214,17 @@ def main(days: int) -> None:
                 ema_slow_period=50,
                 ema_slope_bars=3,
                 ema_slope_min=0.0,
+            ),
+        ),
+        (
+            "MR1) VWAP z<=-1.5",
+            replace(
+                settings,
+                mr_enable=True,
+                mr_z_entry=1.5,
+                mr_z_exit=0.0,
+                mr_dev_window=48,
+                mr_max_hold_bars=10,
             ),
         ),
     ]

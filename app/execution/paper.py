@@ -289,3 +289,146 @@ def run_trend_level1(
             pending_idx = None
 
     return trades
+
+
+def run_meanrev_level1(
+    df: pd.DataFrame,
+    settings: Settings,
+) -> List[Tuple]:
+    trades: List[Tuple] = []
+    position: Optional[Position] = None
+    cooldown_until_idx = -1
+    cost_bps = settings.half_spread_bps + settings.slippage_bps
+    equity = settings.initial_equity
+
+    data = df.copy()
+    data = data.sort_values("ts").reset_index(drop=True)
+    data["idx"] = data.index
+
+    dev = data["close"] - data["vwap48"]
+    dev_std = dev.rolling(settings.mr_dev_window).std()
+    data["mr_z"] = dev / dev_std.replace(0, np.nan)
+
+    for i in range(len(data) - 1):
+        row = data.iloc[i]
+        next_row = data.iloc[i + 1]
+        next_open = float(next_row["open"])
+        next_ts = int(next_row["ts"])
+
+        if position:
+            # Track intratrade extremes (long-only)
+            position.worst_price = min(position.worst_price, float(row["low"]))
+            position.best_price = max(position.best_price, float(row["high"]))
+
+            # Mean reversion exit: reclaim VWAP or z >= -mr_z_exit
+            z = float(row["mr_z"])
+            if not np.isnan(z) and z >= -settings.mr_z_exit:
+                reason = "exit_mean_reversion"
+            else:
+                reason = None
+
+            # ATR stop and time stop
+            if reason is None:
+                atr = float(position.entry_atr if settings.freeze_atr_at_entry else row["atr14"])
+                stop_price = position.entry_price - 1.2 * atr
+                if float(row["low"]) <= stop_price:
+                    reason = "exit_stop_hit"
+                elif int(row["idx"]) - position.entry_idx >= settings.mr_max_hold_bars:
+                    reason = "exit_time_stop"
+
+            if reason:
+                exit_price = _fill_price(next_open, cost_bps, "sell")
+                if position.risk_usd <= 0 or position.qty <= 0:
+                    raise ValueError("Invalid sizing: risk_usd or qty <= 0")
+                entry_cost = _trade_cost(position.entry_price, position.qty, cost_bps)
+                exit_cost = _trade_cost(exit_price, position.qty, cost_bps)
+                total_cost = entry_cost + exit_cost
+                pnl = position.qty * (exit_price - position.entry_price) - total_cost
+                pnl_pct = pnl / max(position.entry_price * position.qty, 1e-9)
+                equity_before = equity
+                equity_after = equity_before + pnl
+                r_multiple = pnl / max(position.risk_usd, 1e-9)
+                mae = position.worst_price - position.entry_price
+                mfe = position.best_price - position.entry_price
+                risk_per_unit = abs(position.entry_price - position.initial_stop_price)
+                mae_r = mae / risk_per_unit if risk_per_unit > 0 else 0.0
+                mfe_r = mfe / risk_per_unit if risk_per_unit > 0 else 0.0
+                bars_to_stop = None
+                if reason == "exit_stop_hit":
+                    bars_to_stop = int(row["idx"]) - position.entry_idx
+                trades.append(
+                    (
+                        "meanrev_level1",
+                        position.entry_ts,
+                        next_ts,
+                        position.entry_price,
+                        exit_price,
+                        None,
+                        position.entry_er,
+                        position.entry_atr,
+                        reason,
+                        pnl,
+                        pnl_pct,
+                        position.qty,
+                        position.risk_usd,
+                        position.stop_dist,
+                        entry_cost,
+                        exit_cost,
+                        total_cost,
+                        equity_before,
+                        equity_after,
+                        r_multiple,
+                        mae_r,
+                        mfe_r,
+                        bars_to_stop,
+                        None,
+                        exit_price,
+                        risk_per_unit,
+                    )
+                )
+                equity = equity_after
+                position = None
+                cooldown_until_idx = i + settings.cooldown_bars
+                continue
+
+        if position is None and i > cooldown_until_idx:
+            if equity <= 0:
+                break
+
+            z = float(row["mr_z"])
+            if np.isnan(z) or z > -settings.mr_z_entry:
+                continue
+
+            if np.isnan(float(row["atr14"])):
+                continue
+
+            stop_dist = 1.2 * float(row["atr14"])
+            if stop_dist <= 0:
+                continue
+
+            risk_usd = abs(equity * settings.risk_pct)
+            if risk_usd <= 0 or risk_usd > equity:
+                continue
+
+            qty = risk_usd / stop_dist
+            if qty <= 0:
+                continue
+
+            entry_price = _fill_price(next_open, cost_bps, "buy")
+            position = Position(
+                entry_idx=i + 1,
+                entry_ts=next_ts,
+                entry_price=entry_price,
+                entry_regime="meanrev",
+                entry_atr=float(row["atr14"]),
+                entry_er=float(row["er20"]),
+                breakout_level=0.0,
+            )
+            position.qty = qty
+            position.risk_usd = risk_usd
+            position.stop_dist = stop_dist
+            position.worst_price = entry_price
+            position.best_price = entry_price
+            position.initial_stop_price = entry_price - stop_dist
+
+    return trades

@@ -53,6 +53,13 @@ class Settings:
     ema_slope_bars: int = int(os.getenv("EMA_SLOPE_BARS", "3"))
     ema_slope_min: float = float(os.getenv("EMA_SLOPE_MIN", "0.0"))
 
+    # Mean-reversion controls (VWAP deviation)
+    mr_enable: bool = os.getenv("MR_ENABLE", "false").lower() == "true"
+    mr_z_entry: float = float(os.getenv("MR_Z_ENTRY", "1.5"))
+    mr_z_exit: float = float(os.getenv("MR_Z_EXIT", "0.0"))
+    mr_dev_window: int = int(os.getenv("MR_DEV_WINDOW", "48"))
+    mr_max_hold_bars: int = int(os.getenv("MR_MAX_HOLD_BARS", "10"))
+
     # Risk sizing (for audit / future sizing)
     initial_equity: float = float(os.getenv("INITIAL_EQUITY", "10000"))
     risk_pct: float = float(os.getenv("RISK_PCT", "0.005"))
