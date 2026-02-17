@@ -35,3 +35,25 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
 ## Simple Bottom Line
 - On current 180-day BTC 5m data, no robust directional edge is confirmed.
 - Some volatility/risk structure is real, but direction signals are not stable enough yet.
+
+## H14 Latest Update (2026-02-17)
+- Focused test run: MR2 with stricter entry (`VWAP z<=-2.0`, from `-1.5`).
+- Result: still FAIL for directional edge (`1494` trades, `10.58%` win, `avgR -2.550`).
+- Interpretation: stricter MR entry reduced overtrading but did not fix negative expectancy.
+- H14 focused MR3 (`z<=-2.0`, `max_hold=6`): still FAIL (`1547` trades, `8.27%` win, `avgR -2.524`); shorter hold reduced stop-rate but did not fix expectancy.
+
+## H15 Latest Update (2026-02-17)
+- New hypothesis started: cross-asset confirmation (BTC entries gated by ETH confirmation).
+- Blocked today: ETH ingest unavailable in environment (`api.coinbase.com` DNS/network failure).
+- Focused offline proxy run (BTC-only 1h confirmation) showed promise:
+  - Raw MR2 (`z<=-2.0`): `n=1272`, mean net return `-0.000419`.
+  - With 1h confirmation: `n=170`, mean net return `+0.000952`.
+- Status: H15 provisional PROMISE in proxy form; needs full validation and real ETH confirmation once data access is restored.
+- H15 real test (BTC MR2 + ETH 1h confirmation): PARTIAL PROMISE (`n=225`, win `55.56%`, mean net `+0.000178`) vs raw BTC MR2 mean `-0.000419`; needs walkforward/bootstrap validation.
+- H15 walkforward+bootstrap (60/15/15, real ETH confirm): STRONG PARTIAL PASS (`n=117`, mean `+0.000813`, CI `[+0.000246,+0.001328]`, `P(mean>0)=0.998`), while raw MR2 stays negative.
+- H15 robustness:
+  - 90/30/30: ETH-confirmed stays positive (`n=80`, mean `+0.000984`, CI `[+0.000318,+0.001672]`).
+  - 120/30/30: ETH-confirmed still positive mean (`n=49`, mean `+0.000647`) but CI crosses zero.
+- Current call: H15 is the best active lead but still research-only (trade-count/stability gate not fully satisfied across geometries).
+- H15 log locked: `PASS gross`, `PASS at 8 bps`, `BORDERLINE PASS at 10 bps`; rules frozen (no tuning).
+- H16 kickoff (ETH shock lead-lag -> BTC h=6, no tuning, no friction): FAIL/WEAK (`P(cont>0)=47.53%`, `mean_cont=-0.000026`).

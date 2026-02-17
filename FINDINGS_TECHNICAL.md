@@ -2095,3 +2095,688 @@ MR1) VWAP z<=-1.5 | 2328 | 8.76% | -1.880 | -4376.022 | 200 | 3.37 | -1.456/-1.2
 Notes:
 - Patched deprecation in `scripts/ablation.py`:
   - from `pd.Timestamp.utcnow()` to `pd.Timestamp.now("UTC")`.
+
+## H14 Ablation Focused Test: MR Threshold Tightening (z<=-2.0)
+Run: 2026-02-17 06:08 UTC
+
+Hypothesis:
+- Stricter MR entry (`mr_z_entry=2.0` vs `1.5`) may filter weaker dislocations and improve R-multiple profile.
+
+Command:
+`.venv/bin/python - <<'PY'
+import pandas as pd
+from dataclasses import replace
+from app.config import get_settings
+from app.data.db import connect, init_db
+from scripts.ablation import run_case
+
+DAYS = 180
+settings = get_settings()
+conn = connect(settings.db_path)
+init_db(conn)
+cutoff_ts = int(pd.Timestamp.now("UTC").timestamp()) - (DAYS * 86400)
+df = pd.read_sql_query(
+    """
+    SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
+           f.atr14, f.er20, f.rv48, f.vwap48
+    FROM candles_5m c
+    JOIN features_5m f ON f.ts = c.ts
+    WHERE c.ts >= ?
+    ORDER BY c.ts
+    """,
+    conn,
+    params=(cutoff_ts,),
+)
+label, stats = run_case(
+    df,
+    replace(
+        settings,
+        mr_enable=True,
+        mr_z_entry=2.0,
+        mr_z_exit=0.0,
+        mr_dev_window=48,
+        mr_max_hold_bars=10,
+    ),
+    "MR2) VWAP z<=-2.0",
+)
+print("label | trades | win% | avgR | totalR | maxLS | avgHold | MAEmean/med | MFEm/med | stopRate | medBarsToStop | stopBuckets")
+print(
+    f"{label} | {stats['trades']} | {stats['win_rate']:.2%} | {stats['avg_r']:.3f} | {stats['total_r']:.3f} | {stats['max_loss_streak']} | {stats['avg_hold']:.2f} | "
+    f"{stats['mae_mean']:.3f}/{stats['mae_median']:.3f} | {stats['mfe_mean']:.3f}/{stats['mfe_median']:.3f} | {stats['stop_rate']:.2%} | {stats['median_bars_to_stop']:.1f} | {stats['stop_buckets']}"
+)
+PY`
+
+Output:
+`2026-02-17 06:08:27 UTC`
+
+`label | trades | win% | avgR | totalR | maxLS | avgHold | MAEmean/med | MFEm/med | stopRate | medBarsToStop | stopBuckets`
+`MR2) VWAP z<=-2.0 | 1494 | 10.58% | -2.550 | -3809.872 | 74 | 3.63 | -1.442/-1.256 | 0.513/0.015 | 77.04% | 0.0 | 1=139, 2-3=140, 4-6=74, 7-10=57, 11-20=0, 21+=0`
+
+Comparison reference (prior MR1 from same 180d ablation run):
+- MR1 (`z<=-1.5`): trades=2328, win%=8.76%, avgR=-1.880, totalR=-4376.022, stopRate=78.65%
+
+Interpretation:
+- Trade count drops and win-rate improves with stricter threshold, but avgR remains deeply negative.
+- Focused H14 MR threshold ablation does not produce positive expectancy.
+
+## H14 Ablation Focused Test: MR Time-Decay (z<=-2.0, max_hold=6)
+Run: 2026-02-17 06:09 UTC
+
+Hypothesis:
+- If MR edge decays quickly, reducing max hold from 10 to 6 bars should improve R profile and reduce adverse stop outcomes.
+
+Command:
+`.venv/bin/python - <<'PY'
+import pandas as pd
+from dataclasses import replace
+from app.config import get_settings
+from app.data.db import connect, init_db
+from scripts.ablation import run_case
+
+DAYS = 180
+settings = get_settings()
+conn = connect(settings.db_path)
+init_db(conn)
+cutoff_ts = int(pd.Timestamp.now("UTC").timestamp()) - (DAYS * 86400)
+df = pd.read_sql_query(
+    """
+    SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
+           f.atr14, f.er20, f.rv48, f.vwap48
+    FROM candles_5m c
+    JOIN features_5m f ON f.ts = c.ts
+    WHERE c.ts >= ?
+    ORDER BY c.ts
+    """,
+    conn,
+    params=(cutoff_ts,),
+)
+label, stats = run_case(
+    df,
+    replace(
+        settings,
+        mr_enable=True,
+        mr_z_entry=2.0,
+        mr_z_exit=0.0,
+        mr_dev_window=48,
+        mr_max_hold_bars=6,
+    ),
+    "MR3) VWAP z<=-2.0, max_hold=6",
+)
+print("label | trades | win% | avgR | totalR | maxLS | avgHold | MAEmean/med | MFEm/med | stopRate | medBarsToStop | stopBuckets")
+print(
+    f"{label} | {stats['trades']} | {stats['win_rate']:.2%} | {stats['avg_r']:.3f} | {stats['total_r']:.3f} | {stats['max_loss_streak']} | {stats['avg_hold']:.2f} | "
+    f"{stats['mae_mean']:.3f}/{stats['mae_median']:.3f} | {stats['mfe_mean']:.3f}/{stats['mfe_median']:.3f} | {stats['stop_rate']:.2%} | {stats['median_bars_to_stop']:.1f} | {stats['stop_buckets']}"
+)
+PY`
+
+Output:
+`2026-02-17 06:09:53 UTC`
+
+`label | trades | win% | avgR | totalR | maxLS | avgHold | MAEmean/med | MFEm/med | stopRate | medBarsToStop | stopBuckets`
+`MR3) VWAP z<=-2.0, max_hold=6 | 1547 | 8.27% | -2.524 | -3905.011 | 69 | 3.01 | -1.409/-1.234 | 0.464/0.022 | 73.30% | 0.0 | 1=146, 2-3=148, 4-6=84, 7-10=0, 11-20=0, 21+=0`
+
+Comparison reference:
+- MR2 (`z<=-2.0`, `max_hold=10`): trades=1494, win%=10.58%, avgR=-2.550, totalR=-3809.872, stopRate=77.04%
+
+Interpretation:
+- Faster timeout reduces stop concentration and slightly improves avgR, but expectancy remains materially negative.
+- H14 MR branch still fails viability.
+
+## H15 Kickoff: Cross-Asset Plan Blocked by Network, Offline Confirmation Proxy
+Run: 2026-02-17 06:12 UTC
+
+Intended path:
+- Ingest ETH-USD 5m into separate DB and run BTC+ETH confirmation hypothesis.
+
+Blocker command:
+`DB_PATH=data/market_eth.sqlite COINBASE_PRODUCT_ID=ETH-USD .venv/bin/python -m scripts.ingest_5m --lookback-bars 400`
+
+Blocker output (key error):
+`requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.coinbase.com', port=443): ... Failed to resolve 'api.coinbase.com'`
+
+Focused fallback test (offline, single-run):
+- Signal base: BTC MR2 event (`z <= -2.0`) using `dev=(close-vwap48)` and `z=dev/std_48`.
+- Confirmation: BTC 1h trend filter (`1h close > EMA20_1h` AND `EMA20_1h.diff(3) > 0`).
+- De-overlap: keep entries at least `h=6` bars apart.
+- Outcome: `fwd_return_6bars - 0.0004` (fee/slippage proxy, roundtrip).
+
+Command:
+`.venv/bin/python - <<'PY'
+import pandas as pd
+import numpy as np
+import sqlite3
+
+DAYS=180
+H=6
+COST=0.0004  # 2bps fee + 2bps slip roundtrip proxy
+
+con=sqlite3.connect('data/market.sqlite')
+df=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', con)
+if df.empty:
+    raise SystemExit('no data')
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+df=df[df.ts>=cutoff].copy().reset_index(drop=True)
+
+dev=df['close']-df['vwap48']
+dev_std=dev.rolling(48).std()
+df['z']=dev/dev_std.replace(0,np.nan)
+
+ts=pd.to_datetime(df['ts'], unit='s', utc=True)
+df['dt']=ts
+
+h1=(df.set_index('dt')['close']
+      .resample('1h').last()
+      .to_frame('close_1h')
+      .dropna()
+      .reset_index())
+h1['ema20_1h']=h1['close_1h'].ewm(span=20, adjust=False).mean()
+h1['ema_slope_1h']=h1['ema20_1h'].diff(3)
+
+m=pd.merge_asof(df.sort_values('dt'), h1.sort_values('dt'), on='dt', direction='backward')
+
+m['fwd_r']=m['close'].shift(-H)/m['close']-1.0
+m['entry_raw']=m['z']<=-2.0
+m['confirm_1h']=(m['close_1h']>m['ema20_1h'])&(m['ema_slope_1h']>0)
+m['entry_conf']=m['entry_raw']&m['confirm_1h']
+
+for col in ['entry_raw','entry_conf']:
+    keep=np.zeros(len(m),dtype=bool)
+    last=-10**9
+    idx=np.flatnonzero(m[col].to_numpy())
+    for i in idx:
+        if i-last>=H:
+            keep[i]=True
+            last=i
+    m[col+'_dedup']=keep
+
+def stats(mask):
+    s=(m.loc[mask,'fwd_r']-COST).dropna()
+    if len(s)==0:
+        return dict(n=0, win=0.0, mean=0.0, med=0.0, std=0.0)
+    return dict(n=int(len(s)), win=float((s>0).mean()), mean=float(s.mean()), med=float(s.median()), std=float(s.std(ddof=0)))
+
+raw=stats(m['entry_raw_dedup'])
+conf=stats(m['entry_conf_dedup'])
+
+print(f'H15 proxy config: DAYS={DAYS}, horizon={H} bars, entry=z<=-2.0, confirm=1h close>EMA20 and EMA20 slope(3)>0, friction={COST:.4f}')
+print('set | n | win_rate | mean_net_r | median_net_r | std_r')
+print(f"raw_mr2 | {raw['n']} | {raw['win']:.2%} | {raw['mean']:.6f} | {raw['med']:.6f} | {raw['std']:.6f}")
+print(f"mr2_plus_1h_confirm | {conf['n']} | {conf['win']:.2%} | {conf['mean']:.6f} | {conf['med']:.6f} | {conf['std']:.6f}")
+PY`
+
+Output:
+`2026-02-17 06:12:40 UTC`
+`H15 proxy config: DAYS=180, horizon=6 bars, entry=z<=-2.0, confirm=1h close>EMA20 and EMA20 slope(3)>0, friction=0.0004`
+`set | n | win_rate | mean_net_r | median_net_r | std_r`
+`raw_mr2 | 1272 | 46.93% | -0.000419 | -0.000149 | 0.005029`
+`mr2_plus_1h_confirm | 170 | 62.94% | 0.000952 | 0.000496 | 0.002898`
+
+Interpretation:
+- Confirmation filter sharply improves conditional edge in this proxy test, but with smaller sample (`n=170`).
+- This is a promising directional clue, not deployability evidence yet.
+
+## H15 Focused Test (Real ETH): BTC MR2 gated by ETH 1h Trend
+Run: 2026-02-17 06:33 UTC
+
+Data precheck (user shell):
+- `data/market_eth.sqlite` rows: candles=51772, features=51724, min_ts=1755757500, max_ts=1771309500
+
+Hypothesis:
+- BTC MR2 entries have better conditional expectancy when ETH higher-timeframe trend confirms risk-on direction.
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+COST=0.0004
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+dev=btc['close']-btc['vwap48']
+dev_std=dev.rolling(48).std()
+btc['z']=dev/dev_std.replace(0,np.nan)
+btc['fwd_r']=btc['close'].shift(-H)/btc['close']-1.0
+
+eth['dt']=pd.to_datetime(eth['ts'], unit='s', utc=True)
+eth1h=(eth.set_index('dt')['close']
+       .resample('1h').last()
+       .to_frame('eth_close_1h')
+       .dropna()
+       .reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+
+btc['dt']=pd.to_datetime(btc['ts'], unit='s', utc=True)
+m=pd.merge_asof(btc.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+
+m['entry_raw']=m['z']<=-2.0
+m['eth_confirm']=(m['eth_close_1h']>m['eth_ema20_1h'])&(m['eth_ema_slope_1h']>0)
+m['entry_eth']=m['entry_raw']&m['eth_confirm']
+
+for col in ['entry_raw','entry_eth']:
+    keep=np.zeros(len(m),dtype=bool)
+    last=-10**9
+    idx=np.flatnonzero(m[col].to_numpy())
+    for i in idx:
+        if i-last>=H:
+            keep[i]=True
+            last=i
+    m[col+'_dedup']=keep
+
+def stats(mask):
+    s=(m.loc[mask,'fwd_r']-COST).dropna()
+    if len(s)==0:
+        return dict(n=0, win=0.0, mean=0.0, med=0.0, std=0.0)
+    return dict(n=int(len(s)), win=float((s>0).mean()), mean=float(s.mean()), med=float(s.median()), std=float(s.std(ddof=0)))
+
+raw=stats(m['entry_raw_dedup'])
+ethf=stats(m['entry_eth_dedup'])
+
+print(f'H15 real config: DAYS={DAYS}, horizon={H}, base=BTC z<=-2.0, confirm=ETH 1h close>EMA20 and EMA20 slope(3)>0, friction={COST:.4f}')
+print('set | n | win_rate | mean_net_r | median_net_r | std_r')
+print(f"btc_mr2_raw | {raw['n']} | {raw['win']:.2%} | {raw['mean']:.6f} | {raw['med']:.6f} | {raw['std']:.6f}")
+print(f"btc_mr2_plus_eth_confirm | {ethf['n']} | {ethf['win']:.2%} | {ethf['mean']:.6f} | {ethf['med']:.6f} | {ethf['std']:.6f}")
+PY`
+
+Output:
+`2026-02-17 06:33:03 UTC`
+`H15 real config: DAYS=180, horizon=6, base=BTC z<=-2.0, confirm=ETH 1h close>EMA20 and EMA20 slope(3)>0, friction=0.0004`
+`set | n | win_rate | mean_net_r | median_net_r | std_r`
+`btc_mr2_raw | 1272 | 46.93% | -0.000419 | -0.000149 | 0.005029`
+`btc_mr2_plus_eth_confirm | 225 | 55.56% | 0.000178 | 0.000237 | 0.003276`
+
+Interpretation:
+- Real ETH confirmation is directionally supportive (mean flips from negative to positive), though smaller than prior BTC-only proxy uplift.
+- This remains a research signal; next step is walkforward + bootstrap uncertainty under fixed rules.
+
+## H15 Walkforward + Bootstrap (Real ETH confirmation, fixed rules)
+Run: 2026-02-17 06:34 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+COST=0.0004
+TRAIN_DAYS=60
+TEST_DAYS=15
+STEP_DAYS=15
+BOOT=3000
+SEED=42
+
+rng=np.random.default_rng(SEED)
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+dev=btc['close']-btc['vwap48']
+dev_std=dev.rolling(48).std()
+btc['z']=dev/dev_std.replace(0,np.nan)
+btc['fwd_r']=btc['close'].shift(-H)/btc['close']-1.0
+btc['dt']=pd.to_datetime(btc['ts'], unit='s', utc=True)
+
+eth['dt']=pd.to_datetime(eth['ts'], unit='s', utc=True)
+eth1h=(eth.set_index('dt')['close']
+       .resample('1h').last()
+       .to_frame('eth_close_1h')
+       .dropna()
+       .reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+
+m=pd.merge_asof(btc.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_raw']=m['z']<=-2.0
+m['eth_confirm']=(m['eth_close_1h']>m['eth_ema20_1h'])&(m['eth_ema_slope_1h']>0)
+m['entry_eth']=m['entry_raw']&m['eth_confirm']
+
+a=m['dt'].min().floor('D')
+b=m['dt'].max().floor('D')
+folds=[]
+cur=a
+fid=1
+while True:
+    tr_s=cur
+    tr_e=tr_s+pd.Timedelta(days=TRAIN_DAYS)
+    te_s=tr_e
+    te_e=te_s+pd.Timedelta(days=TEST_DAYS)
+    if te_e>b:
+        break
+    folds.append((fid,tr_s,tr_e,te_s,te_e))
+    fid+=1
+    cur=cur+pd.Timedelta(days=STEP_DAYS)
+
+def dedup_mask(idx_arr, min_gap):
+    keep=[]
+    last=-10**9
+    for i in idx_arr:
+        if i-last>=min_gap:
+            keep.append(i)
+            last=i
+    return keep
+
+rows=[]
+all_raw=[]
+all_eth=[]
+for fid,tr_s,tr_e,te_s,te_e in folds:
+    test=m[(m['dt']>=te_s) & (m['dt']<te_e)].copy().reset_index(drop=True)
+    raw_idx=np.flatnonzero(test['entry_raw'].to_numpy())
+    eth_idx=np.flatnonzero(test['entry_eth'].to_numpy())
+    raw_keep=dedup_mask(raw_idx,H)
+    eth_keep=dedup_mask(eth_idx,H)
+    raw_r=(test.loc[raw_keep,'fwd_r']-COST).dropna().to_numpy()
+    eth_r=(test.loc[eth_keep,'fwd_r']-COST).dropna().to_numpy()
+    if len(raw_r): all_raw.append(raw_r)
+    if len(eth_r): all_eth.append(eth_r)
+
+    def s(x):
+        if len(x)==0: return (0,0.0,0.0,0.0)
+        return (len(x), float((x>0).mean()), float(x.mean()), float(x.std(ddof=0)))
+
+    rn,rw,rm,rs=s(raw_r)
+    en,ew,em,es=s(eth_r)
+    rows.append((fid,str(tr_s.date()),str(tr_e.date()),str(te_s.date()),str(te_e.date()),'raw',rn,rw,rm,rs))
+    rows.append((fid,str(tr_s.date()),str(tr_e.date()),str(te_s.date()),str(te_e.date()),'eth_confirm',en,ew,em,es))
+
+fold_df=pd.DataFrame(rows, columns=['fold_id','train_start','train_end','test_start','test_end','set','n','win_rate','mean_net_r','std_r'])
+raw_all=np.concatenate(all_raw)
+eth_all=np.concatenate(all_eth)
+
+def boot(x,iters=3000):
+    n=len(x)
+    means=np.empty(iters)
+    for i in range(iters):
+        means[i]=rng.choice(x,size=n,replace=True).mean()
+    lo,hi=np.percentile(means,[2.5,97.5])
+    p=float((means>0).mean())
+    return float(lo),float(hi),p
+
+rlo,rhi,rp=boot(raw_all,BOOT)
+elo,ehi,ep=boot(eth_all,BOOT)
+
+print(f'H15 walkforward config: DAYS={DAYS}, h={H}, train/test/step={TRAIN_DAYS}/{TEST_DAYS}/{STEP_DAYS}, friction={COST:.4f}, bootstrap={BOOT}')
+print('per_fold: fold_id | train_start | train_end | test_start | test_end | set | n | win_rate | mean_net_r | std_r')
+for _,r in fold_df.iterrows():
+    print(f"{int(r['fold_id'])} | {r['train_start']} | {r['train_end']} | {r['test_start']} | {r['test_end']} | {r['set']} | {int(r['n'])} | {r['win_rate']:.2%} | {r['mean_net_r']:.6f} | {r['std_r']:.6f}")
+
+print('aggregated_oos: set | n | win_rate | mean_net_r | std_r | mean_ci95_low | mean_ci95_high | p_mean_gt_0')
+print(f"raw_mr2 | {len(raw_all)} | {(raw_all>0).mean():.2%} | {raw_all.mean():.6f} | {raw_all.std(ddof=0):.6f} | {rlo:.6f} | {rhi:.6f} | {rp:.3f}")
+print(f"mr2_plus_eth_confirm | {len(eth_all)} | {(eth_all>0).mean():.2%} | {eth_all.mean():.6f} | {eth_all.std(ddof=0):.6f} | {elo:.6f} | {ehi:.6f} | {ep:.3f}")
+PY`
+
+Output (key):
+`H15 walkforward config: DAYS=180, h=6, train/test/step=60/15/15, friction=0.0004, bootstrap=3000`
+
+Per-fold (selected):
+- Fold 1: raw `n=99 mean=-0.000481`; eth_confirm `n=15 mean=-0.000148`
+- Fold 3: raw `n=102 mean=-0.000594`; eth_confirm `n=11 mean=+0.002847`
+- Fold 6: raw `n=89 mean=+0.000167`; eth_confirm `n=30 mean=+0.000458`
+- Fold 7: raw `n=150 mean=-0.000654`; eth_confirm `n=12 mean=+0.001575`
+
+Aggregated OOS:
+`raw_mr2 | 748 | 48.66% | -0.000356 | 0.004751 | -0.000699 | -0.000008 | 0.023`
+`mr2_plus_eth_confirm | 117 | 66.67% | 0.000813 | 0.002968 | 0.000246 | 0.001328 | 0.998`
+
+Interpretation:
+- Under fixed rules, ETH-confirmed H15 is positive and statistically supportive on this geometry while raw MR2 remains negative.
+- Additional geometry checks still required for full stability confirmation.
+
+## H15 Walkforward Robustness: 90/30/30 and 120/30/30 (Real ETH confirmation)
+Run: 2026-02-17 06:41 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+COST=0.0004
+BOOT=3000
+SEED=42
+GEOMS=[(90,30,30),(120,30,30)]
+
+rng=np.random.default_rng(SEED)
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+dev=btc['close']-btc['vwap48']
+dev_std=dev.rolling(48).std()
+btc['z']=dev/dev_std.replace(0,np.nan)
+btc['fwd_r']=btc['close'].shift(-H)/btc['close']-1.0
+btc['dt']=pd.to_datetime(btc['ts'], unit='s', utc=True)
+
+eth['dt']=pd.to_datetime(eth['ts'], unit='s', utc=True)
+eth1h=(eth.set_index('dt')['close']
+       .resample('1h').last()
+       .to_frame('eth_close_1h')
+       .dropna()
+       .reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+
+m=pd.merge_asof(btc.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_raw']=m['z']<=-2.0
+m['eth_confirm']=(m['eth_close_1h']>m['eth_ema20_1h'])&(m['eth_ema_slope_1h']>0)
+m['entry_eth']=m['entry_raw']&m['eth_confirm']
+
+def dedup_idx(idx_arr, min_gap):
+    out=[]
+    last=-10**9
+    for i in idx_arr:
+        if i-last>=min_gap:
+            out.append(i)
+            last=i
+    return out
+
+def boot_ci(x,iters=3000):
+    if len(x)==0:
+        return (0.0,0.0,0.0)
+    n=len(x)
+    means=np.empty(iters)
+    for i in range(iters):
+        means[i]=rng.choice(x,size=n,replace=True).mean()
+    lo,hi=np.percentile(means,[2.5,97.5])
+    p=float((means>0).mean())
+    return float(lo),float(hi),p
+
+for TRAIN_DAYS,TEST_DAYS,STEP_DAYS in GEOMS:
+    a=m['dt'].min().floor('D')
+    b=m['dt'].max().floor('D')
+    folds=[]
+    cur=a
+    fid=1
+    while True:
+        tr_s=cur
+        tr_e=tr_s+pd.Timedelta(days=TRAIN_DAYS)
+        te_s=tr_e
+        te_e=te_s+pd.Timedelta(days=TEST_DAYS)
+        if te_e>b:
+            break
+        folds.append((fid,tr_s,tr_e,te_s,te_e))
+        fid+=1
+        cur=cur+pd.Timedelta(days=STEP_DAYS)
+
+    rows=[]
+    all_raw=[]
+    all_eth=[]
+    for fid,tr_s,tr_e,te_s,te_e in folds:
+        test=m[(m['dt']>=te_s)&(m['dt']<te_e)].copy().reset_index(drop=True)
+        raw_keep=dedup_idx(np.flatnonzero(test['entry_raw'].to_numpy()),H)
+        eth_keep=dedup_idx(np.flatnonzero(test['entry_eth'].to_numpy()),H)
+        raw_r=(test.loc[raw_keep,'fwd_r']-COST).dropna().to_numpy()
+        eth_r=(test.loc[eth_keep,'fwd_r']-COST).dropna().to_numpy()
+        if len(raw_r): all_raw.append(raw_r)
+        if len(eth_r): all_eth.append(eth_r)
+
+        def s(x):
+            if len(x)==0:
+                return (0,0.0,0.0,0.0)
+            return (len(x), float((x>0).mean()), float(x.mean()), float(x.std(ddof=0)))
+        rn,rw,rm,rs=s(raw_r)
+        en,ew,em,es=s(eth_r)
+        rows.append((fid,str(tr_s.date()),str(tr_e.date()),str(te_s.date()),str(te_e.date()),'raw',rn,rw,rm,rs))
+        rows.append((fid,str(tr_s.date()),str(tr_e.date()),str(te_s.date()),str(te_e.date()),'eth_confirm',en,ew,em,es))
+
+    fold_df=pd.DataFrame(rows, columns=['fold_id','train_start','train_end','test_start','test_end','set','n','win_rate','mean_net_r','std_r'])
+    raw_all=np.concatenate(all_raw) if all_raw else np.array([])
+    eth_all=np.concatenate(all_eth) if all_eth else np.array([])
+    rlo,rhi,rp=boot_ci(raw_all,BOOT)
+    elo,ehi,ep=boot_ci(eth_all,BOOT)
+
+    def agg(x):
+        if len(x)==0:
+            return (0,0.0,0.0,0.0)
+        return (len(x), float((x>0).mean()), float(x.mean()), float(x.std(ddof=0)))
+
+    rn,rw,rm,rs=agg(raw_all)
+    en,ew,em,es=agg(eth_all)
+
+    print(f'H15 walkforward config: DAYS={DAYS}, h={H}, train/test/step={TRAIN_DAYS}/{TEST_DAYS}/{STEP_DAYS}, friction={COST:.4f}, bootstrap={BOOT}')
+    print('per_fold: fold_id | train_start | train_end | test_start | test_end | set | n | win_rate | mean_net_r | std_r')
+    for _,r in fold_df.iterrows():
+        print(f"{int(r['fold_id'])} | {r['train_start']} | {r['train_end']} | {r['test_start']} | {r['test_end']} | {r['set']} | {int(r['n'])} | {r['win_rate']:.2%} | {r['mean_net_r']:.6f} | {r['std_r']:.6f}")
+    print('aggregated_oos: set | n | win_rate | mean_net_r | std_r | mean_ci95_low | mean_ci95_high | p_mean_gt_0')
+    print(f"raw_mr2 | {rn} | {rw:.2%} | {rm:.6f} | {rs:.6f} | {rlo:.6f} | {rhi:.6f} | {rp:.3f}")
+    print(f"mr2_plus_eth_confirm | {en} | {ew:.2%} | {em:.6f} | {es:.6f} | {elo:.6f} | {ehi:.6f} | {ep:.3f}")
+PY`
+
+Output (90/30/30):
+`raw_mr2 | 374 | 50.27% | -0.000285 | 0.004649 | -0.000739 | 0.000200 | 0.111`
+`mr2_plus_eth_confirm | 80 | 72.50% | 0.000984 | 0.003147 | 0.000318 | 0.001672 | 0.997`
+
+Output (120/30/30):
+`raw_mr2 | 165 | 52.73% | -0.000085 | 0.003299 | -0.000576 | 0.000413 | 0.396`
+`mr2_plus_eth_confirm | 49 | 67.35% | 0.000647 | 0.003103 | -0.000230 | 0.001484 | 0.929`
+
+Interpretation:
+- ETH-confirmed H15 stays positive across geometries; strongest evidence remains in 60/15/15 and 90/30/30.
+- 120/30/30 has positive mean but CI overlap-zero and limited sample.
+
+## H15 Classification Lock + Rule Freeze
+Run: 2026-02-17 06:55 UTC
+
+User-directed log state:
+- `PASS gross`
+- `PASS at 8 bps`
+- `BORDERLINE PASS at 10 bps`
+- `Freeze rules (no tuning)`
+
+Frozen rules:
+- Base: `BTC MR2 z<=-2.0`
+- Confirmation: `ETH 1h close > EMA20` and `EMA20 slope(3) > 0`
+- Horizon: `6` bars
+
+## H16 Kickoff: ETH Shock Lead-Lag -> BTC Forward (No Tuning)
+Run: 2026-02-17 06:54 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+WINDOW=2000
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['btc_fwd_h']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_r1']=m['eth_r1'].abs()
+m['eth_abs_pct']=m['eth_abs_r1'].rolling(WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+sig=m[(m['eth_abs_pct']>=0.90) & m['eth_r1'].notna() & m['btc_fwd_h'].notna()].copy()
+pos=sig[sig['eth_r1']>0]
+neg=sig[sig['eth_r1']<0]
+
+sig['cont']=np.sign(sig['eth_r1'])*sig['btc_fwd_h']
+
+def stats(df):
+    if df.empty:
+        return (0,0.0,0.0,0.0)
+    x=df['btc_fwd_h']
+    return (len(df), float((x>0).mean()), float(x.mean()), float(x.std(ddof=0)))
+
+pn,pw,pm,ps=stats(pos)
+nn,nw,nm,ns=stats(neg)
+cn=len(sig)
+cm=float(sig['cont'].mean()) if cn else 0.0
+cp=float((sig['cont']>0).mean()) if cn else 0.0
+
+print(f'H16 kickoff config: DAYS={DAYS}, horizon={H}, ETH shock gate=top decile abs r1 (rolling {WINDOW}), no tuning, no friction')
+print('bucket | n | btc_fwd_win_rate | btc_fwd_mean | btc_fwd_std')
+print(f"eth_pos_shock | {pn} | {pw:.2%} | {pm:.6f} | {ps:.6f}")
+print(f"eth_neg_shock | {nn} | {nw:.2%} | {nm:.6f} | {ns:.6f}")
+print(f"directional_continuation | n={cn} | p_cont_gt_0={cp:.2%} | mean_cont={cm:.6f}")
+PY`
+
+Output:
+`H16 kickoff config: DAYS=180, horizon=6, ETH shock gate=top decile abs r1 (rolling 2000), no tuning, no friction`
+`bucket | n | btc_fwd_win_rate | btc_fwd_mean | btc_fwd_std`
+`eth_pos_shock | 2484 | 47.71% | -0.000147 | 0.004807`
+`eth_neg_shock | 2618 | 52.64% | -0.000088 | 0.005742`
+`directional_continuation | n=5102 | p_cont_gt_0=47.53% | mean_cont=-0.000026`
+
+Interpretation:
+- Kickoff H16 signal is weak/negative under this constrained definition.

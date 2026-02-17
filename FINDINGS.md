@@ -1944,3 +1944,99 @@ Key output (180d):
 - Best trend ablation case still strongly negative (`avgR` about `-2.86` to `-3.03` across A-G).
 - MR1 remains strongly negative (`avgR -1.880`, `2328` trades, `8.76%` win rate).
 - No ablation variant produced a viable positive expectancy profile.
+
+### H14 Ablation Follow-up: MR Entry Tightening (z<=-2.0)
+- Run: 2026-02-17 06:08 UTC
+- Goal: one controlled MR-only change from MR1 (`mr_z_entry: 1.5 -> 2.0`) to reduce weak/overtraded entries.
+- Command: `.venv/bin/python - <<'PY' ... run_case(..., mr_z_entry=2.0, mr_z_exit=0.0, mr_dev_window=48, mr_max_hold_bars=10) ... PY`
+
+Key output (180d):
+- `MR2) VWAP z<=-2.0 | 1494 trades | 10.58% win | avgR -2.550 | totalR -3809.872 | stopRate 77.04%`
+- Versus MR1 (`z<=-1.5`): fewer trades (`2328 -> 1494`) and slightly lower stop-rate, but expectancy remains strongly negative.
+- Conclusion: tightening MR entry threshold alone does not rescue H14; branch remains non-deployable.
+
+### H14 Ablation Follow-up: MR Time-Decay Check (max_hold 10 -> 6)
+- Run: 2026-02-17 06:09 UTC
+- Goal: keep stricter MR entry (`z<=-2.0`) and test whether faster exits improve expectancy by reducing stale mean-reversion holds.
+- Command: `.venv/bin/python - <<'PY' ... run_case(..., mr_z_entry=2.0, mr_z_exit=0.0, mr_dev_window=48, mr_max_hold_bars=6) ... PY`
+
+Key output (180d):
+- `MR3) VWAP z<=-2.0, max_hold=6 | 1547 trades | 8.27% win | avgR -2.524 | totalR -3905.011 | stopRate 73.30%`
+- Versus MR2 (`max_hold=10`): stop-rate drops (`77.04% -> 73.30%`) and avgR improves slightly (`-2.550 -> -2.524`), but remains strongly negative.
+- Conclusion: shortening hold time alone does not rescue H14 MR expectancy.
+
+### H15 Started: Cross-Asset Confirmation (ETH) Blocked, Offline Proxy Run
+- Run: 2026-02-17 06:12 UTC
+- Intended hypothesis: BTC entries improve when ETH confirms regime/direction.
+- Blocker: ETH ingest failed in this environment due DNS/network resolution (`api.coinbase.com` unreachable), so same-session live ETH replication was not possible.
+- Fallback focused test (offline, single run): BTC MR2 entries (`z<=-2.0`) gated by BTC 1h trend confirmation (`close>EMA20` and `EMA20 slope(3)>0`), horizon `6` bars, friction proxy `0.0004`.
+
+Key output (180d):
+- `raw_mr2`: `n=1272`, `win=46.93%`, `mean_net_r=-0.000419`
+- `mr2_plus_1h_confirm`: `n=170`, `win=62.94%`, `mean_net_r=+0.000952`
+- Interpretation: 1h confirmation filter materially improved conditional expectancy in this event-study proxy while reducing sample size.
+- Status: H15 is now active; next required step is full strategy-level validation (walkforward + bootstrap + acceptance gate) after ETH data access is available.
+
+### H15 Real Data Test: BTC MR2 + ETH 1h Confirmation
+- Run: 2026-02-17 06:33 UTC
+- Setup: BTC base signal `z<=-2.0`; confirmation from ETH (`1h close > EMA20` and `EMA20 slope(3)>0`), horizon `6` bars, friction proxy `0.0004`.
+
+Key output (180d):
+- `btc_mr2_raw`: `n=1272`, `win=46.93%`, `mean_net_r=-0.000419`
+- `btc_mr2_plus_eth_confirm`: `n=225`, `win=55.56%`, `mean_net_r=+0.000178`
+- Interpretation: ETH confirmation improved win-rate and turned mean net return positive, but effect size is modest and sample reduced.
+- Status: H15 remains promising but unproven; proceed to walkforward/bootstrap before any deployability claim.
+
+### H15 Walkforward + Bootstrap (Real ETH Confirmation)
+- Run: 2026-02-17 06:34 UTC
+- Config: fixed-rule H15 (`BTC z<=-2.0` + `ETH 1h close>EMA20 & EMA20 slope>0`), horizon `6`, friction `0.0004`, walkforward `60/15/15`, bootstrap `3000`.
+
+Aggregated OOS:
+- `raw_mr2`: `n=748`, `win=48.66%`, `mean_net_r=-0.000356`, `95% CI [-0.000699, -0.000008]`, `P(mean>0)=0.023`
+- `mr2_plus_eth_confirm`: `n=117`, `win=66.67%`, `mean_net_r=+0.000813`, `95% CI [0.000246, 0.001328]`, `P(mean>0)=0.998`
+
+Interpretation:
+- ETH confirmation materially outperforms raw MR2 under walkforward OOS with friction and clears key uncertainty thresholds on this geometry.
+- This is a strong H15 result, but still provisional until replicated across additional walkforward geometries.
+
+### H15 Robustness Check: Additional Walkforward Geometries (Real ETH Confirmation)
+- Run: 2026-02-17 06:41 UTC
+- Config fixed: BTC `z<=-2.0` with ETH 1h confirmation, horizon `6`, friction `0.0004`, bootstrap `3000`.
+
+#### Geometry 90/30/30 (train/test/step)
+- `raw_mr2`: `n=374`, `mean_net_r=-0.000285`, `95% CI [-0.000739, 0.000200]`, `P(mean>0)=0.111`
+- `mr2_plus_eth_confirm`: `n=80`, `mean_net_r=+0.000984`, `95% CI [0.000318, 0.001672]`, `P(mean>0)=0.997`
+
+#### Geometry 120/30/30 (train/test/step)
+- `raw_mr2`: `n=165`, `mean_net_r=-0.000085`, `95% CI [-0.000576, 0.000413]`, `P(mean>0)=0.396`
+- `mr2_plus_eth_confirm`: `n=49`, `mean_net_r=+0.000647`, `95% CI [-0.000230, 0.001484]`, `P(mean>0)=0.929`
+
+Decision update:
+- Directionally, ETH-confirmed H15 stays positive across all tested geometries.
+- Acceptance gate is only partially met so far:
+  - 60/15/15 passes uncertainty criteria with `n>=100` (`n=117`).
+  - 90/30/30 and 120/30/30 have ETH-confirmed OOS trade counts `<100` (`80`, `49`), and 120/30/30 CI overlaps zero.
+- Status: continue H15 as lead research track; not deployable yet under current strict gate.
+
+### H15 Final Classification + Rule Freeze
+- Logged: 2026-02-17 06:55 UTC
+- Decision labels:
+  - `PASS gross`
+  - `PASS at 8 bps`
+  - `BORDERLINE PASS at 10 bps`
+- Rule state: `Freeze rules (no tuning)` from this point on.
+- Frozen spec: `BTC MR2 (z<=-2.0)` gated by `ETH 1h close>EMA20` and `EMA20 slope(3)>0`, horizon `6` bars.
+
+### H16 Started: ETH->BTC Lead-Lag Shock Continuation (No Tuning Kickoff)
+- Run: 2026-02-17 06:54 UTC
+- Hypothesis: large ETH 5m shocks (top decile by abs return) carry directional information for BTC over next `6` bars.
+- Config: rolling percentile window `2000`, no friction, no parameter tuning.
+
+Key output (180d):
+- `eth_pos_shock`: `n=2484`, BTC fwd mean `-0.000147`, win `47.71%`
+- `eth_neg_shock`: `n=2618`, BTC fwd mean `-0.000088`, win `52.64%`
+- directional continuation score: `n=5102`, `P(cont>0)=47.53%`, `mean_cont=-0.000026`
+
+Interpretation:
+- Initial H16 kickoff does not show a positive directional continuation edge under this simple shock definition.
+- Continue with one constrained follow-up only if needed; otherwise deprioritize H16.
