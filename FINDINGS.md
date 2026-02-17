@@ -2040,3 +2040,552 @@ Key output (180d):
 Interpretation:
 - Initial H16 kickoff does not show a positive directional continuation edge under this simple shock definition.
 - Continue with one constrained follow-up only if needed; otherwise deprioritize H16.
+
+### H16 Final Disposition
+- Logged: 2026-02-17 06:57 UTC
+- Decision: `FAIL` (no gross edge on kickoff).
+- Action: `Do not refine` (branch closed).
+
+### H17 Started: ETH Shock Magnitude -> BTC Forward Magnitude (Baseline, No Tuning)
+- Run: 2026-02-17 06:57 UTC
+- Hypothesis: ETH large 5m absolute shocks (top decile) precede larger BTC absolute forward move over next `6` bars.
+- Config: rolling percentile window `2000`, no friction, no tuning.
+
+Key output (180d):
+- `eth_top_decile_abs_shock`: `n=5102`, BTC `mean_abs_fwd=0.003525`
+- `eth_non_top_decile`: `n=44656`, BTC `mean_abs_fwd=0.002078`
+- Uplift: `+69.65%` versus base.
+
+Interpretation:
+- Baseline H17 shows a strong magnitude/volatility relationship (non-directional).
+- This is useful for risk/positioning context, not yet a directional trading edge claim.
+- Note: H17 (ETH top-decile abs shock) may serve as a volatility conditioning layer for directional hypotheses (e.g., H15) in future combination testing. No combination performed at this stage.
+
+### H18 Baseline Test (No Tuning)
+- Run: 2026-02-17 07:00 UTC
+- Setup: frozen H15 directional rule versus H15 + frozen H17 volatility-conditioning module, horizon `6`, no friction.
+
+Key output (180d):
+- `h15_frozen`: `n=225`, `win=64.00%`, `mean_return=0.000578`
+- `h18_h15_plus_vol_cond_module`: `n=57`, `win=61.40%`, `mean_return=0.001218`
+- Delta mean (`H18 - H15`): `+0.000640`
+
+Interpretation:
+- Baseline H18 suggests higher mean return with volatility conditioning, but with materially smaller sample.
+- Treat as early signal only; needs walkforward/uncertainty validation before any decision.
+
+### H18 WF Validation (60/15/15, No Tuning): H15 gated by H17
+- Run: 2026-02-17 07:05 UTC
+- Setup: frozen H18 definition (`H15` entry gated by `H17` top-decile ETH abs-shock), no rule changes.
+
+#### (a) No friction
+- Fold means: `[-0.000469, -0.001539, +0.006320, +0.001004, +0.002026, +0.001597, +0.003205]`
+- Positive folds: `5/7 (71.43%)`
+- Aggregated mean: `+0.001640`
+
+#### (b) fee=0, slippage=4 bps per side (8 bps roundtrip)
+- Fold means: `[-0.001269, -0.002339, +0.005520, +0.000204, +0.001226, +0.000797, +0.002405]`
+- Positive folds: `5/7 (71.43%)`
+- Aggregated mean: `+0.000840`
+
+#### (c) fee=0, slippage=5 bps per side (10 bps roundtrip)
+- Fold means: `[-0.001469, -0.002539, +0.005320, +0.000004, +0.001026, +0.000597, +0.002205]`
+- Positive folds: `5/7 (71.43%)`
+- Aggregated mean: `+0.000640`
+
+Threshold labels (H15-style):
+- `PASS gross`
+- `PASS at 8 bps`
+- `BORDERLINE PASS at 10 bps`
+
+### H18 Rule Freeze (No Tuning)
+- Logged: 2026-02-17 07:08 UTC
+- Decision: freeze H18 under same no-tuning rule discipline as H15.
+- Frozen definition: `H18 = H15 frozen directional entry` gated by frozen `H17` volatility-conditioning module (`ETH abs-shock top decile`, rolling window `2000`), horizon `6`.
+
+### H19 Started: ETH-BTC Relative Momentum Spread (Baseline, No Tuning)
+- Run: 2026-02-17 07:08 UTC
+- Hypothesis: tails of ETH-vs-BTC 1h relative momentum spread carry directional information for BTC over next `6` bars.
+- Baseline signal: 1h spread `(ETH 6h return - BTC 6h return)`, enter on top/bottom decile tails, no friction, no tuning.
+
+Key output (180d):
+- `long_tail (spread>=90pct)`: `n=2484`, `P(cont>0)=50.72%`, `mean_cont=+0.000256`
+- `short_tail (spread<10pct)`: `n=2772`, `P(cont>0)=54.73%`, `mean_cont=+0.000904`
+- `combined`: `n=5256`, `P(cont>0)=52.83%`, `mean_cont=+0.000598`
+
+Interpretation:
+- H19 baseline shows a modest but positive directional continuation profile, stronger on short-tail setup.
+- Proceed with standard follow-up validation if prioritized.
+
+### H19 Decision + Rule Freeze
+- Logged: 2026-02-17 07:14 UTC
+- Decision labels:
+  - `PASS gross`
+  - `FAIL at 8 bps`
+- Rule state: `Freeze rules`.
+- Frozen definition: baseline H19 relative-momentum spread tail signal (no tuning).
+### H20 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:18 UTC
+- Lock context carried forward: `H15 frozen (no tuning)`, `H18 frozen (no tuning)`, `H19 locked as PASS gross / FAIL at 8 bps (rules frozen)`.
+- Focused test definition: `H20 = frozen H18 long entry` gated by frozen `H19` long-tail regime (`spread_pct >= 0.90`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h18_frozen`: `n=57`, `win=61.40%`, `mean_return=+0.001218`
+- `h20_h18_plus_h19_longtail_gate`: `n=8`, `win=50.00%`, `mean_return=+0.001006`
+- Delta mean (`H20 - H18`): `-0.000212`
+
+Decision:
+- `H20 baseline kickoff = FAIL/WEAK` for advancement at this stage.
+- Reason: confluence gate is too restrictive (`n=8`) and does not improve mean over frozen H18 baseline.
+- Action: keep H20 as logged baseline only; no tuning applied.
+### H20 Final Classification Update (Explicit)
+- Logged: 2026-02-17 07:21 UTC
+- Decision: `FAIL` (no uplift vs frozen H18 baseline).
+- Rule state: `Freeze rules` (no tuning).
+
+### H21 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:21 UTC
+- Lock context carried forward unchanged: `H15 frozen`, `H18 frozen`, `H19 frozen`, `H20 failed/frozen`.
+- Focused test definition: `H21 = frozen H18 long entry` gated by frozen `H19` short-tail regime (`spread_pct < 0.10`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h18_frozen`: `n=57`, `win=61.40%`, `mean_return=+0.001218`
+- `h21_h18_plus_h19_shorttail_gate`: `n=0`, `win=0.00%`, `mean_return=0.000000`
+- Delta mean (`H21 - H18`): `-0.001218`
+
+Decision:
+- `H21 baseline kickoff = FAIL`.
+- Reason: no qualifying events (`n=0`) under frozen confluence rules; no baseline edge to evaluate.
+- Action: keep H21 as logged baseline only; no tuning applied.
+### H22 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:24 UTC
+- Lock context carried forward unchanged: `H15 frozen`, `H18 frozen`, `H19 frozen`, `H20 failed/frozen`, `H21 failed`.
+- Focused test definition: `H22 = frozen H18 long entry` gated by `H19 neutral regime` (`0.10 <= spread_pct < 0.90`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h18_frozen`: `n=57`, `win=61.40%`, `mean_return=+0.001218`
+- `h22_h18_plus_h19_neutral_gate`: `n=28`, `win=78.57%`, `mean_return=+0.002184`
+- Delta mean (`H22 - H18`): `+0.000966`
+
+Decision:
+- `H22 baseline kickoff = PARTIAL PROMISE`.
+- Reason: positive mean uplift and higher hit-rate versus H18 baseline, but sample size is reduced (`57 -> 28`) and result is gross-only.
+- Action: keep rules frozen for now; if prioritized, next step is standard walkforward + friction robustness with no tuning.
+### H22 WF Classification + Rule Freeze
+- Logged: 2026-02-17 07:26 UTC
+- Decision labels:
+  - `PASS gross`
+  - `PASS at 8 bps`
+  - `PASS at 10 bps`
+- Rule state: `Freeze rules`.
+- Frozen definition: `H22 = H18 frozen long entry` gated by `H19 neutral regime (0.10 <= spread_pct < 0.90)`, horizon `6`, no tuning.
+### H23 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:30 UTC
+- Lock context carried forward unchanged: `H15 frozen`, `H18 frozen`, `H19 frozen`, `H22 frozen`.
+- Focused test definition: `H23 = frozen H15 long entry` gated by `H19 neutral regime` (`0.10 <= spread_pct < 0.90`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h15_frozen`: `n=225`, `win=64.00%`, `mean_return=+0.000578`
+- `h23_h15_plus_h19_neutral_gate`: `n=87`, `win=79.31%`, `mean_return=+0.001566`
+- Delta mean (`H23 - H15`): `+0.000988`
+
+Decision:
+- `H23 baseline kickoff = PARTIAL PROMISE`.
+- Reason: clear gross uplift and higher hit-rate versus frozen H15 with reduced sample.
+- Action: keep rules frozen; if prioritized, proceed to standard 60/15/15 walkforward (gross then cost ladder) with no tuning.
+### H23 WF Classification + Rule Freeze
+- Logged: 2026-02-17 07:37 UTC
+- Decision labels:
+  - `PASS gross`
+  - `PASS at 8 bps`
+  - `BORDERLINE PASS at 10 bps`
+- Rule state: `Freeze rules`.
+- Frozen definition: `H23 = H15 frozen long entry` gated by `H19 neutral regime (0.10 <= spread_pct < 0.90)`, horizon `6`, no tuning.
+### H24 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:37 UTC
+- Lock context carried forward unchanged: `H15 frozen`, `H18 frozen`, `H19 frozen`, `H22 frozen`, `H23 frozen`.
+- Focused test definition: `H24 = frozen H15 long entry` gated by `H19 long-tail regime` (`spread_pct >= 0.90`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h15_frozen`: `n=225`, `win=64.00%`, `mean_return=+0.000578`
+- `h24_h15_plus_h19_longtail_gate`: `n=16`, `win=43.75%`, `mean_return=-0.000994`
+- Delta mean (`H24 - H15`): `-0.001572`
+
+Decision:
+- `H24 baseline kickoff = FAIL`.
+- Reason: negative mean return and lower hit-rate versus frozen H15, with very small sample.
+- Action: keep as baseline log only; no tuning applied.
+### H24 Final Classification Update (Explicit)
+- Logged: 2026-02-17 07:38 UTC
+- Decision: `FAIL` (no uplift; negative mean).
+- Rule state: `Freeze rules` (no tuning).
+### H25 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:39 UTC
+- Lock context carried forward unchanged: `H15 frozen`, `H18 frozen`, `H19 frozen`, `H22 frozen`, `H23 frozen`, `H24 frozen`.
+- Focused test definition: `H25 = frozen H15 long entry` gated by `H19 short-tail regime` (`spread_pct < 0.10`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h15_frozen`: `n=225`, `win=64.00%`, `mean_return=+0.000578`
+- `h25_h15_plus_h19_shorttail_gate`: `n=1`, `win=100.00%`, `mean_return=+0.003239`
+- Delta mean (`H25 - H15`): `+0.002661`
+
+Decision:
+- `H25 baseline kickoff = INCONCLUSIVE (sample too small)`.
+- Reason: only one qualifying event (`n=1`), so uplift is not decision-grade.
+- Action: keep as baseline log only; no tuning applied.
+### H25 Final Classification Update (Explicit)
+- Logged: 2026-02-17 07:40 UTC
+- Decision: `INCONCLUSIVE` (n too small).
+- Rule state: `Freeze rules` (no tuning).
+### H26 Baseline Kickoff (No Tuning, No Friction)
+- Run: 2026-02-17 07:43 UTC
+- Lock context carried forward unchanged: `H15 frozen`, `H18 frozen`, `H19 frozen`, `H22 frozen`, `H23 frozen`, `H24 frozen`, `H25 frozen`.
+- Focused test definition: `H26 = frozen H15 long entry` gated by `H19 mid regime` (`0.25 <= spread_pct < 0.75`), horizon `6` bars, no friction.
+
+Key output (180d):
+- `h15_frozen`: `n=225`, `win=64.00%`, `mean_return=+0.000578`
+- `h26_h15_plus_h19_mid_gate`: `n=54`, `win=87.04%`, `mean_return=+0.001754`
+- Delta mean (`H26 - H15`): `+0.001176`
+
+Decision:
+- `H26 baseline kickoff = PARTIAL PROMISE`.
+- Reason: meaningful gross uplift and higher hit-rate versus frozen H15, with reduced sample.
+- Action: keep rules frozen; if prioritized, proceed to standard 60/15/15 walkforward (gross then cost ladder) with no tuning.
+### H26 WF Classification + Rule Freeze
+- Logged: 2026-02-17 07:45 UTC
+- Decision labels:
+  - `PASS gross`
+  - `PASS at 8 bps`
+  - `PASS at 10 bps`
+- Rule state: `Freeze rules`.
+- Frozen definition: `H26 = H15 frozen long entry` gated by `H19 mid regime (0.25 <= spread_pct < 0.75)`, horizon `6`, no tuning.
+### H27 Baseline Kickoff (No Tuning): Liquidity Shock Continuation
+- Run: 2026-02-17 07:50 UTC
+- Hypothesis definition (frozen baseline): bar-level liquidity shock when `range > 1.8x 20-bar median range` and `volume > 1.8x 20-bar median volume`; trade continuation in shock-bar direction for next `6` bars.
+- Evaluation: `gross`, `8 bps` roundtrip, `10 bps` roundtrip.
+
+Key output (180d):
+- `gross`: `n=1838`, `win=47.61%`, `mean_return=-0.000013`
+- `8 bps`: `n=1838`, `win=33.19%`, `mean_return=-0.000813`
+- `10 bps`: `n=1838`, `win=30.36%`, `mean_return=-0.001013`
+
+Decision:
+- `FAIL gross`
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H27 Final Classification Update (Explicit)
+- Logged: 2026-02-17 08:17 UTC
+- Decision: `FAIL`.
+- Rule state: `Freeze rules` (no tuning).
+
+### H28 Baseline Kickoff + Classification Lock (No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Hypothesis definition (frozen baseline): liquidity sweep reversal. If price breaks above (below) prior `12`-bar high (low) and then closes back inside that prior range within `2` bars, fade the failed break (short on failed upside, long on failed downside). Horizon `6` bars.
+- Evaluation: `gross`, `8 bps` roundtrip, `10 bps` roundtrip.
+
+Key output (180d):
+- `gross`: `n=4635`, `win=51.00%`, `mean_return=+0.000006`
+- `8 bps`: `n=4635`, `win=34.93%`, `mean_return=-0.000794`
+- `10 bps`: `n=4635`, `win=32.13%`, `mean_return=-0.000994`
+
+Decision:
+- `FAIL gross` (economically flat; no meaningful uplift)
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H29 Baseline Kickoff + Classification Lock (No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Hypothesis definition (frozen baseline): when H19 neutral regime is entered from non-neutral on a bar (`spread_pct` enters `[0.10,0.90)` from outside), measure BTC forward return over horizon `6` bars.
+- Evaluation: `gross`, `8 bps` roundtrip, `10 bps` roundtrip.
+
+Key output (180d):
+- `gross`: `n=3740`, `win=50.08%`, `mean_return=-0.000026`
+- `8 bps`: `n=3740`, `win=33.40%`, `mean_return=-0.000826`
+- `10 bps`: `n=3740`, `win=30.24%`, `mean_return=-0.001026`
+
+Decision:
+- `FAIL gross`
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H30 Baseline Kickoff + Classification Lock (No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Hypothesis definition (frozen baseline): ETH/BTC short-term divergence. If ETH 1h return sign differs from BTC 1h return sign, trade BTC in ETH sign direction for horizon `6` bars.
+- Evaluation: `gross`, `8 bps` roundtrip, `10 bps` roundtrip.
+
+Key output (180d):
+- `gross`: `n=1580`, `win=38.99%`, `mean_return=-0.000519`
+- `8 bps`: `n=1580`, `win=21.46%`, `mean_return=-0.001319`
+- `10 bps`: `n=1580`, `win=18.16%`, `mean_return=-0.001519`
+
+Decision:
+- `FAIL gross`
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H31 Conditional Distribution Study (Stats Only, No Trading Logic)
+- Run: 2026-02-17 08:17 UTC
+- Definition: estimate BTC `h=6` forward return conditional mean under `(ETH 1h slope sign × H19 regime)`.
+- Slope sign used: sign of ETH `1h EMA20 slope(3)`.
+- H19 regimes: `short_tail` (`spread_pct<0.10`), `neutral` (`0.10<=spread_pct<0.90`), `long_tail` (`spread_pct>=0.90`).
+- Protocol: descriptive stats only, no trading logic, no tuning.
+
+Conditional stats (180d):
+- `neg × short_tail`: `n=2472`, `mean=-0.001077`, `std=0.005564`, `sem=0.000112`
+- `neg × neutral`: `n=23772`, `mean=-0.000107`, `std=0.003644`, `sem=0.000024`
+- `neg × long_tail`: `n=576`, `mean=+0.000507`, `std=0.005152`, `sem=0.000215`
+- `pos × short_tail`: `n=300`, `mean=+0.000518`, `std=0.006930`, `sem=0.000400`
+- `pos × neutral`: `n=22682`, `mean=+0.000074`, `std=0.002727`, `sem=0.000018`
+- `pos × long_tail`: `n=1908`, `mean=+0.000181`, `std=0.004509`, `sem=0.000103`
+- `overall unconditional mean`: `-0.000053`
+
+Note:
+- `flat` slope bucket had `n=0` across regimes in this sample.
+### H32 Baseline Kickoff + Classification Lock (No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Hypothesis definition (frozen baseline): trade BTC in direction of ETH 1h EMA20 slope sign only when H19 `short_tail` (`spread_pct < 0.10`). Horizon `6` bars.
+- Evaluation: `gross`, `8 bps` roundtrip, `10 bps` roundtrip.
+
+Key output (180d):
+- `gross`: `n=462`, `win=60.17%`, `mean_return=+0.001258`
+- `8 bps`: `n=462`, `win=50.87%`, `mean_return=+0.000458`
+- `10 bps`: `n=462`, `win=47.84%`, `mean_return=+0.000258`
+
+Decision:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H32 WF+Bootstrap Interpretation Lock (Frozen Rules)
+- Logged: 2026-02-17 08:17 UTC
+- H32 remains frozen.
+- Interpretation of fixed-rule WF+bootstrap (`60/15/15`) results:
+  - `PASS gross`
+  - `BORDERLINE at 8 bps` (CI crosses zero slightly)
+  - `FAIL / NOT-ROBUST at 10 bps`
+
+Next step policy (locked):
+- Replication only.
+- Allowed:
+  1. Extend history beyond `180d` and rerun the same fixed H32 tests.
+  2. Run the same fixed H32 on `ETH-USD 5m` if available.
+- Not allowed:
+  - No new thresholds.
+  - No new slicing.
+  - No stacking.
+### H32 Replication Attempt: Data Extension Blocker
+- Run: 2026-02-17 08:51 UTC
+- Attempted action: extend BTC-USD 5m history beyond 180d via `scripts.backfill_5m`.
+- Result: blocked in this environment (`api.coinbase.com` DNS resolution failure).
+- Policy impact: proceeded with replication on maximum locally available history with frozen H32 rules and unchanged protocol.
+
+### H32 Replication A (BTC Primary, Max Local History, Frozen Rules)
+- Data window used: `2025-08-21 06:25 UTC` to `2026-02-17 06:25 UTC` (`51771` bars).
+- Protocol: baseline + `60/15/15` WF + bootstrap at gross / 8 bps / 10 bps, no tuning.
+
+Baseline (BTC primary):
+- `gross`: `n=462`, `win=60.17%`, `mean=+0.001258`
+- `8 bps`: `n=462`, `win=50.87%`, `mean=+0.000458`
+- `10 bps`: `n=462`, `win=47.84%`, `mean=+0.000258`
+
+WF+bootstrap summary (BTC primary):
+- `gross`: positive folds `6/8`, agg mean `+0.001258`, CI `[+0.000744,+0.001785]`, `P(mean>0)=1.000`
+- `8 bps`: positive folds `5/8`, agg mean `+0.000458`, CI `[-0.000069,+0.000983]`, `P(mean>0)=0.954`
+- `10 bps`: positive folds `5/8`, agg mean `+0.000258`, CI `[-0.000255,+0.000815]`, `P(mean>0)=0.844`
+
+Replication interpretation lock (BTC primary):
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `H32 remains frozen` (no parameter changes).
+
+### H32 Replication B (ETH Primary Asset, Same Frozen Rule Form)
+- Data window used: `2025-08-21 06:25 UTC` to `2026-02-17 06:25 UTC` (`51771` bars).
+- Rule form (nearest feasible same definition): trade primary asset in direction of ETH 1h EMA20 slope sign when H19 short-tail (`spread_pct<0.10`), horizon `6`, no tuning.
+- Primary traded asset in this replication: `ETH-USD`.
+
+Baseline (ETH primary):
+- `gross`: `n=462`, `win=61.90%`, `mean=+0.002235`
+- `8 bps`: `n=462`, `win=55.63%`, `mean=+0.001435`
+- `10 bps`: `n=462`, `win=54.76%`, `mean=+0.001235`
+
+WF+bootstrap summary (ETH primary):
+- `gross`: positive folds `7/8`, agg mean `+0.002235`, CI `[+0.001474,+0.003046]`, `P(mean>0)=1.000`
+- `8 bps`: positive folds `6/8`, agg mean `+0.001435`, CI `[+0.000654,+0.002261]`, `P(mean>0)=0.999`
+- `10 bps`: positive folds `5/8`, agg mean `+0.001235`, CI `[+0.000441,+0.002044]`, `P(mean>0)=1.000`
+
+Replication interpretation lock (ETH primary):
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+- Rule state: `frozen replication result` (no parameter changes).
+### H33 Classification + Symmetry Confirmation Lock
+- Logged: 2026-02-17 08:17 UTC
+- Decision labels:
+  - `PASS gross`
+  - `PASS at 8 bps`
+  - `PASS at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+
+Symmetry confirmation note:
+- H33 (reverse logic: BTC slope -> ETH trade in H19 short-tail) replicates the positive cross-asset structure observed in H32 (ETH slope -> ETH/BTC directional deployment in H19 short-tail) under the same fixed validation protocol.
+- Interpretation: directional effect in this regime appears bidirectionally consistent across the H32/H33 symmetry check.
+### H32+H33 Concurrent Portfolio Evaluation (Frozen, No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Setup: frozen H32 (trade BTC) + frozen H33 (trade ETH) concurrently.
+- Capital model: equal-weight sleeves (50/50 notional), positions can coexist.
+- Validation: same `180d` window, same cost ladder (`gross`, `8 bps`, `10 bps`), same `60/15/15` WF + bootstrap.
+
+Key diagnostics:
+- Event rows: `462`
+- H32/H33 per-trade return correlation (when both active): `+0.811961`
+- Both signals active on all event rows in this sample (`both_active_rows=462`), so `concurrent_50_50`, `intersection`, and `either` variants are numerically identical under frozen rules.
+
+Portfolio baseline metrics (identical across the 3 requested variants):
+- `gross`: `n=462`, `mean=+0.001709`, `sharpe_like=+0.250760`, `max_dd=-0.039973`, `final_eq=2.177595`
+- `8 bps`: `n=462`, `mean=+0.000909`, `sharpe_like=+0.133375`, `max_dd=-0.075880`, `final_eq=1.505443`
+- `10 bps`: `n=462`, `mean=+0.000709`, `sharpe_like=+0.104029`, `max_dd=-0.087467`, `final_eq=1.372670`
+
+WF+bootstrap (identical across variants):
+- `gross`: fold means `[+0.000000, +0.002572, +0.002509, +0.001219, -0.000143, +0.000505, +0.001568, +0.001996]`, positive folds `6/8`, agg mean `+0.001709`, CI `[+0.001095,+0.002353]`, `P(mean>0)=1.000`
+- `8 bps`: fold means `[+0.000000, +0.001772, +0.001709, +0.000419, -0.000943, -0.000295, +0.000768, +0.001196]`, positive folds `5/8`, agg mean `+0.000909`, CI `[+0.000286,+0.001558]`, `P(mean>0)=0.997`
+- `10 bps`: fold means `[+0.000000, +0.001572, +0.001509, +0.000219, -0.001143, -0.000495, +0.000568, +0.000996]`, positive folds `5/8`, agg mean `+0.000709`, CI `[+0.000097,+0.001359]`, `P(mean>0)=0.987`
+
+Portfolio freeze decision:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H34 Baseline + WF+Bootstrap (Frozen, No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Definition: same short-tail regime gate (`H19 short_tail`) with fixed conditioning on `|ETH 1h slope|` in top `30%` of its rolling distribution (`abs_slope_pct >= 0.70`, rolling window `2000`), trade in slope direction, horizon `6`.
+- Primary traded asset: BTC (H32 lineage).
+
+Baseline (180d):
+- `gross`: `n=320`, `win=59.69%`, `mean=+0.001375`
+- `8 bps`: `n=320`, `win=50.94%`, `mean=+0.000575`
+- `10 bps`: `n=320`, `win=47.81%`, `mean=+0.000375`
+
+WF+bootstrap (`60/15/15`, frozen rules):
+- `gross`: fold means `[+0.000000, +0.001498, +0.002196, +0.000879, +0.000000, -0.000265, +0.001278, +0.001735]`, positive folds `5/8`, agg mean `+0.001375`, CI `[+0.000776,+0.001986]`, `P(mean>0)=1.000`
+- `8 bps`: fold means `[+0.000000, +0.000698, +0.001396, +0.000079, +0.000000, -0.001065, +0.000478, +0.000935]`, positive folds `5/8`, agg mean `+0.000575`, CI `[-0.000044,+0.001194]`, `P(mean>0)=0.965`
+- `10 bps`: fold means `[+0.000000, +0.000498, +0.001196, -0.000121, +0.000000, -0.001265, +0.000278, +0.000735]`, positive folds `4/8`, agg mean `+0.000375`, CI `[-0.000231,+0.000989]`, `P(mean>0)=0.876`
+
+H34 freeze interpretation:
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H35 Short-Tail Mapping (Stats Only): |ETH 1h EMA20 Slope| Deciles
+- Run: 2026-02-17 08:17 UTC
+- Scope: H19 `short_tail` only (`spread_pct<0.10`).
+- Method: bucket `|ETH 1h EMA20 slope(3)|` into 10 equal-frequency deciles; compute BTC `h=6` forward mean return, `n`, and win rate per decile.
+- Protocol: mapping only (no trading logic, no thresholds).
+
+Results:
+- `decile 1`: `n=288`, `mean=-0.000489`, `win=51.74%`
+- `decile 2`: `n=276`, `mean=-0.000096`, `win=49.28%`
+- `decile 3`: `n=276`, `mean=+0.000068`, `win=43.48%`
+- `decile 4`: `n=276`, `mean=-0.001187`, `win=41.30%`
+- `decile 5`: `n=276`, `mean=-0.001946`, `win=38.04%`
+- `decile 6`: `n=276`, `mean=-0.001407`, `win=39.86%`
+- `decile 7`: `n=276`, `mean=-0.001259`, `win=44.20%`
+- `decile 8`: `n=276`, `mean=-0.000085`, `win=55.80%`
+- `decile 9`: `n=276`, `mean=+0.000031`, `win=49.64%`
+- `decile 10`: `n=276`, `mean=-0.002688`, `win=39.13%`
+
+Note:
+- This is a descriptive distribution map only; no new strategy thresholds were introduced.
+### H35 Short-Tail Mapping (Stats Only): Signed ETH 1h EMA20 Slope Deciles
+- Run: 2026-02-17 08:17 UTC
+- Scope: H19 `short_tail` only (`spread_pct<0.10`).
+- Method: bucket signed `ETH 1h EMA20 slope(3)` into 10 equal-frequency bins; compute BTC `h=6` forward mean return, `n`, and win rate per bin.
+- Protocol: mapping only (no trading logic).
+
+Results:
+- `bin 1`: `n=288`, `mean=-0.002691`, `win=38.54%`
+- `bin 2`: `n=276`, `mean=+0.000223`, `win=51.81%`
+- `bin 3`: `n=276`, `mean=-0.000189`, `win=54.35%`
+- `bin 4`: `n=276`, `mean=-0.001303`, `win=43.12%`
+- `bin 5`: `n=276`, `mean=-0.001331`, `win=40.94%`
+- `bin 6`: `n=276`, `mean=-0.002334`, `win=33.70%`
+- `bin 7`: `n=276`, `mean=-0.001279`, `win=41.67%`
+- `bin 8`: `n=276`, `mean=-0.001042`, `win=39.13%`
+- `bin 9`: `n=276`, `mean=+0.000363`, `win=52.54%`
+- `bin 10`: `n=276`, `mean=+0.000621`, `win=57.25%`
+
+Note:
+- Descriptive map only; no strategy thresholds or logic changes introduced.
+### H36 Baseline + WF+Bootstrap + Freeze (No Tuning)
+- Run: 2026-02-17 08:17 UTC
+- Definition: H19 `short_tail` + signed ETH 1h EMA20 slope in bottom signed decile (`slope_signed_pct<=0.10`, rolling `2000`), trade BTC short, horizon `6`.
+- No tuning.
+
+Baseline (180d):
+- `gross`: `n=206`, `win=55.83%`, `mean=+0.001310`
+- `8 bps`: `n=206`, `win=47.57%`, `mean=+0.000510`
+- `10 bps`: `n=206`, `win=45.15%`, `mean=+0.000310`
+
+WF+bootstrap (`60/15/15`):
+- `gross`: fold means `[+0.000000, +0.000674, +0.001547, +0.000359, +0.000000, +0.000000, +0.001391, +0.002357]`, positive folds `5/8`, agg mean `+0.001310`, CI `[+0.000509,+0.002176]`, `P(mean>0)=0.999`
+- `8 bps`: fold means `[+0.000000, -0.000126, +0.000747, -0.000441, +0.000000, +0.000000, +0.000591, +0.001557]`, positive folds `3/8`, agg mean `+0.000510`, CI `[-0.000285,+0.001367]`, `P(mean>0)=0.885`
+- `10 bps`: fold means `[+0.000000, -0.000326, +0.000547, -0.000641, +0.000000, +0.000000, +0.000391, +0.001357]`, positive folds `3/8`, agg mean `+0.000310`, CI `[-0.000533,+0.001173]`, `P(mean>0)=0.748`
+
+H36 freeze interpretation:
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `Freeze rules` (no tuning).
+### H32 Horizon-Swap Evaluation (Frozen Rules, No Tuning Beyond h)
+- Run: 2026-02-17 08:17 UTC
+- Change applied: horizon-only swap from frozen H32 baseline (`h=6`) to `h=4` and `h=8`.
+- All other rules/thresholds unchanged.
+- Validation: baseline + `60/15/15` WF + bootstrap at `gross`, `8 bps`, `10 bps`.
+
+#### H32-h4
+Baseline:
+- `gross`: `n=693`, `win=56.57%`, `mean=+0.000840`
+- `8 bps`: `n=693`, `win=46.90%`, `mean=+0.000040`
+- `10 bps`: `n=693`, `win=44.44%`, `mean=-0.000160`
+
+WF+bootstrap:
+- `gross`: positive folds `6/8`, agg mean `+0.000840`, CI `[+0.000521,+0.001154]`, `P(mean>0)=1.000`
+- `8 bps`: positive folds `3/8`, agg mean `+0.000040`, CI `[-0.000280,+0.000369]`, `P(mean>0)=0.608`
+- `10 bps`: positive folds `2/8`, agg mean `-0.000160`, CI `[-0.000483,+0.000171]`, `P(mean>0)=0.165`
+
+Freeze interpretation (h4):
+- `PASS gross`
+- `FAIL / NOT-ROBUST at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `Freeze rules`.
+
+#### H32-h8
+Baseline:
+- `gross`: `n=368`, `win=58.42%`, `mean=+0.001447`
+- `8 bps`: `n=368`, `win=50.82%`, `mean=+0.000647`
+- `10 bps`: `n=368`, `win=48.91%`, `mean=+0.000447`
+
+WF+bootstrap:
+- `gross`: positive folds `6/8`, agg mean `+0.001447`, CI `[+0.000795,+0.002105]`, `P(mean>0)=1.000`
+- `8 bps`: positive folds `5/8`, agg mean `+0.000647`, CI `[-0.000001,+0.001319]`, `P(mean>0)=0.975`
+- `10 bps`: positive folds `5/8`, agg mean `+0.000447`, CI `[-0.000211,+0.001102]`, `P(mean>0)=0.902`
+
+Freeze interpretation (h8):
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `Freeze rules`.
+### H32 Execution Realism Check (Frozen h=6): Next-Bar-Close Entry
+- Run: 2026-02-17 08:17 UTC
+- Constraint lock: H32 kept frozen at `h=6`; no threshold/rule changes.
+- Test only: execution assumption changed from signal-bar close reference to `entry at next bar close` (worse fill), same costs.
+
+Results (`n=462`):
+- `gross`: ref `+0.001258` vs next-close `+0.001242` (delta `-0.000016`), win `60.17% -> 56.93%`
+- `8 bps`: ref `+0.000458` vs next-close `+0.000442` (delta `-0.000016`), win `50.87% -> 48.05%`
+- `10 bps`: ref `+0.000258` vs next-close `+0.000242` (delta `-0.000016`), win `47.84% -> 45.67%`
+
+Interpretation:
+- Degradation under this fill assumption is small on mean return and moderate on win-rate, while sign of mean remains positive across gross/8/10 in this sample.
+- H32 rule state unchanged: frozen at `h=6`.

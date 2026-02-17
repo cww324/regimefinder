@@ -2780,3 +2780,2157 @@ Output:
 
 Interpretation:
 - Kickoff H16 signal is weak/negative under this constrained definition.
+
+## H16 Final Disposition
+Run: 2026-02-17 06:57 UTC
+
+Decision:
+- `FAIL` (no gross edge on kickoff)
+- `Do not refine`
+
+## H17 Kickoff (Baseline, No Tuning): ETH Shock Magnitude -> BTC Forward Magnitude
+Run: 2026-02-17 06:57 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import pandas as pd
+import numpy as np
+
+DAYS=180
+H=6
+WINDOW=2000
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['btc_fwd_abs_h']=(m['close_btc'].shift(-H)/m['close_btc']-1.0).abs()
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_r1']=m['eth_r1'].abs()
+m['eth_abs_pct']=m['eth_abs_r1'].rolling(WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+sig=m[(m['eth_abs_pct']>=0.90) & m['btc_fwd_abs_h'].notna()].copy()
+base=m[(m['eth_abs_pct']<0.90) & m['eth_abs_pct'].notna() & m['btc_fwd_abs_h'].notna()].copy()
+
+sn=len(sig); bn=len(base)
+sm=float(sig['btc_fwd_abs_h'].mean()) if sn else 0.0
+bm=float(base['btc_fwd_abs_h'].mean()) if bn else 0.0
+uplift=(sm/bm-1.0) if bm>0 else 0.0
+
+print(f'H17 kickoff config: DAYS={DAYS}, horizon={H}, ETH abs-shock gate=top decile rolling {WINDOW}, no tuning, no friction')
+print('bucket | n | mean_abs_btc_fwd_h | median_abs_btc_fwd_h')
+print(f"eth_top_decile_abs_shock | {sn} | {sm:.6f} | {float(sig['btc_fwd_abs_h'].median()):.6f}")
+print(f"eth_non_top_decile | {bn} | {bm:.6f} | {float(base['btc_fwd_abs_h'].median()):.6f}")
+print(f"uplift_vs_base: {uplift:.2%}")
+PY`
+
+Output:
+`H17 kickoff config: DAYS=180, horizon=6, ETH abs-shock gate=top decile rolling 2000, no tuning, no friction`
+`bucket | n | mean_abs_btc_fwd_h | median_abs_btc_fwd_h`
+`eth_top_decile_abs_shock | 5102 | 0.003525 | 0.002285`
+`eth_non_top_decile | 44656 | 0.002078 | 0.001332`
+`uplift_vs_base: 69.65%`
+
+Interpretation:
+- H17 baseline indicates substantial non-directional move-size uplift after large ETH shocks.
+- Candidate use is volatility/risk conditioning rather than standalone directional alpha.
+
+H17 note:
+- Note: H17 (ETH top-decile abs shock) may serve as a volatility conditioning layer for directional hypotheses (e.g., H15) in future combination testing. No combination performed at this stage.
+
+## H18 Baseline (No Tuning): Frozen H15 with Frozen H17 Volatility-Conditioning Module
+Run: 2026-02-17 07:00 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+WINDOW=2000
+COST=0.0
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_pct']=m['eth_r1'].abs().rolling(WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m['vol_cond_h17']=m['eth_abs_pct']>=0.90
+
+m['entry_h18']=m['entry_h15'] & m['vol_cond_h17']
+
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(mask):
+    idx=dedup_idx(mask,H)
+    r=(m.loc[idx,'fwd_r']-COST).dropna().to_numpy()
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+n1,w1,m1,s1=stats(m['entry_h15'])
+n2,w2,m2,s2=stats(m['entry_h18'])
+
+print(f'H18 baseline config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('set | n | win_rate | mean_return | std_return')
+print(f"h15_frozen | {n1} | {w1:.2%} | {m1:.6f} | {s1:.6f}")
+print(f"h18_h15_plus_vol_cond_module | {n2} | {w2:.2%} | {m2:.6f} | {s2:.6f}")
+print(f"delta_mean_h18_minus_h15: {m2-m1:.6f}")
+PY`
+
+Output:
+`H18 baseline config: DAYS=180, horizon=6, no friction, no tuning`
+`set | n | win_rate | mean_return | std_return`
+`h15_frozen | 225 | 64.00% | 0.000578 | 0.003276`
+`h18_h15_plus_vol_cond_module | 57 | 61.40% | 0.001218 | 0.004155`
+`delta_mean_h18_minus_h15: 0.000640`
+
+Interpretation:
+- Conditional layering raises mean return but reduces sample considerably.
+- Keep as exploratory until walkforward robustness is checked.
+
+## H18 WF Validation (60/15/15, no tuning): cost ladder
+Run: 2026-02-17 07:05 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+WINDOW=2000
+TRAIN_DAYS=60
+TEST_DAYS=15
+STEP_DAYS=15
+COSTS=[('gross',0.0),('slip4',0.0008),('slip5',0.0010)]
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_pct']=m['eth_r1'].abs().rolling(WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m['entry_h18']=m['entry_h15'] & (m['eth_abs_pct']>=0.90)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+start=m['dt'].min().floor('D')
+end=m['dt'].max().floor('D')
+folds=[]
+cur=start
+fid=1
+while True:
+    tr_s=cur
+    tr_e=tr_s+pd.Timedelta(days=TRAIN_DAYS)
+    te_s=tr_e
+    te_e=te_s+pd.Timedelta(days=TEST_DAYS)
+    if te_e>end:
+        break
+    folds.append((fid,te_s,te_e))
+    fid+=1
+    cur=cur+pd.Timedelta(days=STEP_DAYS)
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+for label,cost in COSTS:
+    print(f'=== H18_WF_60_15_15 [{label}] cost={cost:.6f} ===')
+    print('fold_id | test_start | test_end | trades | mean_return')
+    agg=[]
+    pos=0
+    for fid,te_s,te_e in folds:
+        test=m[(m['dt']>=te_s)&(m['dt']<te_e)].copy().reset_index(drop=True)
+        idx=dedup_idx(test['entry_h18'],H)
+        r=(test.loc[idx,'fwd_r']-cost).dropna().to_numpy()
+        n=len(r)
+        mean=float(r.mean()) if n else 0.0
+        if mean>0:
+            pos+=1
+        if n:
+            agg.append(r)
+        print(f"{fid} | {te_s.date()} | {te_e.date()} | {n} | {mean:.6f}")
+    all_r=np.concatenate(agg) if agg else np.array([])
+    agg_mean=float(all_r.mean()) if len(all_r) else 0.0
+    print(f'positive_folds: {pos}/{len(folds)} ({(100*pos/len(folds)):.2f}%)')
+    print(f'aggregated_mean: {agg_mean:.6f}')
+PY`
+
+Output:
+`=== H18_WF_60_15_15 [gross] cost=0.000000 ===`
+`fold_id | test_start | test_end | trades | mean_return`
+`1 | 2025-10-20 | 2025-11-04 | 5 | -0.000469`
+`2 | 2025-11-04 | 2025-11-19 | 3 | -0.001539`
+`3 | 2025-11-19 | 2025-12-04 | 3 | 0.006320`
+`4 | 2025-12-04 | 2025-12-19 | 7 | 0.001004`
+`5 | 2025-12-19 | 2026-01-03 | 8 | 0.002026`
+`6 | 2026-01-03 | 2026-01-18 | 10 | 0.001597`
+`7 | 2026-01-18 | 2026-02-02 | 5 | 0.003205`
+`positive_folds: 5/7 (71.43%)`
+`aggregated_mean: 0.001640`
+
+`=== H18_WF_60_15_15 [slip4] cost=0.000800 ===`
+`fold_id | test_start | test_end | trades | mean_return`
+`1 | 2025-10-20 | 2025-11-04 | 5 | -0.001269`
+`2 | 2025-11-04 | 2025-11-19 | 3 | -0.002339`
+`3 | 2025-11-19 | 2025-12-04 | 3 | 0.005520`
+`4 | 2025-12-04 | 2025-12-19 | 7 | 0.000204`
+`5 | 2025-12-19 | 2026-01-03 | 8 | 0.001226`
+`6 | 2026-01-03 | 2026-01-18 | 10 | 0.000797`
+`7 | 2026-01-18 | 2026-02-02 | 5 | 0.002405`
+`positive_folds: 5/7 (71.43%)`
+`aggregated_mean: 0.000840`
+
+`=== H18_WF_60_15_15 [slip5] cost=0.001000 ===`
+`fold_id | test_start | test_end | trades | mean_return`
+`1 | 2025-10-20 | 2025-11-04 | 5 | -0.001469`
+`2 | 2025-11-04 | 2025-11-19 | 3 | -0.002539`
+`3 | 2025-11-19 | 2025-12-04 | 3 | 0.005320`
+`4 | 2025-12-04 | 2025-12-19 | 7 | 0.000004`
+`5 | 2025-12-19 | 2026-01-03 | 8 | 0.001026`
+`6 | 2026-01-03 | 2026-01-18 | 10 | 0.000597`
+`7 | 2026-01-18 | 2026-02-02 | 5 | 0.002205`
+`positive_folds: 5/7 (71.43%)`
+`aggregated_mean: 0.000640`
+
+Threshold labels (H15-style):
+- `PASS gross`
+- `PASS at 8 bps`
+- `BORDERLINE PASS at 10 bps`
+
+## H18 Rule Freeze (No Tuning)
+Run: 2026-02-17 07:08 UTC
+
+Decision:
+- Freeze H18 with same no-tuning rule discipline as H15.
+
+Frozen definition:
+- `H18 = H15 frozen directional entry` gated by frozen `H17` volatility-conditioning module (`ETH abs-shock top decile`, rolling `2000`), horizon `6`.
+
+## H19 Kickoff (Baseline, No Tuning): ETH-BTC Relative Momentum Spread Tails
+Run: 2026-02-17 07:08 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+x=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+x['btc_fwd_h']=x['close_btc'].shift(-H)/x['close_btc']-1.0
+
+x['sig_long']=x['spread_pct']>=0.90
+x['sig_short']=x['spread_pct']<0.10
+x['cont']=0.0
+x.loc[x['sig_long'],'cont']=x.loc[x['sig_long'],'btc_fwd_h']
+x.loc[x['sig_short'],'cont']=-x.loc[x['sig_short'],'btc_fwd_h']
+
+sig=x[(x['sig_long']|x['sig_short']) & x['btc_fwd_h'].notna()]
+lon=x[x['sig_long'] & x['btc_fwd_h'].notna()]
+sho=x[x['sig_short'] & x['btc_fwd_h'].notna()]
+
+def s(series):
+    series=series.dropna()
+    if len(series)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(series), float((series>0).mean()), float(series.mean()), float(series.std(ddof=0)))
+
+ln,lp,lm,ls=s(lon['btc_fwd_h'])
+sn,sp,sm,ss=s(-sho['btc_fwd_h'])
+cn,cp,cm,cs=s(sig['cont'])
+
+print(f'H19 kickoff config: DAYS={DAYS}, horizon={H}, signal=1h relative momentum spread (ETH-BTC, 6h lookback), tails=top/bottom decile, no tuning, no friction')
+print('bucket | n | p_cont_gt_0 | mean_cont | std_cont')
+print(f"long_tail (spread>=90pct) | {ln} | {lp:.2%} | {lm:.6f} | {ls:.6f}")
+print(f"short_tail (spread<10pct) | {sn} | {sp:.2%} | {sm:.6f} | {ss:.6f}")
+print(f"combined | {cn} | {cp:.2%} | {cm:.6f} | {cs:.6f}")
+PY`
+
+Output:
+`H19 kickoff config: DAYS=180, horizon=6, signal=1h relative momentum spread (ETH-BTC, 6h lookback), tails=top/bottom decile, no tuning, no friction`
+`bucket | n | p_cont_gt_0 | mean_cont | std_cont`
+`long_tail (spread>=90pct) | 2484 | 50.72% | 0.000256 | 0.004668`
+`short_tail (spread<10pct) | 2772 | 54.73% | 0.000904 | 0.005749`
+`combined | 5256 | 52.83% | 0.000598 | 0.005276`
+
+Interpretation:
+- Baseline H19 shows modest positive directional continuation, with stronger effect in short-tail regime.
+
+## H19 Decision + Rule Freeze
+Run: 2026-02-17 07:14 UTC
+
+Decision labels:
+- `PASS gross`
+- `FAIL at 8 bps`
+
+Rule state:
+- `Freeze rules`
+
+Frozen definition:
+- Baseline H19 signal only (1h ETH-BTC relative momentum spread tails, no tuning).
+
+## H20 Kickoff (Baseline, No Tuning): Frozen H18 gated by Frozen H19 Long-Tail Regime
+Run: 2026-02-17 07:18 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 locked: PASS gross / FAIL at 8 bps (rules frozen)`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+VOL_WINDOW=2000
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_pct']=m['eth_r1'].abs().rolling(VOL_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m['entry_h18']=m['entry_h15'] & (m['eth_abs_pct']>=0.90)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h20']=m['entry_h18'] & (m['spread_pct']>=0.90)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h18_idx=dedup_idx(m['entry_h18'], H)
+h20_idx=dedup_idx(m['entry_h20'], H)
+
+r18=m.loc[h18_idx,'fwd_r'].dropna().to_numpy()
+r20=m.loc[h20_idx,'fwd_r'].dropna().to_numpy()
+
+n18,w18,m18,s18=stats(r18)
+n20,w20,m20,s20=stats(r20)
+
+print(f'H20 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H20 = frozen H18 long entry gated by frozen H19 long-tail regime (spread_pct>=0.90)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h18_frozen | {n18} | {w18:.2%} | {m18:.6f} | {s18:.6f}')
+print(f'h20_h18_plus_h19_longtail_gate | {n20} | {w20:.2%} | {m20:.6f} | {s20:.6f}')
+print(f'delta_mean_h20_minus_h18: {m20-m18:.6f}')
+PY`
+
+Output:
+`H20 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H20 = frozen H18 long entry gated by frozen H19 long-tail regime (spread_pct>=0.90)`
+`set | n | win_rate | mean_return | std_return`
+`h18_frozen | 57 | 61.40% | 0.001218 | 0.004155`
+`h20_h18_plus_h19_longtail_gate | 8 | 50.00% | 0.001006 | 0.006516`
+`delta_mean_h20_minus_h18: -0.000212`
+
+Decision notes:
+- H20 kickoff is logged as `FAIL/WEAK` for advancement.
+- Confluence gate is highly restrictive at baseline (`n=8`) and does not improve mean over frozen H18.
+- No tuning performed; baseline-only result recorded.
+
+## H20 Final Classification Update (Explicit)
+Run: 2026-02-17 07:21 UTC
+
+Decision:
+- `FAIL` (no uplift versus frozen H18 baseline)
+- `Freeze rules` (no tuning)
+
+## H21 Kickoff (Baseline, No Tuning): Frozen H18 gated by Frozen H19 Short-Tail Regime
+Run: 2026-02-17 07:21 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 frozen (rules locked)`
+- `H20 failed/frozen`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+VOL_WINDOW=2000
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_pct']=m['eth_r1'].abs().rolling(VOL_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m['entry_h18']=m['entry_h15'] & (m['eth_abs_pct']>=0.90)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h21']=m['entry_h18'] & (m['spread_pct']<0.10)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h18_idx=dedup_idx(m['entry_h18'], H)
+h21_idx=dedup_idx(m['entry_h21'], H)
+
+r18=m.loc[h18_idx,'fwd_r'].dropna().to_numpy()
+r21=m.loc[h21_idx,'fwd_r'].dropna().to_numpy()
+
+n18,w18,m18,s18=stats(r18)
+n21,w21,m21,s21=stats(r21)
+
+print(f'H21 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H21 = frozen H18 long entry gated by frozen H19 short-tail regime (spread_pct<0.10)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h18_frozen | {n18} | {w18:.2%} | {m18:.6f} | {s18:.6f}')
+print(f'h21_h18_plus_h19_shorttail_gate | {n21} | {w21:.2%} | {m21:.6f} | {s21:.6f}')
+print(f'delta_mean_h21_minus_h18: {m21-m18:.6f}')
+PY`
+
+Output:
+`H21 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H21 = frozen H18 long entry gated by frozen H19 short-tail regime (spread_pct<0.10)`
+`set | n | win_rate | mean_return | std_return`
+`h18_frozen | 57 | 61.40% | 0.001218 | 0.004155`
+`h21_h18_plus_h19_shorttail_gate | 0 | 0.00% | 0.000000 | 0.000000`
+`delta_mean_h21_minus_h18: -0.001218`
+
+Decision notes:
+- H21 kickoff is logged as `FAIL`.
+- No qualifying events (`n=0`) under frozen confluence rules, so no baseline edge exists to evaluate.
+- No tuning performed; baseline-only result recorded.
+
+## H22 Kickoff (Baseline, No Tuning): Frozen H18 gated by H19 Neutral Regime
+Run: 2026-02-17 07:24 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 frozen (rules locked)`
+- `H20 failed/frozen`
+- `H21 failed`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+VOL_WINDOW=2000
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+m['eth_r1']=m['close_eth'].pct_change()
+m['eth_abs_pct']=m['eth_r1'].abs().rolling(VOL_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m['entry_h18']=m['entry_h15'] & (m['eth_abs_pct']>=0.90)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h22']=m['entry_h18'] & (m['spread_pct']>=0.10) & (m['spread_pct']<0.90)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h18_idx=dedup_idx(m['entry_h18'], H)
+h22_idx=dedup_idx(m['entry_h22'], H)
+
+r18=m.loc[h18_idx,'fwd_r'].dropna().to_numpy()
+r22=m.loc[h22_idx,'fwd_r'].dropna().to_numpy()
+
+n18,w18,m18,s18=stats(r18)
+n22,w22,m22,s22=stats(r22)
+
+print(f'H22 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H22 = frozen H18 long entry gated by H19 neutral regime (0.10<=spread_pct<0.90)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h18_frozen | {n18} | {w18:.2%} | {m18:.6f} | {s18:.6f}')
+print(f'h22_h18_plus_h19_neutral_gate | {n22} | {w22:.2%} | {m22:.6f} | {s22:.6f}')
+print(f'delta_mean_h22_minus_h18: {m22-m18:.6f}')
+PY`
+
+Output:
+`H22 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H22 = frozen H18 long entry gated by H19 neutral regime (0.10<=spread_pct<0.90)`
+`set | n | win_rate | mean_return | std_return`
+`h18_frozen | 57 | 61.40% | 0.001218 | 0.004155`
+`h22_h18_plus_h19_neutral_gate | 28 | 78.57% | 0.002184 | 0.003559`
+`delta_mean_h22_minus_h18: 0.000966`
+
+Decision notes:
+- H22 kickoff is logged as `PARTIAL PROMISE`.
+- Baseline shows positive uplift over frozen H18 on a smaller sample.
+- No tuning performed; treat as gross-only kickoff signal pending standard walkforward + friction validation.
+
+## H22 WF Classification + Rule Freeze
+Run: 2026-02-17 07:29 UTC
+
+Decision labels:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+
+Rule state:
+- `Freeze rules` (no tuning)
+
+Frozen definition:
+- `H22 = H18 frozen long entry` gated by `H19 neutral regime (0.10 <= spread_pct < 0.90)`, horizon `6`.
+
+## H23 Kickoff (Baseline, No Tuning): Frozen H15 gated by H19 Neutral Regime
+Run: 2026-02-17 07:30 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 frozen (rules locked)`
+- `H22 frozen (rules locked)`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h23']=m['entry_h15'] & (m['spread_pct']>=0.10) & (m['spread_pct']<0.90)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h15_idx=dedup_idx(m['entry_h15'], H)
+h23_idx=dedup_idx(m['entry_h23'], H)
+
+r15=m.loc[h15_idx,'fwd_r'].dropna().to_numpy()
+r23=m.loc[h23_idx,'fwd_r'].dropna().to_numpy()
+
+n15,w15,m15,s15=stats(r15)
+n23,w23,m23,s23=stats(r23)
+
+print(f'H23 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H23 = frozen H15 long entry gated by H19 neutral regime (0.10<=spread_pct<0.90)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h15_frozen | {n15} | {w15:.2%} | {m15:.6f} | {s15:.6f}')
+print(f'h23_h15_plus_h19_neutral_gate | {n23} | {w23:.2%} | {m23:.6f} | {s23:.6f}')
+print(f'delta_mean_h23_minus_h15: {m23-m15:.6f}')
+PY`
+
+Output:
+`H23 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H23 = frozen H15 long entry gated by H19 neutral regime (0.10<=spread_pct<0.90)`
+`set | n | win_rate | mean_return | std_return`
+`h15_frozen | 225 | 64.00% | 0.000578 | 0.003276`
+`h23_h15_plus_h19_neutral_gate | 87 | 79.31% | 0.001566 | 0.002868`
+`delta_mean_h23_minus_h15: 0.000988`
+
+Decision notes:
+- H23 kickoff is logged as `PARTIAL PROMISE`.
+- Baseline shows meaningful gross uplift over frozen H15 on a reduced sample.
+- No tuning performed; treat as kickoff signal pending walkforward + friction validation.
+
+## H23 WF Classification + Rule Freeze
+Run: 2026-02-17 07:37 UTC
+
+Decision labels:
+- `PASS gross`
+- `PASS at 8 bps`
+- `BORDERLINE PASS at 10 bps`
+
+Rule state:
+- `Freeze rules` (no tuning)
+
+Frozen definition:
+- `H23 = H15 frozen long entry` gated by `H19 neutral regime (0.10 <= spread_pct < 0.90)`, horizon `6`.
+
+## H24 Kickoff (Baseline, No Tuning): Frozen H15 gated by H19 Long-Tail Regime
+Run: 2026-02-17 07:37 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 frozen (rules locked)`
+- `H22 frozen (rules locked)`
+- `H23 frozen (rules locked)`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h24']=m['entry_h15'] & (m['spread_pct']>=0.90)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h15_idx=dedup_idx(m['entry_h15'], H)
+h24_idx=dedup_idx(m['entry_h24'], H)
+
+r15=m.loc[h15_idx,'fwd_r'].dropna().to_numpy()
+r24=m.loc[h24_idx,'fwd_r'].dropna().to_numpy()
+
+n15,w15,m15,s15=stats(r15)
+n24,w24,m24,s24=stats(r24)
+
+print(f'H24 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H24 = frozen H15 long entry gated by H19 long-tail regime (spread_pct>=0.90)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h15_frozen | {n15} | {w15:.2%} | {m15:.6f} | {s15:.6f}')
+print(f'h24_h15_plus_h19_longtail_gate | {n24} | {w24:.2%} | {m24:.6f} | {s24:.6f}')
+print(f'delta_mean_h24_minus_h15: {m24-m15:.6f}')
+PY`
+
+Output:
+`H24 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H24 = frozen H15 long entry gated by H19 long-tail regime (spread_pct>=0.90)`
+`set | n | win_rate | mean_return | std_return`
+`h15_frozen | 225 | 64.00% | 0.000578 | 0.003276`
+`h24_h15_plus_h19_longtail_gate | 16 | 43.75% | -0.000994 | 0.007129`
+`delta_mean_h24_minus_h15: -0.001572`
+
+Decision notes:
+- H24 kickoff is logged as `FAIL`.
+- Baseline underperforms frozen H15 with negative mean and lower hit-rate on a small sample.
+- No tuning performed; baseline-only result recorded.
+
+## H24 Final Classification Update (Explicit)
+Run: 2026-02-17 07:39 UTC
+
+Decision:
+- `FAIL` (no uplift; negative mean)
+- `Freeze rules` (no tuning)
+
+## H25 Kickoff (Baseline, No Tuning): Frozen H15 gated by H19 Short-Tail Regime
+Run: 2026-02-17 07:39 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 frozen (rules locked)`
+- `H22 frozen (rules locked)`
+- `H23 frozen (rules locked)`
+- `H24 frozen (rules locked)`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h25']=m['entry_h15'] & (m['spread_pct']<0.10)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h15_idx=dedup_idx(m['entry_h15'], H)
+h25_idx=dedup_idx(m['entry_h25'], H)
+
+r15=m.loc[h15_idx,'fwd_r'].dropna().to_numpy()
+r25=m.loc[h25_idx,'fwd_r'].dropna().to_numpy()
+
+n15,w15,m15,s15=stats(r15)
+n25,w25,m25,s25=stats(r25)
+
+print(f'H25 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H25 = frozen H15 long entry gated by H19 short-tail regime (spread_pct<0.10)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h15_frozen | {n15} | {w15:.2%} | {m15:.6f} | {s15:.6f}')
+print(f'h25_h15_plus_h19_shorttail_gate | {n25} | {w25:.2%} | {m25:.6f} | {s25:.6f}')
+print(f'delta_mean_h25_minus_h15: {m25-m15:.6f}')
+PY`
+
+Output:
+`H25 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H25 = frozen H15 long entry gated by H19 short-tail regime (spread_pct<0.10)`
+`set | n | win_rate | mean_return | std_return`
+`h15_frozen | 225 | 64.00% | 0.000578 | 0.003276`
+`h25_h15_plus_h19_shorttail_gate | 1 | 100.00% | 0.003239 | 0.000000`
+`delta_mean_h25_minus_h15: 0.002661`
+
+Decision notes:
+- H25 kickoff is logged as `INCONCLUSIVE (sample too small)`.
+- Only one qualifying event (`n=1`), so the uplift is not decision-grade.
+- No tuning performed; baseline-only result recorded.
+
+## H25 Final Classification Update (Explicit)
+Run: 2026-02-17 07:43 UTC
+
+Decision:
+- `INCONCLUSIVE` (n too small)
+- `Freeze rules` (no tuning)
+
+## H26 Kickoff (Baseline, No Tuning): Frozen H15 gated by H19 Mid Regime
+Run: 2026-02-17 07:43 UTC
+
+Lock context (explicit):
+- `H15 frozen (no tuning)`
+- `H18 frozen (no tuning)`
+- `H19 frozen (rules locked)`
+- `H22 frozen (rules locked)`
+- `H23 frozen (rules locked)`
+- `H24 frozen (rules locked)`
+- `H25 frozen (rules locked)`
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc_c=pd.read_sql_query('''
+SELECT c.ts, c.close, f.vwap48
+FROM candles_5m c
+JOIN features_5m f ON f.ts=c.ts
+ORDER BY c.ts
+''', btc_con)
+eth_c=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc_c=btc_c[btc_c.ts>=cutoff].copy().reset_index(drop=True)
+eth_c=eth_c[eth_c.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc_c.merge(eth_c, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+m['z']=(m['close_btc']-m['vwap48'])/(m['close_btc']-m['vwap48']).rolling(48).std().replace(0,np.nan)
+eth1h=(m[['dt','close_eth']].dropna().set_index('dt')['close_eth']
+       .resample('1h').last().to_frame('eth_close_1h').dropna().reset_index())
+eth1h['eth_ema20_1h']=eth1h['eth_close_1h'].ewm(span=20, adjust=False).mean()
+eth1h['eth_ema_slope_1h']=eth1h['eth_ema20_1h'].diff(3)
+m=pd.merge_asof(m.sort_values('dt'), eth1h.sort_values('dt'), on='dt', direction='backward')
+m['entry_h15']=(m['z']<=-2.0) & (m['eth_close_1h']>m['eth_ema20_1h']) & (m['eth_ema_slope_1h']>0)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+
+m['entry_h26']=m['entry_h15'] & (m['spread_pct']>=0.25) & (m['spread_pct']<0.75)
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+def stats(r):
+    r=np.asarray(r, dtype=float)
+    if len(r)==0:
+        return (0,0.0,0.0,0.0)
+    return (len(r), float((r>0).mean()), float(r.mean()), float(r.std(ddof=0)))
+
+h15_idx=dedup_idx(m['entry_h15'], H)
+h26_idx=dedup_idx(m['entry_h26'], H)
+
+r15=m.loc[h15_idx,'fwd_r'].dropna().to_numpy()
+r26=m.loc[h26_idx,'fwd_r'].dropna().to_numpy()
+
+n15,w15,m15,s15=stats(r15)
+n26,w26,m26,s26=stats(r26)
+
+print(f'H26 kickoff config: DAYS={DAYS}, horizon={H}, no friction, no tuning')
+print('definition: H26 = frozen H15 long entry gated by H19 mid regime (0.25<=spread_pct<0.75)')
+print('set | n | win_rate | mean_return | std_return')
+print(f'h15_frozen | {n15} | {w15:.2%} | {m15:.6f} | {s15:.6f}')
+print(f'h26_h15_plus_h19_mid_gate | {n26} | {w26:.2%} | {m26:.6f} | {s26:.6f}')
+print(f'delta_mean_h26_minus_h15: {m26-m15:.6f}')
+PY`
+
+Output:
+`H26 kickoff config: DAYS=180, horizon=6, no friction, no tuning`
+`definition: H26 = frozen H15 long entry gated by H19 mid regime (0.25<=spread_pct<0.75)`
+`set | n | win_rate | mean_return | std_return`
+`h15_frozen | 225 | 64.00% | 0.000578 | 0.003276`
+`h26_h15_plus_h19_mid_gate | 54 | 87.04% | 0.001754 | 0.002070`
+`delta_mean_h26_minus_h15: 0.001176`
+
+Decision notes:
+- H26 kickoff is logged as `PARTIAL PROMISE`.
+- Baseline shows material gross uplift over frozen H15 on a reduced sample.
+- No tuning performed; treat as kickoff signal pending walkforward + friction validation.
+
+## H26 WF Classification + Rule Freeze
+Run: 2026-02-17 07:50 UTC
+
+Decision labels:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+
+Rule state:
+- `Freeze rules` (no tuning)
+
+Frozen definition:
+- `H26 = H15 frozen long entry` gated by `H19 mid regime (0.25 <= spread_pct < 0.75)`, horizon `6`.
+
+## H27 Kickoff + Classification Lock (No Tuning): Liquidity Shock Continuation
+Run: 2026-02-17 07:50 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+MED_WIN=20
+RANGE_MULT=1.8
+VOL_MULT=1.8
+COSTS=[('gross',0.0000),('slip4',0.0008),('slip5',0.0010)]
+
+con=sqlite3.connect('data/market.sqlite')
+df=pd.read_sql_query('SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts', con)
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+df=df[df.ts>=cutoff].copy().reset_index(drop=True)
+
+df['range']=df['high']-df['low']
+df['med_range20']=df['range'].rolling(MED_WIN).median()
+df['med_vol20']=df['volume'].rolling(MED_WIN).median()
+df['bar_r']=df['close']/df['open']-1.0
+
+df['liq_shock']=(df['range']>RANGE_MULT*df['med_range20']) & (df['volume']>VOL_MULT*df['med_vol20'])
+sig=np.sign(df['bar_r'])
+df['signal_dir']=sig.replace(0,np.nan)
+df['entry_h27']=df['liq_shock'] & df['signal_dir'].notna()
+df['fwd_r']=df['close'].shift(-H)/df['close']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+idx=dedup_idx(df['entry_h27'],H)
+base=(df.loc[idx,['signal_dir','fwd_r']].dropna()).copy()
+base['gross_cont_r']=base['signal_dir']*base['fwd_r']
+
+print(f'H27 kickoff config: DAYS={DAYS}, horizon={H}, range_mult={RANGE_MULT}, vol_mult={VOL_MULT}, med_window={MED_WIN}, no tuning')
+print('definition: liquidity shock continuation = (range>1.8x med20 AND volume>1.8x med20), trade in shock-bar direction for 6 bars')
+print('cost | n | win_rate | mean_return | std_return')
+for label,cost in COSTS:
+    r=(base['gross_cont_r']-cost).to_numpy()
+    n=len(r)
+    win=float((r>0).mean()) if n else 0.0
+    mean=float(r.mean()) if n else 0.0
+    std=float(r.std(ddof=0)) if n else 0.0
+    print(f'{label} | {n} | {win:.2%} | {mean:.6f} | {std:.6f}')
+PY`
+
+Output:
+`H27 kickoff config: DAYS=180, horizon=6, range_mult=1.8, vol_mult=1.8, med_window=20, no tuning`
+`definition: liquidity shock continuation = (range>1.8x med20 AND volume>1.8x med20), trade in shock-bar direction for 6 bars`
+`cost | n | win_rate | mean_return | std_return`
+`gross | 1838 | 47.61% | -0.000013 | 0.004468`
+`slip4 | 1838 | 33.19% | -0.000813 | 0.004468`
+`slip5 | 1838 | 30.36% | -0.001013 | 0.004468`
+
+Classification lock:
+- `FAIL gross`
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H27 Final Classification Update (Explicit)
+Run: 2026-02-17 08:17 UTC
+
+Decision:
+- `FAIL`
+- `Freeze rules` (no tuning)
+
+## H28 Kickoff + Classification Lock (No Tuning): Liquidity Sweep Reversal
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+LOOKBACK=12
+REENTRY_BARS=2
+H=6
+COSTS=[('gross',0.0000),('slip4',0.0008),('slip5',0.0010)]
+
+con=sqlite3.connect('data/market.sqlite')
+df=pd.read_sql_query('SELECT ts, open, high, low, close FROM candles_5m ORDER BY ts', con)
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+df=df[df.ts>=cutoff].copy().reset_index(drop=True)
+
+df['prev_high12']=df['high'].shift(1).rolling(LOOKBACK).max()
+df['prev_low12']=df['low'].shift(1).rolling(LOOKBACK).min()
+
+n=len(df)
+signal=np.zeros(n, dtype=float)
+
+for i in range(n):
+    ph=df.at[i,'prev_high12']
+    pl=df.at[i,'prev_low12']
+    if np.isnan(ph) or np.isnan(pl):
+        continue
+
+    up_break = df.at[i,'high'] > ph
+    dn_break = df.at[i,'low'] < pl
+    if not (up_break or dn_break):
+        continue
+
+    for k in range(1, REENTRY_BARS+1):
+        j=i+k
+        if j>=n:
+            break
+        c=df.at[j,'close']
+        if (c <= ph) and (c >= pl):
+            if up_break and not dn_break:
+                signal[j] = -1.0
+            elif dn_break and not up_break:
+                signal[j] = +1.0
+            else:
+                signal[j] = signal[j]
+            break
+
+df['signal_dir']=signal
+df['entry_h28']=df['signal_dir']!=0
+df['fwd_r']=df['close'].shift(-H)/df['close']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+idx=dedup_idx(df['entry_h28'],H)
+base=df.loc[idx,['signal_dir','fwd_r']].dropna().copy()
+base['gross_cont_r']=base['signal_dir']*base['fwd_r']
+
+print(f'H28 kickoff config: DAYS={DAYS}, lookback={LOOKBACK}, reentry_within={REENTRY_BARS}, horizon={H}, no tuning')
+print('definition: sweep reversal; break of 12-bar high/low then close back inside range within 2 bars; fade failed break')
+print('cost | n | win_rate | mean_return | std_return')
+for label,cost in COSTS:
+    r=(base['gross_cont_r']-cost).to_numpy()
+    n=len(r)
+    win=float((r>0).mean()) if n else 0.0
+    mean=float(r.mean()) if n else 0.0
+    std=float(r.std(ddof=0)) if n else 0.0
+    print(f'{label} | {n} | {win:.2%} | {mean:.6f} | {std:.6f}')
+PY`
+
+Output:
+`H28 kickoff config: DAYS=180, lookback=12, reentry_within=2, horizon=6, no tuning`
+`definition: sweep reversal; break of 12-bar high/low then close back inside range within 2 bars; fade failed break`
+`cost | n | win_rate | mean_return | std_return`
+`gross | 4635 | 51.00% | 0.000006 | 0.003510`
+`slip4 | 4635 | 34.93% | -0.000794 | 0.003510`
+`slip5 | 4635 | 32.13% | -0.000994 | 0.003510`
+
+Classification lock:
+- `FAIL gross` (economically flat)
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H29 Kickoff + Classification Lock (No Tuning): H19 Neutral-Entry State Transition
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+COSTS=[('gross',0.0000),('slip4',0.0008),('slip5',0.0010)]
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+m=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')
+m['is_neutral']=(m['spread_pct']>=0.10) & (m['spread_pct']<0.90)
+m['prev_neutral']=m['is_neutral'].shift(1).fillna(False)
+m['entry_h29']=m['is_neutral'] & (~m['prev_neutral'])
+m['fwd_r']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+idx=np.flatnonzero(m['entry_h29'].to_numpy())
+sel=[]
+last=-10**9
+for i in idx:
+    if i-last>=H:
+        sel.append(i)
+        last=i
+
+r_base=m.loc[sel,'fwd_r'].dropna().to_numpy()
+
+print(f'H29 kickoff config: DAYS={DAYS}, horizon={H}, no tuning')
+print('definition: event when H19 neutral regime is entered from non-neutral (spread_pct in [0.10,0.90) and prev bar non-neutral); measure BTC forward return')
+print('cost | n | win_rate | mean_return | std_return')
+for label,cost in COSTS:
+    r=r_base-cost
+    n=len(r)
+    win=float((r>0).mean()) if n else 0.0
+    mean=float(r.mean()) if n else 0.0
+    std=float(r.std(ddof=0)) if n else 0.0
+    print(f'{label} | {n} | {win:.2%} | {mean:.6f} | {std:.6f}')
+PY`
+
+Output:
+`H29 kickoff config: DAYS=180, horizon=6, no tuning`
+`definition: event when H19 neutral regime is entered from non-neutral (spread_pct in [0.10,0.90) and prev bar non-neutral); measure BTC forward return`
+`cost | n | win_rate | mean_return | std_return`
+`gross | 3740 | 50.08% | -0.000026 | 0.003428`
+`slip4 | 3740 | 33.40% | -0.000826 | 0.003428`
+`slip5 | 3740 | 30.24% | -0.001026 | 0.003428`
+
+Classification lock:
+- `FAIL gross`
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H30 Kickoff + Classification Lock (No Tuning): ETH/BTC 1h Sign-Divergence Directional Test
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+COSTS=[('gross',0.0000),('slip4',0.0008),('slip5',0.0010)]
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h']=h1['close_btc']/h1['close_btc'].shift(1)-1.0
+h1['ret_eth_1h']=h1['close_eth']/h1['close_eth'].shift(1)-1.0
+h1['sgn_btc']=np.sign(h1['ret_btc_1h'])
+h1['sgn_eth']=np.sign(h1['ret_eth_1h'])
+h1['diverge']=(h1['sgn_eth']!=0) & (h1['sgn_btc']!=0) & (h1['sgn_eth']!=h1['sgn_btc'])
+h1['signal_dir']=np.where(h1['diverge'], h1['sgn_eth'], 0.0)
+
+x=pd.merge_asof(m.sort_values('dt'), h1[['dt','signal_dir']].sort_values('dt'), on='dt', direction='backward')
+x['entry_h30']=x['signal_dir']!=0
+x['fwd_r']=x['close_btc'].shift(-H)/x['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+idx=dedup_idx(x['entry_h30'], H)
+base=x.loc[idx,['signal_dir','fwd_r']].dropna().copy()
+base['gross_r']=base['signal_dir']*base['fwd_r']
+
+print(f'H30 kickoff config: DAYS={DAYS}, horizon={H}, no tuning')
+print('definition: if ETH 1h return sign != BTC 1h return sign, trade BTC in ETH return-sign direction for h=6')
+print('cost | n | win_rate | mean_return | std_return')
+for label,cost in COSTS:
+    r=(base['gross_r']-cost).to_numpy()
+    n=len(r)
+    win=float((r>0).mean()) if n else 0.0
+    mean=float(r.mean()) if n else 0.0
+    std=float(r.std(ddof=0)) if n else 0.0
+    print(f'{label} | {n} | {win:.2%} | {mean:.6f} | {std:.6f}')
+PY`
+
+Output:
+`H30 kickoff config: DAYS=180, horizon=6, no tuning`
+`definition: if ETH 1h return sign != BTC 1h return sign, trade BTC in ETH return-sign direction for h=6`
+`cost | n | win_rate | mean_return | std_return`
+`gross | 1580 | 38.99% | -0.000519 | 0.002320`
+`slip4 | 1580 | 21.46% | -0.001319 | 0.002320`
+`slip5 | 1580 | 18.16% | -0.001519 | 0.002320`
+
+Classification lock:
+- `FAIL gross`
+- `FAIL at 8 bps`
+- `FAIL at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H31 Conditional Distribution Study (Stats Only, No Trading Logic)
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+m['btc_fwd_h6']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+h1['eth_ema20_1h']=h1['close_eth'].ewm(span=20, adjust=False).mean()
+h1['eth_ema_slope_1h']=h1['eth_ema20_1h'].diff(3)
+h1['slope_sign']=np.sign(h1['eth_ema_slope_1h'])
+
+h1['h19_regime']=np.where(h1['spread_pct']<0.10,'short_tail',
+                    np.where(h1['spread_pct']>=0.90,'long_tail','neutral'))
+
+x=pd.merge_asof(m.sort_values('dt'),
+                h1[['dt','h19_regime','slope_sign']].sort_values('dt'),
+                on='dt', direction='backward')
+
+x=x[x['btc_fwd_h6'].notna() & x['h19_regime'].notna() & x['slope_sign'].notna()].copy()
+x['slope_sign']=x['slope_sign'].astype(int)
+
+rows=[]
+for s in [-1,0,1]:
+    for r in ['short_tail','neutral','long_tail']:
+        y=x[(x['slope_sign']==s) & (x['h19_regime']==r)]['btc_fwd_h6'].to_numpy()
+        n=len(y)
+        mean=float(y.mean()) if n else np.nan
+        std=float(y.std(ddof=0)) if n else np.nan
+        sem=float(std/np.sqrt(n)) if n else np.nan
+        rows.append((s,r,n,mean,std,sem))
+
+out=pd.DataFrame(rows, columns=['slope_sign','h19_regime','n','mean_fwd_h6','std_fwd_h6','sem'])
+
+label={-1:'neg',0:'flat',1:'pos'}
+print(f'H31 stats config: DAYS={DAYS}, horizon={H}, conditioning=(ETH 1h EMA20 slope sign x H19 regime), no trading logic, no tuning')
+print('slope_sign | h19_regime | n | mean_fwd_h6 | std_fwd_h6 | sem')
+for _,r in out.iterrows():
+    ms='nan' if pd.isna(r['mean_fwd_h6']) else f"{r['mean_fwd_h6']:+.6f}"
+    ss='nan' if pd.isna(r['std_fwd_h6']) else f"{r['std_fwd_h6']:.6f}"
+    se='nan' if pd.isna(r['sem']) else f"{r['sem']:.6f}"
+    print(f"{label[int(r['slope_sign'])]} | {r['h19_regime']} | {int(r['n'])} | {ms} | {ss} | {se}")
+
+all_mean=float(x['btc_fwd_h6'].mean())
+print(f'overall_unconditional_mean_fwd_h6: {all_mean:+.6f}')
+PY`
+
+Output:
+`H31 stats config: DAYS=180, horizon=6, conditioning=(ETH 1h EMA20 slope sign x H19 regime), no trading logic, no tuning`
+`slope_sign | h19_regime | n | mean_fwd_h6 | std_fwd_h6 | sem`
+`neg | short_tail | 2472 | -0.001077 | 0.005564 | 0.000112`
+`neg | neutral | 23772 | -0.000107 | 0.003644 | 0.000024`
+`neg | long_tail | 576 | +0.000507 | 0.005152 | 0.000215`
+`flat | short_tail | 0 | nan | nan | nan`
+`flat | neutral | 0 | nan | nan | nan`
+`flat | long_tail | 0 | nan | nan | nan`
+`pos | short_tail | 300 | +0.000518 | 0.006930 | 0.000400`
+`pos | neutral | 22682 | +0.000074 | 0.002727 | 0.000018`
+`pos | long_tail | 1908 | +0.000181 | 0.004509 | 0.000103`
+`overall_unconditional_mean_fwd_h6: -0.000053`
+
+Note:
+- This is a descriptive conditional-distribution study only (no trading signal classification).
+
+## H32 Kickoff + Classification Lock (No Tuning): ETH 1h Slope Direction in H19 Short-Tail
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+COSTS=[('gross',0.0000),('slip4',0.0008),('slip5',0.0010)]
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last()
+      .dropna()
+      .reset_index())
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+h1['eth_ema20_1h']=h1['close_eth'].ewm(span=20, adjust=False).mean()
+h1['eth_ema_slope_1h']=h1['eth_ema20_1h'].diff(3)
+h1['slope_sign']=np.sign(h1['eth_ema_slope_1h'])
+h1['is_short_tail']=h1['spread_pct']<0.10
+h1['signal_dir']=np.where(h1['is_short_tail'] & (h1['slope_sign']!=0), h1['slope_sign'], 0.0)
+
+x=pd.merge_asof(m.sort_values('dt'), h1[['dt','signal_dir']].sort_values('dt'), on='dt', direction='backward')
+x['entry_h32']=x['signal_dir']!=0
+x['fwd_r']=x['close_btc'].shift(-H)/x['close_btc']-1.0
+
+def dedup_idx(mask, gap):
+    idx=np.flatnonzero(mask.to_numpy())
+    out=[]
+    last=-10**9
+    for i in idx:
+        if i-last>=gap:
+            out.append(i)
+            last=i
+    return out
+
+idx=dedup_idx(x['entry_h32'], H)
+base=x.loc[idx,['signal_dir','fwd_r']].dropna().copy()
+base['gross_r']=base['signal_dir']*base['fwd_r']
+
+print(f'H32 kickoff config: DAYS={DAYS}, horizon={H}, no tuning')
+print('definition: trade BTC in direction of ETH 1h EMA20 slope sign only when H19 short_tail (spread_pct<0.10)')
+print('cost | n | win_rate | mean_return | std_return')
+for label,cost in COSTS:
+    r=(base['gross_r']-cost).to_numpy()
+    n=len(r)
+    win=float((r>0).mean()) if n else 0.0
+    mean=float(r.mean()) if n else 0.0
+    std=float(r.std(ddof=0)) if n else 0.0
+    print(f'{label} | {n} | {win:.2%} | {mean:.6f} | {std:.6f}')
+PY`
+
+Output:
+`H32 kickoff config: DAYS=180, horizon=6, no tuning`
+`definition: trade BTC in direction of ETH 1h EMA20 slope sign only when H19 short_tail (spread_pct<0.10)`
+`cost | n | win_rate | mean_return | std_return`
+`gross | 462 | 60.17% | 0.001258 | 0.005683`
+`slip4 | 462 | 50.87% | 0.000458 | 0.005683`
+`slip5 | 462 | 47.84% | 0.000258 | 0.005683`
+
+Classification lock:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H32 WF+Bootstrap Interpretation Lock (Frozen Rules)
+Run: 2026-02-17 08:17 UTC
+
+Interpretation (fixed rule, no tuning):
+- `PASS gross`
+- `BORDERLINE at 8 bps` (95% CI crosses zero slightly)
+- `FAIL / NOT-ROBUST at 10 bps`
+
+Policy lock for next step:
+- Replication only.
+- Allowed actions:
+  - Extend history beyond `180d` and rerun the same fixed H32 tests.
+  - Run the same fixed H32 on `ETH-USD 5m` if available.
+- Disallowed actions:
+  - No new thresholds.
+  - No new slicing.
+  - No stacking.
+
+## H33 Classification + Symmetry Confirmation Lock
+Run: 2026-02-17 08:17 UTC
+
+Decision labels:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+
+Rule state:
+- `Freeze rules` (no tuning)
+
+Symmetry confirmation (H32 vs H33):
+- H33 reverse logic (`BTC 1h EMA20 slope sign` -> trade `ETH`, gated by `H19 short-tail`) remains positive at gross/8/10 bps under the same `60/15/15` WF + bootstrap protocol used for H32 replication.
+- This confirms directional symmetry for the frozen short-tail cross-asset structure without introducing new parameters, thresholds, slicing, or stacking.
+
+## H32+H33 Concurrent Portfolio Evaluation + Freeze Lock (Frozen Rules, No Tuning)
+Run: 2026-02-17 08:17 UTC
+
+Protocol:
+- Same 180d window, same cost model (`gross`, `8 bps`, `10 bps`).
+- Same validation geometry: `60/15/15` WF + bootstrap (`3000`).
+- Capital model: equal-weight sleeves (`50/50`) with concurrent positions allowed.
+- Variants evaluated: `concurrent_50_50`, `intersection_both_active`, `either_active_equal_weight`.
+
+Key diagnostics:
+- Event rows: `462`
+- Both-active rows: `462`
+- Per-trade return correlation (H32 vs H33, both-active): `+0.811961`
+- Because both-active rows equal total event rows, all three variants are numerically identical under frozen rules in this sample.
+
+Representative output (full 8-fold geometry):
+- `BASE_gross | n=462 | mean=+0.001709 | sharpe_like=+0.250760 | max_dd=-0.039973 | final_eq=2.177595`
+- `BASE_slip4 | n=462 | mean=+0.000909 | sharpe_like=+0.133375 | max_dd=-0.075880 | final_eq=1.505443`
+- `BASE_slip5 | n=462 | mean=+0.000709 | sharpe_like=+0.104029 | max_dd=-0.087467 | final_eq=1.372670`
+
+WF + bootstrap (same values across the 3 variants):
+- `gross`:
+  - fold means `[+0.000000, +0.002572, +0.002509, +0.001219, -0.000143, +0.000505, +0.001568, +0.001996]`
+  - positive folds `6/8 (75.00%)`
+  - aggregated mean `+0.001709`
+  - 95% CI `[+0.001095, +0.002353]`
+  - `P(mean>0)=1.000`
+- `8 bps`:
+  - fold means `[+0.000000, +0.001772, +0.001709, +0.000419, -0.000943, -0.000295, +0.000768, +0.001196]`
+  - positive folds `5/8 (62.50%)`
+  - aggregated mean `+0.000909`
+  - 95% CI `[+0.000286, +0.001558]`
+  - `P(mean>0)=0.997`
+- `10 bps`:
+  - fold means `[+0.000000, +0.001572, +0.001509, +0.000219, -0.001143, -0.000495, +0.000568, +0.000996]`
+  - positive folds `5/8 (62.50%)`
+  - aggregated mean `+0.000709`
+  - 95% CI `[+0.000097, +0.001359]`
+  - `P(mean>0)=0.987`
+
+Portfolio freeze decision:
+- `PASS gross`
+- `PASS at 8 bps`
+- `PASS at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H34 Baseline + WF+Bootstrap + Freeze Interpretation (No Tuning)
+Run: 2026-02-17 08:17 UTC
+
+Definition (fixed):
+- Gate: `H19 short_tail` (`spread_pct < 0.10`)
+- Additional condition: `|ETH 1h EMA20 slope(3)|` in top `30%` of its rolling distribution (`abs_slope_pct >= 0.70`, rolling `2000`)
+- Action: trade BTC in ETH slope-sign direction
+- Horizon: `6`
+- Costs: `gross`, `8 bps`, `10 bps`
+- Validation: `60/15/15` WF + bootstrap (`3000`)
+
+Key output:
+- `baseline_cost | n | win_rate | mean_return | std_return`
+- `gross | 320 | 59.69% | +0.001375 | 0.005619`
+- `slip4 | 320 | 50.94% | +0.000575 | 0.005619`
+- `slip5 | 320 | 47.81% | +0.000375 | 0.005619`
+
+- `WF_gross_fold_means=[+0.000000, +0.001498, +0.002196, +0.000879, +0.000000, -0.000265, +0.001278, +0.001735]`
+- `WF_gross_positive_folds=5/8 (62.50%)`
+- `WF_gross_aggregated_n=320`
+- `WF_gross_aggregated_mean=+0.001375`
+- `WF_gross_bootstrap_95ci=[+0.000776, +0.001986]`
+- `WF_gross_Pmean_gt_0=1.000`
+
+- `WF_slip4_fold_means=[+0.000000, +0.000698, +0.001396, +0.000079, +0.000000, -0.001065, +0.000478, +0.000935]`
+- `WF_slip4_positive_folds=5/8 (62.50%)`
+- `WF_slip4_aggregated_n=320`
+- `WF_slip4_aggregated_mean=+0.000575`
+- `WF_slip4_bootstrap_95ci=[-0.000044, +0.001194]`
+- `WF_slip4_Pmean_gt_0=0.965`
+
+- `WF_slip5_fold_means=[+0.000000, +0.000498, +0.001196, -0.000121, +0.000000, -0.001265, +0.000278, +0.000735]`
+- `WF_slip5_positive_folds=4/8 (50.00%)`
+- `WF_slip5_aggregated_n=320`
+- `WF_slip5_aggregated_mean=+0.000375`
+- `WF_slip5_bootstrap_95ci=[-0.000231, +0.000989]`
+- `WF_slip5_Pmean_gt_0=0.876`
+
+Freeze interpretation:
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H35 Short-Tail Conditional Map (Stats Only): |ETH 1h EMA20 Slope| Deciles
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+m['btc_fwd_h6']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last().dropna().reset_index())
+
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+h1['eth_ema20_1h']=h1['close_eth'].ewm(span=20, adjust=False).mean()
+h1['eth_ema_slope_1h']=h1['eth_ema20_1h'].diff(3)
+h1['abs_slope']=h1['eth_ema_slope_1h'].abs()
+
+x=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct','abs_slope']].sort_values('dt'), on='dt', direction='backward')
+
+s=x[(x['spread_pct']<0.10) & x['abs_slope'].notna() & x['btc_fwd_h6'].notna()].copy()
+s['decile']=pd.qcut(s['abs_slope'], q=10, labels=False, duplicates='drop') + 1
+
+rows=[]
+for d in sorted(s['decile'].dropna().unique()):
+    y=s.loc[s['decile']==d, 'btc_fwd_h6'].to_numpy()
+    rows.append((int(d), len(y), float(y.mean()), float((y>0).mean()), float(np.nanmin(s.loc[s['decile']==d,'abs_slope'])), float(np.nanmax(s.loc[s['decile']==d,'abs_slope']))))
+
+print('H35_MAP_short_tail_abs_slope_deciles')
+print('decile | n | mean_btc_fwd_h6 | win_rate | abs_slope_min | abs_slope_max')
+for d,n,mn,w,mnsl,mxsl in rows:
+    print(f'{d} | {n} | {mn:+.6f} | {w:.2%} | {mnsl:.6f} | {mxsl:.6f}')
+PY`
+
+Output:
+`H35_MAP_short_tail_abs_slope_deciles`
+`decile | n | mean_btc_fwd_h6 | win_rate | abs_slope_min | abs_slope_max`
+`1 | 288 | -0.000489 | 51.74% | 0.046429 | 2.700818`
+`2 | 276 | -0.000096 | 49.28% | 2.758466 | 8.335652`
+`3 | 276 | +0.000068 | 43.48% | 8.443155 | 12.277371`
+`4 | 276 | -0.001187 | 41.30% | 12.773340 | 15.736979`
+`5 | 276 | -0.001946 | 38.04% | 15.808342 | 19.211213`
+`6 | 276 | -0.001407 | 39.86% | 19.235166 | 23.178089`
+`7 | 276 | -0.001259 | 44.20% | 23.256277 | 26.675303`
+`8 | 276 | -0.000085 | 55.80% | 27.166189 | 29.806444`
+`9 | 276 | +0.000031 | 49.64% | 30.126691 | 37.021707`
+`10 | 276 | -0.002688 | 39.13% | 37.774227 | 64.408118`
+
+Note:
+- Mapping only (descriptive). No trading logic, no thresholds added.
+
+## H35 Short-Tail Conditional Map (Stats Only): Signed ETH 1h EMA20 Slope Deciles
+Run: 2026-02-17 08:17 UTC
+
+Command:
+`.venv/bin/python - <<'PY'
+import sqlite3
+import numpy as np
+import pandas as pd
+
+DAYS=180
+H=6
+SPREAD_WINDOW=2000
+RET_1H_LOOKBACK=6
+
+btc_con=sqlite3.connect('data/market.sqlite')
+eth_con=sqlite3.connect('data/market_eth.sqlite')
+btc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)
+eth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)
+
+cutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)
+btc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)
+eth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)
+
+m=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)
+m['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)
+m['btc_fwd_h6']=m['close_btc'].shift(-H)/m['close_btc']-1.0
+
+h1=(m.set_index('dt')[['close_btc','close_eth']]
+      .resample('1h').last().dropna().reset_index())
+
+h1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0
+h1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0
+h1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']
+h1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+
+h1['eth_ema20_1h']=h1['close_eth'].ewm(span=20, adjust=False).mean()
+h1['eth_ema_slope_1h']=h1['eth_ema20_1h'].diff(3)
+
+x=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct','eth_ema_slope_1h']].sort_values('dt'), on='dt', direction='backward')
+
+s=x[(x['spread_pct']<0.10) & x['eth_ema_slope_1h'].notna() & x['btc_fwd_h6'].notna()].copy()
+s['bin']=pd.qcut(s['eth_ema_slope_1h'], q=10, labels=False, duplicates='drop') + 1
+
+rows=[]
+for b in sorted(s['bin'].dropna().unique()):
+    part=s[s['bin']==b]
+    y=part['btc_fwd_h6'].to_numpy()
+    rows.append((int(b), len(y), float(y.mean()), float((y>0).mean()), float(part['eth_ema_slope_1h'].min()), float(part['eth_ema_slope_1h'].max())))
+
+print('H35_MAP_short_tail_signed_slope_deciles')
+print('bin | n | mean_btc_fwd_h6 | win_rate | slope_min | slope_max')
+for b,n,mn,w,smn,smx in rows:
+    print(f'{b} | {n} | {mn:+.6f} | {w:.2%} | {smn:.6f} | {smx:.6f}')
+PY`
+
+Output:
+`H35_MAP_short_tail_signed_slope_deciles`
+`bin | n | mean_btc_fwd_h6 | win_rate | slope_min | slope_max`
+`1 | 288 | -0.002691 | 38.54% | -64.408118 | -37.021707`
+`2 | 276 | +0.000223 | 51.81% | -36.386329 | -29.806444`
+`3 | 276 | -0.000189 | 54.35% | -29.784282 | -26.577656`
+`4 | 276 | -0.001303 | 43.12% | -26.395872 | -23.142417`
+`5 | 276 | -0.001331 | 40.94% | -22.903985 | -19.092321`
+`6 | 276 | -0.002334 | 33.70% | -18.973052 | -15.607334`
+`7 | 276 | -0.001279 | 41.67% | -15.601042 | -11.233828`
+`8 | 276 | -0.001042 | 39.13% | -11.228559 | -5.783436`
+`9 | 276 | +0.000363 | 52.54% | -5.217253 | 0.117688`
+`10 | 276 | +0.000621 | 57.25% | 0.158861 | 29.352061`
+
+Note:
+- Mapping only (descriptive). No trading logic, no threshold-tuning action.
+
+## H36 Baseline + WF+Bootstrap + Freeze Interpretation (No Tuning)
+Run: 2026-02-17 08:17 UTC
+
+Definition (fixed):
+- Gate: `H19 short_tail` (`spread_pct < 0.10`)
+- Condition: signed ETH 1h EMA20 slope in bottom signed decile (`slope_signed_pct <= 0.10`, rolling `2000`)
+- Action: trade BTC short
+- Horizon: `6`
+- Costs: `gross`, `8 bps`, `10 bps`
+- Validation: `60/15/15` WF + bootstrap (`3000`)
+
+Key output:
+- `gross | 206 | 55.83% | +0.001310 | 0.006132`
+- `slip4 | 206 | 47.57% | +0.000510 | 0.006132`
+- `slip5 | 206 | 45.15% | +0.000310 | 0.006132`
+
+- `WF_gross_fold_means=[+0.000000, +0.000674, +0.001547, +0.000359, +0.000000, +0.000000, +0.001391, +0.002357]`
+- `WF_gross_positive_folds=5/8 (62.50%)`
+- `WF_gross_aggregated_n=206`
+- `WF_gross_aggregated_mean=+0.001310`
+- `WF_gross_bootstrap_95ci=[+0.000509, +0.002176]`
+- `WF_gross_Pmean_gt_0=0.999`
+
+- `WF_slip4_fold_means=[+0.000000, -0.000126, +0.000747, -0.000441, +0.000000, +0.000000, +0.000591, +0.001557]`
+- `WF_slip4_positive_folds=3/8 (37.50%)`
+- `WF_slip4_aggregated_n=206`
+- `WF_slip4_aggregated_mean=+0.000510`
+- `WF_slip4_bootstrap_95ci=[-0.000285, +0.001367]`
+- `WF_slip4_Pmean_gt_0=0.885`
+
+- `WF_slip5_fold_means=[+0.000000, -0.000326, +0.000547, -0.000641, +0.000000, +0.000000, +0.000391, +0.001357]`
+- `WF_slip5_positive_folds=3/8 (37.50%)`
+- `WF_slip5_aggregated_n=206`
+- `WF_slip5_aggregated_mean=+0.000310`
+- `WF_slip5_bootstrap_95ci=[-0.000533, +0.001173]`
+- `WF_slip5_Pmean_gt_0=0.748`
+
+Freeze interpretation:
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- Rule state: `Freeze rules` (no tuning)
+
+## H32 Horizon-Swap Replication (No Tuning Beyond Horizon)
+Run: 2026-02-17 08:17 UTC
+
+Protocol:
+- Frozen H32 rule unchanged except horizon swap.
+- Horizons tested: `h=4`, `h=8`.
+- Costs: `gross`, `8 bps`, `10 bps`.
+- Validation: baseline + `60/15/15` WF + bootstrap (`3000`).
+
+### H32-h4
+- `gross | n=693 | win=56.57% | mean=+0.000840 | std=0.004320`
+- `slip4 | n=693 | win=46.90% | mean=+0.000040 | std=0.004320`
+- `slip5 | n=693 | win=44.44% | mean=-0.000160 | std=0.004320`
+- `WF_gross_fold_means=[+0.000000, +0.001073, +0.001370, +0.000728, -0.000822, +0.000235, +0.000727, +0.000970]`
+- `WF_gross_positive_folds=6/8 (75.00%)`
+- `WF_gross_aggregated_mean=+0.000840`
+- `WF_gross_bootstrap_95ci=[+0.000521, +0.001154]`
+- `WF_gross_Pmean_gt_0=1.000`
+- `WF_slip4_fold_means=[+0.000000, +0.000273, +0.000570, -0.000072, -0.001622, -0.000565, -0.000073, +0.000170]`
+- `WF_slip4_positive_folds=3/8 (37.50%)`
+- `WF_slip4_aggregated_mean=+0.000040`
+- `WF_slip4_bootstrap_95ci=[-0.000280, +0.000369]`
+- `WF_slip4_Pmean_gt_0=0.608`
+- `WF_slip5_fold_means=[+0.000000, +0.000073, +0.000370, -0.000272, -0.001822, -0.000765, -0.000273, -0.000030]`
+- `WF_slip5_positive_folds=2/8 (25.00%)`
+- `WF_slip5_aggregated_mean=-0.000160`
+- `WF_slip5_bootstrap_95ci=[-0.000483, +0.000171]`
+- `WF_slip5_Pmean_gt_0=0.165`
+
+Freeze interpretation (h4):
+- `PASS gross`
+- `FAIL / NOT-ROBUST at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- `Freeze rules`
+
+### H32-h8
+- `gross | n=368 | win=58.42% | mean=+0.001447 | std=0.006475`
+- `slip4 | n=368 | win=50.82% | mean=+0.000647 | std=0.006475`
+- `slip5 | n=368 | win=48.91% | mean=+0.000447 | std=0.006475`
+- `WF_gross_fold_means=[+0.000000, +0.002147, +0.002261, +0.001152, -0.001602, +0.000659, +0.001447, +0.001425]`
+- `WF_gross_positive_folds=6/8 (75.00%)`
+- `WF_gross_aggregated_mean=+0.001447`
+- `WF_gross_bootstrap_95ci=[+0.000795, +0.002105]`
+- `WF_gross_Pmean_gt_0=1.000`
+- `WF_slip4_fold_means=[+0.000000, +0.001347, +0.001461, +0.000352, -0.002402, -0.000141, +0.000647, +0.000625]`
+- `WF_slip4_positive_folds=5/8 (62.50%)`
+- `WF_slip4_aggregated_mean=+0.000647`
+- `WF_slip4_bootstrap_95ci=[-0.000001, +0.001319]`
+- `WF_slip4_Pmean_gt_0=0.975`
+- `WF_slip5_fold_means=[+0.000000, +0.001147, +0.001261, +0.000152, -0.002602, -0.000341, +0.000447, +0.000425]`
+- `WF_slip5_positive_folds=5/8 (62.50%)`
+- `WF_slip5_aggregated_mean=+0.000447`
+- `WF_slip5_bootstrap_95ci=[-0.000211, +0.001102]`
+- `WF_slip5_Pmean_gt_0=0.902`
+
+Freeze interpretation (h8):
+- `PASS gross`
+- `BORDERLINE at 8 bps`
+- `FAIL / NOT-ROBUST at 10 bps`
+- `Freeze rules`
+
+## H32 Execution Realism Sensitivity (Frozen h=6): Entry at Next Bar Close
+Run: 2026-02-17 08:17 UTC
+
+Protocol:
+- Frozen H32 rule unchanged (`h=6`, same signal/cost setup).
+- Sensitivity-only change: compute returns from next-bar close entry (`t+1`) instead of signal-bar close reference (`t`).
+
+Output:
+`H32_EXECUTION_REALISM_NEXT_CLOSE`
+`n_events=462`
+`cost | mean_ref | mean_next_close | delta_next_minus_ref | win_ref | win_next`
+`gross | +0.001258 | +0.001242 | -0.000016 | 60.17% | 56.93%`
+`slip4 | +0.000458 | +0.000442 | -0.000016 | 50.87% | 48.05%`
+`slip5 | +0.000258 | +0.000242 | -0.000016 | 47.84% | 45.67%`
+
+Interpretation:
+- Mean-return impact is small and negative under worse fill assumption.
+- Win-rate declines are larger but the mean remains positive across gross/8/10 for this sample.
+- H32 freeze remains in place (`h=6`, no tuning).
+
+## H32 Expanding-Window Live Simulation (8 bps) — Export + Fold Dominance Table
+Run: 2026-02-17 08:17 UTC
+
+Exported equity curve:
+- `logs/h32_expanding_wf_60_5_8bps_equity.csv`
+
+Summary stats (frozen H32, `h=6`, train `60d`, test `5d`, step `5d`, no re-optimization):
+- `folds_total=24`
+- `positive_folds=12/24 (50.00%)`
+- `aggregated_trades=462`
+- `aggregated_mean=+0.000458`
+- `final_equity=1.226261`
+- `max_drawdown=-0.065278`
+
+Per-fold table (trade count + mean return):
+`fold | test_start | test_end | trades | mean_return`
+`1 | 2025-10-20 | 2025-10-25 | 0 | +0.000000`
+`2 | 2025-10-25 | 2025-10-30 | 0 | +0.000000`
+`3 | 2025-10-30 | 2025-11-04 | 0 | +0.000000`
+`4 | 2025-11-04 | 2025-11-09 | 0 | +0.000000`
+`5 | 2025-11-09 | 2025-11-14 | 20 | +0.000881`
+`6 | 2025-11-14 | 2025-11-19 | 22 | +0.000746`
+`7 | 2025-11-19 | 2025-11-24 | 24 | +0.001931`
+`8 | 2025-11-24 | 2025-11-29 | 6 | -0.000479`
+`9 | 2025-11-29 | 2025-12-04 | 20 | +0.000944`
+`10 | 2025-12-04 | 2025-12-09 | 12 | +0.000466`
+`11 | 2025-12-09 | 2025-12-14 | 34 | +0.000469`
+`12 | 2025-12-14 | 2025-12-19 | 42 | +0.000104`
+`13 | 2025-12-19 | 2025-12-24 | 4 | -0.002035`
+`14 | 2025-12-24 | 2025-12-29 | 0 | +0.000000`
+`15 | 2025-12-29 | 2026-01-03 | 0 | +0.000000`
+`16 | 2026-01-03 | 2026-01-08 | 8 | -0.000426`
+`17 | 2026-01-08 | 2026-01-13 | 12 | -0.002525`
+`18 | 2026-01-13 | 2026-01-18 | 14 | +0.001331`
+`19 | 2026-01-18 | 2026-01-23 | 42 | -0.000138`
+`20 | 2026-01-23 | 2026-01-28 | 14 | +0.000628`
+`21 | 2026-01-28 | 2026-02-02 | 72 | +0.000473`
+`22 | 2026-02-02 | 2026-02-07 | 58 | +0.001264`
+`23 | 2026-02-07 | 2026-02-12 | 28 | -0.000199`
+`24 | 2026-02-12 | 2026-02-17 | 30 | +0.000253`
