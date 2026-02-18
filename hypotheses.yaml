@@ -1,0 +1,1464 @@
+dataset_defaults:
+  primary_symbols:
+    - BTC-USD
+  secondary_symbols:
+    - ETH-USD
+  timeframe: 5m
+  horizon_default_bars: 6
+  lookback_default_days: 180
+
+gates:
+  baseline_cost_modes:
+    - gross
+    - bps8
+    - bps10
+  baseline_cost_config:
+    gross:
+      fee_bps: 0
+      slip_bps: 0
+    bps8:
+      fee_bps: 0
+      slip_bps: 8
+    bps10:
+      fee_bps: 0
+      slip_bps: 10
+  walkforward:
+    train_days: 60
+    test_days: 15
+    step_days: 15
+  bootstrap:
+    iterations: 3000
+    ci: 0.95
+    report_metrics:
+      - mean_ci_low
+      - mean_ci_high
+      - p_mean_gt_0
+
+hypotheses:
+  - id: H15
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen BTC mean-reversion entry (MR2) with ETH 1h trend confirmation."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "BTC entry condition: vwap_z <= -2.0."
+      - "ETH confirmation condition: ETH 1h close > EMA20 and EMA20 slope(3) > 0."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC VWAP z-score"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 and EMA20 slope(3)"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        btc_vwap_z_entry_max: -2.0
+        eth_confirm_timeframe: 1h
+        eth_ema_span: 20
+        eth_ema_slope_lag_hours: 3
+    allowed_variants: []
+    status: frozen
+  - id: H16
+    family: shock_structure
+    class: tradeable_hypothesis
+    description: "Frozen ETH shock lead-lag continuation test toward BTC horizon return."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Trigger when ETH absolute 1-bar return is in top decile of rolling 20-day window."
+      - "Trade BTC in ETH shock-bar direction (continuation test)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "BTC-USD 5m closes"
+      - "ETH 1-bar absolute return rolling decile rank"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        shock_window_bars: 5760
+        shock_percentile_threshold: 0.90
+    allowed_variants: []
+    status: frozen
+  - id: H17
+    family: shock_structure
+    class: structural_diagnostic
+    description: "Frozen non-directional ETH shock magnitude map for BTC move-size conditioning."
+    rationale: "Stats-only module used as conditioning reference for H18."
+    entry_rules:
+      - "Condition on ETH absolute 1-bar return top decile over rolling 20-day window."
+      - "Measure BTC forward absolute move magnitude at fixed horizon."
+    exit_rules:
+      - "No trading signal output; diagnostics only."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "BTC-USD 5m closes"
+      - "ETH 1-bar absolute return rolling decile rank"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        shock_window_bars: 5760
+        shock_percentile_threshold: 0.90
+        output_mode: magnitude_only
+    allowed_variants: []
+    status: frozen
+  - id: H18
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H15 directional entry gated by frozen H17 volatility-conditioning module."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Apply H15 BTC/ETH directional entry exactly as frozen."
+      - "Require frozen H17 conditioning gate: ETH absolute shock in top decile."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H15 frozen signal state"
+      - "H17 frozen conditioning gate"
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        base_signal: H15
+        conditioning_module: H17
+    allowed_variants: []
+    status: frozen
+  - id: H19
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Frozen ETH-BTC relative momentum spread tail regime classifier."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Compute ETH-BTC 1h relative momentum spread using 6h lookback."
+      - "Compute rolling spread percentile rank."
+      - "Classify short_tail when spread_pct < 0.10; long_tail when spread_pct >= 0.90; neutral otherwise."
+    exit_rules:
+      - "Use regime output for gating downstream hypotheses."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC/ETH 1h returns"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        relative_momentum_lookback_hours: 6
+        spread_percentile_window_bars: 2000
+        short_tail_threshold: 0.10
+        long_tail_threshold: 0.90
+    allowed_variants: []
+    status: frozen
+  - id: H20
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H18 entry gated by H19 long-tail regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H18 long entry."
+      - "Gate: H19 long-tail regime (spread_pct >= 0.90)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H18 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: long_tail
+        regime_threshold: 0.90
+    allowed_variants: []
+    status: frozen
+  - id: H21
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H18 entry gated by H19 short-tail regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H18 long entry."
+      - "Gate: H19 short-tail regime (spread_pct < 0.10)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H18 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: short_tail
+        regime_threshold: 0.10
+    allowed_variants: []
+    status: frozen
+  - id: H22
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H18 entry gated by H19 neutral regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H18 long entry."
+      - "Gate: H19 neutral regime (0.10 <= spread_pct < 0.90)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H18 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: neutral
+        regime_low_inclusive: 0.10
+        regime_high_exclusive: 0.90
+    allowed_variants: []
+    status: frozen
+  - id: H23
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H15 entry gated by H19 neutral regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H15 long entry."
+      - "Gate: H19 neutral regime (0.10 <= spread_pct < 0.90)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H15 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: neutral
+        regime_low_inclusive: 0.10
+        regime_high_exclusive: 0.90
+    allowed_variants: []
+    status: frozen
+  - id: H24
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H15 entry gated by H19 long-tail regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H15 long entry."
+      - "Gate: H19 long-tail regime (spread_pct >= 0.90)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H15 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: long_tail
+        regime_threshold: 0.90
+    allowed_variants: []
+    status: frozen
+  - id: H25
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H15 entry gated by H19 short-tail regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H15 long entry."
+      - "Gate: H19 short-tail regime (spread_pct < 0.10)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H15 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: short_tail
+        regime_threshold: 0.10
+    allowed_variants: []
+    status: frozen
+  - id: H26
+    family: mean_reversion
+    class: tradeable_hypothesis
+    description: "Frozen H15 entry gated by H19 mid regime."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Base signal: frozen H15 long entry."
+      - "Gate: H19 mid regime (0.25 <= spread_pct < 0.75)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H15 frozen signal state"
+      - "H19 frozen regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: mid
+        regime_low_inclusive: 0.25
+        regime_high_exclusive: 0.75
+    allowed_variants: []
+    status: frozen
+  - id: H27
+    family: shock_structure
+    class: tradeable_hypothesis
+    description: "Frozen liquidity shock continuation hypothesis."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Trigger when range > 1.8x median(range,20) and volume > 1.8x median(volume,20)."
+      - "Trade in shock-bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        range_multiple: 1.8
+        volume_multiple: 1.8
+        median_window_bars: 20
+    allowed_variants: []
+    status: frozen
+  - id: H28
+    family: range_structure
+    class: tradeable_hypothesis
+    description: "Frozen liquidity sweep reversal hypothesis."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Detect break of prior 12-bar high/low."
+      - "Require close back inside breakout range within 2 bars."
+      - "Fade failed break direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        breakout_lookback_bars: 12
+        reentry_within_bars: 2
+    allowed_variants: []
+    status: frozen
+  - id: H29
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Frozen H19 neutral-entry state transition signal."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Trigger when H19 enters neutral regime from non-neutral state."
+      - "Neutral regime definition: 0.10 <= spread_pct < 0.90."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H19 frozen regime state"
+      - "BTC-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_low_inclusive: 0.10
+        regime_high_exclusive: 0.90
+        transition_required: true
+    allowed_variants: []
+    status: frozen
+  - id: H30
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Frozen ETH/BTC 1h sign-divergence continuation hypothesis."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Trigger when ETH 1h slope sign != BTC 1h slope sign."
+      - "Trade BTC in ETH slope sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH 1h EMA20 slope sign"
+      - "BTC 1h EMA20 slope sign"
+      - "BTC-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed: {}
+    allowed_variants: []
+    status: frozen
+  - id: H31
+    family: cross_asset_regime
+    class: structural_diagnostic
+    description: "Frozen conditional distribution map by ETH 1h slope sign x H19 regime."
+    rationale: "Stats-only mapping logged as non-tradeable."
+    entry_rules:
+      - "Condition BTC h=6 returns on (ETH 1h EMA20 slope sign, H19 regime bucket)."
+    exit_rules:
+      - "No trading signal output; diagnostics only."
+    required_inputs:
+      - "ETH 1h EMA20 slope sign"
+      - "H19 regime bucket"
+      - "BTC-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        output_mode: conditional_distribution
+    allowed_variants: []
+    status: frozen
+  - id: H32
+    family: cross_asset_regime
+    description: "Frozen H32 baseline (see FINDINGS_SIMPLIFIED.md and FINDINGS_TECHNICAL.md)."
+    rationale: "Reference frozen validated research lineage without altering logic."
+    entry_rules:
+      - "See existing frozen H32 rule definition in findings files."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "H19 short_tail regime state"
+    parameters:
+      horizon_bars: 6
+      fixed: {}
+    allowed_variants: []
+    status: frozen
+  - id: H33
+    family: cross_asset_regime
+    description: "Frozen H33 symmetry mirror of H32 (see findings files)."
+    rationale: "Reference frozen symmetry validation without altering logic."
+    entry_rules:
+      - "See existing frozen H33 mirror-rule definition in findings files."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "H19 short_tail regime state"
+    parameters:
+      horizon_bars: 6
+      fixed: {}
+    allowed_variants: []
+    status: frozen
+  - id: H34
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Frozen short-tail directional rule gated to top 30% absolute ETH 1h slope."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Require H19 short-tail regime (spread_pct < 0.10)."
+      - "Require |ETH 1h EMA20 slope| in top 30% tail."
+      - "Trade BTC in ETH slope sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H19 frozen regime state"
+      - "ETH 1h EMA20 slope sign and absolute magnitude rank"
+      - "BTC-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: short_tail
+        regime_threshold: 0.10
+        abs_slope_percentile_min: 0.70
+    allowed_variants: []
+    status: frozen
+  - id: H35
+    family: cross_asset_regime
+    class: structural_diagnostic
+    description: "Frozen short-tail decile maps for absolute and signed ETH 1h slope."
+    rationale: "Stats-only conditional map with no trade signal."
+    entry_rules:
+      - "In H19 short-tail regime, bin ETH slope by absolute and signed deciles."
+      - "Report BTC h=6 conditional means by bin."
+    exit_rules:
+      - "No trading signal output; diagnostics only."
+    required_inputs:
+      - "H19 frozen regime state"
+      - "ETH 1h EMA20 slope series"
+      - "BTC-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        output_mode: decile_map
+        regime_gate: short_tail
+    allowed_variants: []
+    status: frozen
+  - id: H36
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Frozen short-tail bottom signed-slope decile rule (BTC short)."
+    rationale: "Legacy frozen definition transcribed from findings to remove pointer-only stubs."
+    entry_rules:
+      - "Require H19 short-tail regime (spread_pct < 0.10)."
+      - "Require ETH signed 1h slope in bottom decile."
+      - "Trade BTC short."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "H19 frozen regime state"
+      - "ETH signed 1h slope decile rank"
+      - "BTC-USD 5m closes"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gate: short_tail
+        regime_threshold: 0.10
+        signed_slope_decile: 1
+        trade_direction: short_only
+    allowed_variants: []
+    status: frozen
+  - id: H37
+    family: cross_asset_regime
+    description: "ETH slope alignment in H19 neutral regime."
+    rationale: "Test whether ETH 1h trend-direction signal is stronger in neutral spread regime than short-tail."
+    entry_rules:
+      - "Trigger when H19 neutral regime is active: 0.10 <= spread_pct < 0.90."
+      - "Compute ETH 1h EMA20 slope sign and trade BTC in that same sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign"
+      - "H19 spread_pct regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_low_inclusive: 0.10
+        regime_high_exclusive: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H38
+    family: cross_asset_regime
+    description: "ETH slope-only direction in H19 long-tail regime."
+    rationale: "Test ETH trend-direction transfer when spread is in long-tail extremes."
+    entry_rules:
+      - "Trigger when H19 long-tail regime is active: spread_pct >= 0.90."
+      - "Compute ETH 1h EMA20 slope sign and trade BTC in that same sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign"
+      - "H19 spread_pct regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_threshold_long_tail: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H39
+    family: cross_asset_regime
+    description: "Frozen H39 baseline: ETH 1h EMA20 slope sign flip drives BTC direction (no regime gating)."
+    rationale: "Frozen lock after batch validation; preserve exact no-gating inflection logic."
+    entry_rules:
+      - "Trigger when ETH 1h EMA20 slope sign flips versus prior bar."
+      - "Trade BTC in the new ETH slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        regime_gating: "none"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: frozen
+  - id: H40
+    family: cross_asset_regime
+    description: "BTC slope confirmed by ETH slope."
+    rationale: "Test continuation when both assets share the same 1h slope sign."
+    entry_rules:
+      - "Trigger when BTC 1h EMA20 slope sign equals ETH 1h EMA20 slope sign and is non-zero."
+      - "Trade BTC in that shared sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC 1h EMA20 slope sign"
+      - "ETH 1h EMA20 slope sign"
+    parameters:
+      horizon_bars: 6
+      fixed: {}
+    allowed_variants: []
+    status: planned
+  - id: H41
+    family: cross_asset_regime
+    description: "BTC/ETH 1h slope divergence reversal."
+    rationale: "Test mean-reversion in BTC when BTC and ETH slope signs diverge."
+    entry_rules:
+      - "Trigger when BTC 1h EMA20 slope sign does not equal ETH 1h EMA20 slope sign."
+      - "Trade BTC opposite its own BTC slope sign."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC 1h EMA20 slope sign"
+      - "ETH 1h EMA20 slope sign"
+    parameters:
+      horizon_bars: 6
+      fixed: {}
+    allowed_variants: []
+    status: planned
+  - id: H42
+    family: shock_structure
+    description: "BTC top-decile shock continuation."
+    rationale: "Test whether extreme BTC one-bar moves continue over short horizon."
+    entry_rules:
+      - "Compute rolling 20-day percentile of BTC 1-bar returns."
+      - "Trigger when BTC 1-bar return is >= 90th percentile."
+      - "Trade in the BTC shock-bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1-bar returns"
+      - "Rolling 20-day return percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        top_decile_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H43
+    family: shock_structure
+    description: "BTC top-decile shock reversal."
+    rationale: "Test mean-reversion after extreme BTC one-bar moves."
+    entry_rules:
+      - "Compute rolling 20-day percentile of BTC 1-bar returns."
+      - "Trigger when BTC 1-bar return is >= 90th percentile."
+      - "Trade opposite the BTC shock-bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1-bar returns"
+      - "Rolling 20-day return percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        top_decile_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H44
+    family: shock_structure
+    description: "ETH shock leads BTC direction."
+    rationale: "Test cross-asset lead-lag where ETH extreme shocks transfer direction to BTC."
+    entry_rules:
+      - "Compute rolling 20-day percentile of ETH 1-bar returns."
+      - "Trigger when ETH 1-bar return is >= 90th percentile."
+      - "Trade BTC in ETH shock-bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1-bar returns"
+      - "Rolling 20-day ETH return percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        top_decile_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H45
+    family: shock_structure
+    description: "ETH shock divergence versus BTC."
+    rationale: "Test ETH-led impulse when ETH is in top-decile shock and BTC is not."
+    entry_rules:
+      - "Compute rolling 20-day percentiles of ETH and BTC 1-bar returns."
+      - "Trigger when ETH 1-bar return is >= 90th percentile and BTC 1-bar return is < 90th percentile."
+      - "Trade BTC in ETH shock-bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC and ETH 1-bar returns"
+      - "Rolling 20-day return percentile states"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        top_decile_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H46
+    family: shock_structure
+    description: "Dual-shock alignment continuation."
+    rationale: "Test continuation when BTC and ETH both register same-direction top-decile shocks."
+    entry_rules:
+      - "Compute rolling 20-day percentiles of BTC and ETH 1-bar returns."
+      - "Trigger when both assets are >= 90th percentile in the same sign direction."
+      - "Trade BTC in that shared shock direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC and ETH 1-bar returns"
+      - "Rolling 20-day return percentile states"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        top_decile_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H47
+    family: volatility_conditioning
+    description: "High-volatility continuation."
+    rationale: "Test short-horizon continuation during top-decile BTC true-range conditions."
+    entry_rules:
+      - "Compute rolling 20-day percentile of BTC true range."
+      - "Trigger when BTC true range is >= 90th percentile."
+      - "Trade in current BTC bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "BTC true range series"
+      - "Rolling 20-day true-range percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        high_vol_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H48
+    family: volatility_conditioning
+    description: "Low-volatility breakout follow-through."
+    rationale: "Test whether direction chosen by next bar after low-volatility setup carries forward."
+    entry_rules:
+      - "Compute rolling 20-day percentile of BTC true range."
+      - "Trigger when BTC true range is <= 10th percentile."
+      - "Trade in the direction of the next bar."
+    exit_rules:
+      - "Hold for fixed horizon bars from entry."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "BTC true range series"
+      - "Rolling 20-day true-range percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        low_vol_threshold: 0.10
+    allowed_variants: []
+    status: planned
+  - id: H49
+    family: volatility_conditioning
+    description: "Volatility expansion from compression."
+    rationale: "Test expansion-bar direction persistence after compressed range cluster."
+    entry_rules:
+      - "Compute rolling 20-day percentile of BTC true range."
+      - "Trigger when prior 5 bars are all <= 25th percentile, then first expansion bar occurs."
+      - "Trade in direction of the first expansion bar."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "BTC true range series"
+      - "Rolling 20-day true-range percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        compression_threshold: 0.25
+        compression_bars: 5
+    allowed_variants: []
+    status: planned
+  - id: H50
+    family: volatility_conditioning
+    description: "ETH high-volatility alignment on BTC."
+    rationale: "Test whether ETH volatility regime informs BTC directional continuation."
+    entry_rules:
+      - "Compute rolling 20-day percentile of ETH true range."
+      - "Trigger when ETH true range is >= 90th percentile."
+      - "Trade BTC in ETH bar direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "ETH-USD 5m OHLC"
+      - "ETH true range series"
+      - "Rolling 20-day ETH true-range percentile state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        lookback_days_percentile: 20
+        high_vol_threshold: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H51
+    family: mean_reversion
+    description: "VWAP z <= -2 in H19 neutral regime."
+    rationale: "Test fixed-threshold long mean-reversion only in neutral spread regime."
+    entry_rules:
+      - "Trigger when BTC VWAP z-score <= -2.0 and H19 neutral regime is active (0.10 <= spread_pct < 0.90)."
+      - "Enter long BTC."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "BTC VWAP z-score series"
+      - "H19 spread_pct regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        vwap_z_threshold: -2.0
+        regime_low_inclusive: 0.10
+        regime_high_exclusive: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H52
+    family: mean_reversion
+    description: "VWAP z >= +2 in H19 neutral regime."
+    rationale: "Test fixed-threshold short mean-reversion only in neutral spread regime."
+    entry_rules:
+      - "Trigger when BTC VWAP z-score >= +2.0 and H19 neutral regime is active (0.10 <= spread_pct < 0.90)."
+      - "Enter short BTC."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "BTC VWAP z-score series"
+      - "H19 spread_pct regime state"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        vwap_z_threshold: 2.0
+        regime_low_inclusive: 0.10
+        regime_high_exclusive: 0.90
+    allowed_variants: []
+    status: planned
+  - id: H53
+    family: mean_reversion
+    description: "Extreme VWAP z +/-3 across all regimes."
+    rationale: "Test stronger fixed-threshold mean-reversion without regime gating."
+    entry_rules:
+      - "Trigger when absolute BTC VWAP z-score >= 3.0."
+      - "Trade opposite direction of z-score sign."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "BTC VWAP z-score series"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        vwap_abs_z_threshold: 3.0
+    allowed_variants: []
+    status: planned
+  - id: H54
+    family: range_structure
+    description: "12-bar breakout continuation."
+    rationale: "Test short-horizon continuation after local range break."
+    entry_rules:
+      - "Trigger long when close breaks above prior 12-bar high."
+      - "Trigger short when close breaks below prior 12-bar low."
+      - "Trade in breakout direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "Rolling 12-bar high/low levels"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        breakout_lookback_bars: 12
+    allowed_variants: []
+    status: planned
+  - id: H55
+    family: range_structure
+    description: "Failed breakout reversal."
+    rationale: "Test fade signal when breakout fails quickly and closes back inside prior range."
+    entry_rules:
+      - "Trigger when price breaks prior 12-bar high/low then closes back inside that range within 1 bar."
+      - "Trade opposite the failed break direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "Rolling 12-bar high/low levels"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        breakout_lookback_bars: 12
+        reentry_window_bars: 1
+    allowed_variants: []
+    status: planned
+  - id: H56
+    family: range_structure
+    description: "Consecutive momentum burst continuation."
+    rationale: "Test continuation after short streak of directional bars."
+    entry_rules:
+      - "Trigger when 3 consecutive BTC bars have the same direction."
+      - "Trade in direction of the streak."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLC"
+      - "Bar direction sign series"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        consecutive_bars: 3
+    allowed_variants: []
+    status: planned
+  - id: H59
+    family: cross_asset_regime
+    description: "Frozen H59 BTC-only slope flip control."
+    rationale: "Frozen replication control removing cross-asset transfer by trading BTC on BTC slope-sign flips."
+    entry_rules:
+      - "Compute BTC 1h EMA20 slope sign."
+      - "Trigger when BTC slope sign flips versus prior 1h bar."
+      - "Trade BTC in the new BTC slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        tuning: "forbidden"
+        classification_lock: "PASS gross / PASS bps8 / PASS bps10"
+    allowed_variants: []
+    status: frozen
+  - id: H60
+    family: cross_asset_regime
+    description: "Frozen H60 ETH-self slope flip trade."
+    rationale: "Frozen replication control trading ETH on ETH slope-sign flips to isolate self-asset behavior."
+    entry_rules:
+      - "Compute ETH 1h EMA20 slope sign."
+      - "Trigger when ETH slope sign flips versus prior 1h bar."
+      - "Trade ETH in the new ETH slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        tuning: "forbidden"
+        classification_lock: "PASS gross / PASS bps8 / PASS bps10"
+    allowed_variants: []
+    status: frozen
+  - id: H61
+    family: cross_asset_regime
+    description: "Frozen H39 next-bar execution realism variant."
+    rationale: "Frozen replication pass explicitly enforcing next-bar close entry on frozen H39 signal logic."
+    entry_rules:
+      - "Signal is H39: ETH 1h EMA20 slope sign flip versus prior 1h bar."
+      - "Trade BTC in the new ETH slope-sign direction."
+      - "Execution: detect signal at t, enter at close[t+1], hold 6 bars from entry."
+      - "Drop trade if t+1 does not exist."
+    exit_rules:
+      - "Hold for fixed horizon bars from entry."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 6
+      fixed:
+        entry_mode: "next_bar_close"
+        tuning: "forbidden"
+        classification_lock: "PASS gross / PASS bps8 / BORDERLINE bps10"
+    allowed_variants: []
+    status: frozen
+  - id: H62
+    family: cross_asset_regime
+    description: "H59 horizon sensitivity swap: horizon=4."
+    rationale: "No-tuning horizon-only replication of H59 at shorter hold."
+    entry_rules:
+      - "Same as H59: BTC 1h EMA20 slope sign flip versus prior 1h bar."
+      - "Trade BTC in the new BTC slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 4
+      fixed:
+        base_hypothesis: "H59"
+        variant_type: "horizon_swap_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H63
+    family: cross_asset_regime
+    description: "H59 horizon sensitivity swap: horizon=8."
+    rationale: "No-tuning horizon-only replication of H59 at longer hold."
+    entry_rules:
+      - "Same as H59: BTC 1h EMA20 slope sign flip versus prior 1h bar."
+      - "Trade BTC in the new BTC slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H59"
+        variant_type: "horizon_swap_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H64
+    family: cross_asset_regime
+    description: "H60 horizon sensitivity swap: horizon=4."
+    rationale: "No-tuning horizon-only replication of H60 at shorter hold."
+    entry_rules:
+      - "Same as H60: ETH 1h EMA20 slope sign flip versus prior 1h bar."
+      - "Trade ETH in the new ETH slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 4
+      fixed:
+        base_hypothesis: "H60"
+        variant_type: "horizon_swap_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H65
+    family: cross_asset_regime
+    description: "H60 horizon sensitivity swap: horizon=8."
+    rationale: "No-tuning horizon-only replication of H60 at longer hold."
+    entry_rules:
+      - "Same as H60: ETH 1h EMA20 slope sign flip versus prior 1h bar."
+      - "Trade ETH in the new ETH slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H60"
+        variant_type: "horizon_swap_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H66
+    family: cross_asset_regime
+    description: "H63 longer-lookback replication at 120 days."
+    rationale: "No-rule-change replication of H63 with shorter lookback window."
+    entry_rules:
+      - "Same as H63 (same signal logic, same execution)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 120
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        variant_type: "lookback_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H67
+    family: cross_asset_regime
+    description: "H65 longer-lookback replication at 120 days."
+    rationale: "No-rule-change replication of H65 with shorter lookback window."
+    entry_rules:
+      - "Same as H65 (same signal logic, same execution)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 120
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        variant_type: "lookback_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H68
+    family: cross_asset_regime
+    description: "H63 odd-day subsample replication."
+    rationale: "No-rule-change stability check on odd calendar day trades only."
+    entry_rules:
+      - "Same as H63, keep trades where entry day-of-month is odd."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        day_parity: "odd"
+        variant_type: "subsample_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H69
+    family: cross_asset_regime
+    description: "H63 even-day subsample replication."
+    rationale: "No-rule-change stability check on even calendar day trades only."
+    entry_rules:
+      - "Same as H63, keep trades where entry day-of-month is even."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        day_parity: "even"
+        variant_type: "subsample_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H70
+    family: cross_asset_regime
+    description: "H65 odd-day subsample replication."
+    rationale: "No-rule-change stability check on odd calendar day trades only."
+    entry_rules:
+      - "Same as H65, keep trades where entry day-of-month is odd."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        day_parity: "odd"
+        variant_type: "subsample_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H71
+    family: cross_asset_regime
+    description: "H65 even-day subsample replication."
+    rationale: "No-rule-change stability check on even calendar day trades only."
+    entry_rules:
+      - "Same as H65, keep trades where entry day-of-month is even."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        day_parity: "even"
+        variant_type: "subsample_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H72
+    family: cross_asset_regime
+    description: "H63 180-day replication control."
+    rationale: "Explicit rerun of H63 at current lookback for side-by-side robustness comparison."
+    entry_rules:
+      - "Same as H63."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        variant_type: "lookback_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H73
+    family: cross_asset_regime
+    description: "H65 180-day replication control."
+    rationale: "Explicit rerun of H65 at current lookback for side-by-side robustness comparison."
+    entry_rules:
+      - "Same as H65."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        variant_type: "lookback_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H74
+    family: cross_asset_regime
+    description: "H59 reference rerun at 120 days."
+    rationale: "Reference comparison anchor for slope-flip family at shorter lookback."
+    entry_rules:
+      - "Same as H59."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 120
+      horizon_bars: 6
+      fixed:
+        base_hypothesis: "H59"
+        variant_type: "reference_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H75
+    family: cross_asset_regime
+    description: "H60 reference rerun at 120 days."
+    rationale: "Reference comparison anchor for slope-flip family at shorter lookback."
+    entry_rules:
+      - "Same as H60."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 120
+      horizon_bars: 6
+      fixed:
+        base_hypothesis: "H60"
+        variant_type: "reference_replication_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H76
+    family: cross_asset_regime
+    description: "H63 next-bar execution realism variant."
+    rationale: "Execution realism validation: same H63 signal, entry at next bar close."
+    entry_rules:
+      - "Same signal as H63."
+      - "Enter at close[t+1], hold 8 bars from entry."
+      - "Drop non-executable end-of-data trades."
+    exit_rules:
+      - "Hold for fixed horizon bars from entry."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        entry_mode: "next_bar_close"
+        variant_type: "execution_realism_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H77
+    family: cross_asset_regime
+    description: "H65 next-bar execution realism variant."
+    rationale: "Execution realism validation: same H65 signal, entry at next bar close."
+    entry_rules:
+      - "Same signal as H65."
+      - "Enter at close[t+1], hold 8 bars from entry."
+      - "Drop non-executable end-of-data trades."
+    exit_rules:
+      - "Hold for fixed horizon bars from entry."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        entry_mode: "next_bar_close"
+        variant_type: "execution_realism_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H78
+    family: cross_asset_regime
+    description: "H63 extra-cost stress replication."
+    rationale: "Cost fragility validation with additional bps12 and bps15 stress outputs."
+    entry_rules:
+      - "Same as H63."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        stress_cost_modes: ["bps12", "bps15"]
+        variant_type: "cost_stress_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H79
+    family: cross_asset_regime
+    description: "H65 extra-cost stress replication."
+    rationale: "Cost fragility validation with additional bps12 and bps15 stress outputs."
+    entry_rules:
+      - "Same as H65."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        stress_cost_modes: ["bps12", "bps15"]
+        variant_type: "cost_stress_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H80
+    family: cross_asset_regime
+    description: "H63 UTC window replication 00:00-08:00."
+    rationale: "Time-of-day sanity check for H63."
+    entry_rules:
+      - "Same as H63, keep trades in UTC 00:00-08:00."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        utc_window: "00:00-08:00"
+        variant_type: "tod_window_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H81
+    family: cross_asset_regime
+    description: "H63 UTC window replication 08:00-16:00."
+    rationale: "Time-of-day sanity check for H63."
+    entry_rules:
+      - "Same as H63, keep trades in UTC 08:00-16:00."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        utc_window: "08:00-16:00"
+        variant_type: "tod_window_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H82
+    family: cross_asset_regime
+    description: "H63 UTC window replication 16:00-24:00."
+    rationale: "Time-of-day sanity check for H63."
+    entry_rules:
+      - "Same as H63, keep trades in UTC 16:00-24:00."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H63"
+        utc_window: "16:00-24:00"
+        variant_type: "tod_window_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H83
+    family: cross_asset_regime
+    description: "H65 UTC window replication 00:00-08:00."
+    rationale: "Time-of-day sanity check for H65."
+    entry_rules:
+      - "Same as H65, keep trades in UTC 00:00-08:00."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        utc_window: "00:00-08:00"
+        variant_type: "tod_window_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H84
+    family: cross_asset_regime
+    description: "H65 UTC window replication 08:00-16:00."
+    rationale: "Time-of-day sanity check for H65."
+    entry_rules:
+      - "Same as H65, keep trades in UTC 08:00-16:00."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        utc_window: "08:00-16:00"
+        variant_type: "tod_window_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned
+  - id: H85
+    family: cross_asset_regime
+    description: "H65 UTC window replication 16:00-24:00."
+    rationale: "Time-of-day sanity check for H65."
+    entry_rules:
+      - "Same as H65, keep trades in UTC 16:00-24:00."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        base_hypothesis: "H65"
+        utc_window: "16:00-24:00"
+        variant_type: "tod_window_only"
+        tuning: "forbidden"
+    allowed_variants: []
+    status: planned

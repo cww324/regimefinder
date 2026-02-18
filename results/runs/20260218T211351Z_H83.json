@@ -1,0 +1,333 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": 0.002185016062986095,
+      "ci_low": 0.0005452791240960238,
+      "mean": 0.0013128959390691225,
+      "n": 116,
+      "p_mean_gt_0": 0.9996666666666667,
+      "std": 0.004428392212760024,
+      "win_rate": 0.5172413793103449
+    },
+    "bps8": {
+      "ci_high": 0.0023850160629860953,
+      "ci_low": 0.0007452791240960242,
+      "mean": 0.001512895939069123,
+      "n": 116,
+      "p_mean_gt_0": 1.0,
+      "std": 0.004428392212760024,
+      "win_rate": 0.5517241379310345
+    },
+    "gross": {
+      "ci_high": 0.003185016062986096,
+      "ci_low": 0.0015452791240960241,
+      "mean": 0.002312895939069123,
+      "n": 116,
+      "p_mean_gt_0": 1.0,
+      "std": 0.004428392212760024,
+      "win_rate": 0.646551724137931
+    }
+  },
+  "classification": "INCONCLUSIVE",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H83 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h83_runner_20260218T211347Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H83 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h83_runner_20260218T211349Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H83 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h83_runner_20260218T211350Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 8,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H83",
+  "notes": "Adapter executed scripts/research_family_runner.py for cross_asset_regime gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-18T21:13:51+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": 0.0013650959769891436,
+          "mean_ci_high": 0.0025345043921004497,
+          "mean_ci_low": 0.00021545470003584446,
+          "n": 69,
+          "p_mean_gt_0": 0.9903333333333333
+        },
+        "diagnostics": {
+          "mae_proxy_median": null,
+          "median_hold_return": 0.00023074774767578663,
+          "return_histogram_bins": [
+            "(-inf,-1%)",
+            "[-1%,-0.5%)",
+            "[-0.5%,-0.2%)",
+            "[-0.2%,0%)",
+            "[0%,0.2%)",
+            "[0.2%,0.5%)",
+            "[0.5%,1%)",
+            "[1%,inf)"
+          ],
+          "return_histogram_counts": [
+            0,
+            5,
+            15,
+            36,
+            21,
+            17,
+            16,
+            6
+          ],
+          "top10_pct_pnl_contribution": 0.8437113582301746,
+          "trades_per_day": 0.6556759302873293
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0005184073258949416,
+            "n": 11,
+            "test_end": "2025-11-07T00:00:00+00:00",
+            "test_start": "2025-10-23T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0009489370540436329,
+            "n": 12,
+            "test_end": "2025-11-22T00:00:00+00:00",
+            "test_start": "2025-11-07T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0022053350133797297,
+            "n": 9,
+            "test_end": "2025-12-07T00:00:00+00:00",
+            "test_start": "2025-11-22T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.004859389657319468,
+            "n": 11,
+            "test_end": "2025-12-22T00:00:00+00:00",
+            "test_start": "2025-12-07T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.00024631772805456544,
+            "n": 12,
+            "test_end": "2026-01-06T00:00:00+00:00",
+            "test_start": "2025-12-22T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.000565096594425051,
+            "n": 5,
+            "test_end": "2026-01-21T00:00:00+00:00",
+            "test_start": "2026-01-06T00:00:00+00:00"
+          },
+          {
+            "fold_id": 7,
+            "mean": 0.001064654615192365,
+            "n": 9,
+            "test_end": "2026-02-05T00:00:00+00:00",
+            "test_start": "2026-01-21T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 5,
+          "pct": 71.42857142857143,
+          "total": 7
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": 0.0015650959769891444,
+          "mean_ci_high": 0.0027345043921004506,
+          "mean_ci_low": 0.0004154547000358448,
+          "n": 69,
+          "p_mean_gt_0": 0.9953333333333333
+        },
+        "diagnostics": {
+          "mae_proxy_median": null,
+          "median_hold_return": 0.0004307477476757866,
+          "return_histogram_bins": [
+            "(-inf,-1%)",
+            "[-1%,-0.5%)",
+            "[-0.5%,-0.2%)",
+            "[-0.2%,0%)",
+            "[0%,0.2%)",
+            "[0.2%,0.5%)",
+            "[0.5%,1%)",
+            "[1%,inf)"
+          ],
+          "return_histogram_counts": [
+            0,
+            4,
+            15,
+            33,
+            22,
+            19,
+            17,
+            6
+          ],
+          "top10_pct_pnl_contribution": 0.745850948501851,
+          "trades_per_day": 0.6556759302873293
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0007184073258949417,
+            "n": 11,
+            "test_end": "2025-11-07T00:00:00+00:00",
+            "test_start": "2025-10-23T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0011489370540436327,
+            "n": 12,
+            "test_end": "2025-11-22T00:00:00+00:00",
+            "test_start": "2025-11-07T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.00240533501337973,
+            "n": 9,
+            "test_end": "2025-12-07T00:00:00+00:00",
+            "test_start": "2025-11-22T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.005059389657319468,
+            "n": 11,
+            "test_end": "2025-12-22T00:00:00+00:00",
+            "test_start": "2025-12-07T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -4.631772805456543e-05,
+            "n": 12,
+            "test_end": "2026-01-06T00:00:00+00:00",
+            "test_start": "2025-12-22T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.00036509659442505104,
+            "n": 5,
+            "test_end": "2026-01-21T00:00:00+00:00",
+            "test_start": "2026-01-06T00:00:00+00:00"
+          },
+          {
+            "fold_id": 7,
+            "mean": 0.001264654615192365,
+            "n": 9,
+            "test_end": "2026-02-05T00:00:00+00:00",
+            "test_start": "2026-01-21T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 5,
+          "pct": 71.42857142857143,
+          "total": 7
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 0.002365095976989144,
+          "mean_ci_high": 0.0035345043921004506,
+          "mean_ci_low": 0.0012154547000358448,
+          "n": 69,
+          "p_mean_gt_0": 1.0
+        },
+        "diagnostics": {
+          "mae_proxy_median": null,
+          "median_hold_return": 0.0012307477476757867,
+          "return_histogram_bins": [
+            "(-inf,-1%)",
+            "[-1%,-0.5%)",
+            "[-0.5%,-0.2%)",
+            "[-0.2%,0%)",
+            "[0%,0.2%)",
+            "[0.2%,0.5%)",
+            "[0.5%,1%)",
+            "[1%,inf)"
+          ],
+          "return_histogram_counts": [
+            0,
+            3,
+            8,
+            30,
+            25,
+            22,
+            20,
+            8
+          ],
+          "top10_pct_pnl_contribution": 0.5236523923840755,
+          "trades_per_day": 0.6556759302873293
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0015184073258949417,
+            "n": 11,
+            "test_end": "2025-11-07T00:00:00+00:00",
+            "test_start": "2025-10-23T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.001948937054043633,
+            "n": 12,
+            "test_end": "2025-11-22T00:00:00+00:00",
+            "test_start": "2025-11-07T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0032053350133797297,
+            "n": 9,
+            "test_end": "2025-12-07T00:00:00+00:00",
+            "test_start": "2025-11-22T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.005859389657319469,
+            "n": 11,
+            "test_end": "2025-12-22T00:00:00+00:00",
+            "test_start": "2025-12-07T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": 0.0007536822719454347,
+            "n": 12,
+            "test_end": "2026-01-06T00:00:00+00:00",
+            "test_start": "2025-12-22T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.000434903405574949,
+            "n": 5,
+            "test_end": "2026-01-21T00:00:00+00:00",
+            "test_start": "2026-01-06T00:00:00+00:00"
+          },
+          {
+            "fold_id": 7,
+            "mean": 0.0020646546151923653,
+            "n": 9,
+            "test_end": "2026-02-05T00:00:00+00:00",
+            "test_start": "2026-01-21T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 7,
+          "pct": 100.0,
+          "total": 7
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

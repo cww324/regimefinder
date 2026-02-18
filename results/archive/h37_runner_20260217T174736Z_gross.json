@@ -1,0 +1,64 @@
+{
+  "baseline": {
+    "gross": {
+      "mean": 0.0001242807689119162,
+      "mean_ci_high": 0.00023445034375637827,
+      "mean_ci_low": 1.6882302597672192e-05,
+      "n": 3747,
+      "p_mean_gt_0": 0.9883333333333333,
+      "std": 0.0034231936006102457,
+      "win_rate": 0.5038697624766479
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0,
+    "cost_mode": "gross",
+    "days": 180,
+    "horizon": 6,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "family": "cross_asset_regime",
+  "hypothesis_id": "H37",
+  "timestamp_utc": "2026-02-17T17:47:37+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": 0.00020495563662748775,
+      "mean_ci_high": 0.0004410651208007892,
+      "mean_ci_low": -3.443752878732085e-05,
+      "n": 1066,
+      "p_mean_gt_0": 0.9483333333333334
+    },
+    "folds": [
+      {
+        "fold_id": 1,
+        "mean": 0.00010294917501156686,
+        "n": 600,
+        "test_end": "2026-01-27T00:00:00+00:00",
+        "test_start": "2026-01-12T00:00:00+00:00"
+      },
+      {
+        "fold_id": 2,
+        "mean": 0.0003362944284076434,
+        "n": 466,
+        "test_end": "2026-02-11T00:00:00+00:00",
+        "test_start": "2026-01-27T00:00:00+00:00"
+      }
+    ],
+    "positive_folds": {
+      "count": 2,
+      "pct": 100.0,
+      "total": 2
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

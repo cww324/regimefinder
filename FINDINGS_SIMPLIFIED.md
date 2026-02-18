@@ -1,4 +1,5 @@
 # Findings Simplified
+Canonical truth = `results/runs` artifacts; `results/summary.json` and findings are derived.
 
 Last Updated: 2026-02-17
 Scope: BTC-USD, Coinbase, 5m, ~180 days
@@ -173,3 +174,168 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
   - Means changed slightly: gross `+0.001258 -> +0.001242`, 8 bps `+0.000458 -> +0.000442`, 10 bps `+0.000258 -> +0.000242`.
   - Win-rates decreased: gross `60.17% -> 56.93%`, 8 bps `50.87% -> 48.05%`, 10 bps `47.84% -> 45.67%`.
   - H32 remains frozen; no rule changes.
+
+- H32: `FAIL` (bps8 n=462, mean=0.00045769968310510514, WF agg=0.0004421428714670377)
+
+- H33: `FAIL` (bps8 n=462, mean=-0.002057699683105106, WF agg=-0.002042142871467038)
+
+- H37: `FAIL` (bps8 n=3747, mean=-0.0006757192310880838, WF agg=-0.0005950443633725123)
+
+- H38: `FAIL` (bps8 n=406, mean=-0.000795139038499537, WF agg=-0.001159263093260172)
+
+- H39: `PASS` (bps8 n=326, mean=0.000608531221681871, WF agg=0.0009142505375646338)
+
+- H40: `FAIL` (bps8 n=7146, mean=-0.0005408389740210429, WF agg=-0.0005009386717780214)
+
+- H41: `FAIL` (bps8 n=1472, mean=-0.0009729836610631007, WF agg=-0.0010013846561422368)
+
+- H42: `FAIL` (bps8 n=2490, mean=-0.0005560967984188211, WF agg=-0.0005371786196449361)
+
+- H43: `FAIL` (bps8 n=2490, mean=-0.0010439032015811792, WF agg=-0.001062821380355064)
+
+- H44: `FAIL` (bps8 n=2449, mean=-0.0006521372701282587, WF agg=-0.0006452543119515767)
+
+- H45: `FAIL` (bps8 n=1286, mean=-0.0009290926943585902, WF agg=-0.0009951618769991227)
+
+- H46: `FAIL` (bps8 n=1795, mean=-0.0006141638905442473, WF agg=-0.000584206482415338)
+
+- H47: `FAIL` (bps8 n=2017, mean=-0.0007603113856433166, WF agg=-0.0007860825099800092)
+
+- H48: `FAIL` (bps8 n=1892, mean=-0.0008356582767705313, WF agg=-0.0007846438361969042)
+
+- H49: `FAIL` (bps8 n=514, mean=-0.0009279892070691534, WF agg=-0.0010249694928039527)
+
+- H50: `FAIL` (bps8 n=1929, mean=-0.0007966581332502239, WF agg=-0.0007762357203084478)
+
+- H51: `FAIL` (bps8 n=372, mean=-0.0006035595521548516, WF agg=-0.0007063938774321842)
+
+- H52: `INCONCLUSIVE` (bps8 n=363, mean=-0.0005117051006692997, WF agg=-4.0703864384104664e-05)
+
+- H53: `FAIL` (bps8 n=612, mean=-0.0007652927313003039, WF agg=-0.0004909237943503551)
+
+- H54: `FAIL` (bps8 n=3884, mean=-0.0008702141746363642, WF agg=-0.0009034568349689908)
+
+- H55: `FAIL` (bps8 n=2012, mean=-0.000781996291616128, WF agg=-0.0008269653048801187)
+
+- H56: `FAIL` (bps8 n=5092, mean=-0.0009707259739250243, WF agg=-0.0010278733088273664)
+
+- H59: `PASS` (bps8 n=334, mean=0.0010149890861475869, WF agg=0.0012866501297545039)
+
+- H60: `PASS` (bps8 n=324, mean=0.0017646081394872518, WF agg=0.0019027564333464171)
+
+- H61: `BORDERLINE` (bps8 n=324, mean=0.0005443140281774565, WF agg=0.0007096416455597401)
+
+## Phase-2 Replication Freeze Update (2026-02-17)
+- H59 freeze: `PASS gross / PASS bps8 / PASS bps10` (robust; bps8 and bps10 each 100% positive folds in WF).
+- H60 freeze: `PASS gross / PASS bps8 / PASS bps10` (robust).
+- H61 freeze (realism variant): `PASS gross / PASS bps8 / BORDERLINE bps10` (10 bps CI crosses 0; bps10 fold support 57.14%).
+
+- H62: `BORDERLINE` (bps8 n=335, mean=0.00033426024334174987, WF agg=0.0005426922388723893)
+
+- H63: `PASS` (bps8 n=335, mean=0.0014379580904312621, WF agg=0.0017501702449459885)
+
+- H64: `PASS` (bps8 n=325, mean=0.0010149075180192581, WF agg=0.0011027892932372364)
+
+- H65: `PASS` (bps8 n=325, mean=0.002259078222285754, WF agg=0.002254674868739397)
+
+- H66: `INCONCLUSIVE` (bps8 n=210, mean=0.001682866287913043, WF agg=0.0015062658827210316)
+
+- H67: `INCONCLUSIVE` (bps8 n=220, mean=0.0022613898043064304, WF agg=0.0009621722484972721)
+
+- H68: `INCONCLUSIVE` (bps8 n=170, mean=0.0015565755365926637, WF agg=0.0015079081630144436)
+
+- H69: `INCONCLUSIVE` (bps8 n=162, mean=0.0013403511705525348, WF agg=0.0018307265769311031)
+
+- H70: `PASS` (bps8 n=163, mean=0.0025294005359594476, WF agg=0.002063329956339998)
+
+- H71: `INCONCLUSIVE` (bps8 n=159, mean=0.0019813068126899153, WF agg=0.001888763804805619)
+
+- H72: `PASS` (bps8 n=332, mean=0.0014510684664164565, WF agg=0.0017604547965901834)
+
+- H73: `PASS` (bps8 n=322, mean=0.002258757983164865, WF agg=0.0023037077715540545)
+
+- H74: `INCONCLUSIVE` (bps8 n=210, mean=0.0012393011349051773, WF agg=0.0010655851371971826)
+
+- H75: `INCONCLUSIVE` (bps8 n=220, mean=0.0019459795260085302, WF agg=0.0004934618278751236)
+
+
+## Phase-2c Update (2026-02-18)
+- H63/H65 robustness replications added as new IDs (H66-H73) plus H59/H60 references (H74-H75); no rule changes.
+- Longer-lookback checks (120d vs 180d), odd/even day subsamples, and trade-density/concentration diagnostics logged in FINDINGS_TECHNICAL.md.
+
+- H76: `PASS` (bps8 n=328, mean=0.0015949277557862135, WF agg=0.001888404180074488)
+
+- H76: `PASS` (bps8 n=328, mean=0.0015949277557862135, WF agg=0.001888404180074488)
+
+- H77: `PASS` (bps8 n=324, mean=0.00213298458606954, WF agg=0.0019903163752861028)
+
+- H78: `PASS` (bps8 n=328, mean=0.0014201780443425722, WF agg=0.0017240476861219388)
+
+- H79: `PASS` (bps8 n=324, mean=0.00213298458606954, WF agg=0.0019903163752861028)
+
+- H80: `INCONCLUSIVE` (bps8 n=112, mean=0.0006517901630801529, WF agg=0.0007304200071063339)
+
+- H81: `INCONCLUSIVE` (bps8 n=106, mean=0.0018863729313158602, WF agg=0.0025269968210485565)
+
+- H82: `INCONCLUSIVE` (bps8 n=110, mean=0.001753294268726412, WF agg=0.001999492473436476)
+
+- H83: `INCONCLUSIVE` (bps8 n=116, mean=0.001512895939069123, WF agg=0.0015650959769891444)
+
+- H84: `INCONCLUSIVE` (bps8 n=109, mean=0.002732654466568435, WF agg=0.002319840351523096)
+
+- H85: `INCONCLUSIVE` (bps8 n=99, mean=0.0021993105060459915, WF agg=0.0022020625296173494)
+
+<!-- DERIVED_STATUS_START -->
+
+## Derived Status (Artifact-Backed)
+- H32: `INCONCLUSIVE` (artifact: `results/runs/20260217T171153Z_H32.json`)
+- H33: `INCONCLUSIVE` (artifact: `results/runs/20260217T172009Z_H33.json`)
+- H37: `INCONCLUSIVE` (artifact: `results/runs/20260217T174740Z_H37.json`)
+- H38: `INCONCLUSIVE` (artifact: `results/runs/20260217T174744Z_H38.json`)
+- H39: `PASS` (artifact: `results/runs/20260217T174748Z_H39.json`)
+- H40: `FAIL` (artifact: `results/runs/20260217T174752Z_H40.json`)
+- H41: `FAIL` (artifact: `results/runs/20260217T174756Z_H41.json`)
+- H42: `FAIL` (artifact: `results/runs/20260217T180330Z_H42.json`)
+- H43: `FAIL` (artifact: `results/runs/20260217T180334Z_H43.json`)
+- H44: `FAIL` (artifact: `results/runs/20260217T180338Z_H44.json`)
+- H45: `FAIL` (artifact: `results/runs/20260217T180342Z_H45.json`)
+- H46: `FAIL` (artifact: `results/runs/20260217T180346Z_H46.json`)
+- H47: `FAIL` (artifact: `results/runs/20260217T180351Z_H47.json`)
+- H48: `FAIL` (artifact: `results/runs/20260217T180355Z_H48.json`)
+- H49: `FAIL` (artifact: `results/runs/20260217T180359Z_H49.json`)
+- H50: `FAIL` (artifact: `results/runs/20260217T180402Z_H50.json`)
+- H51: `INCONCLUSIVE` (artifact: `results/runs/20260217T180406Z_H51.json`)
+- H52: `INCONCLUSIVE` (artifact: `results/runs/20260217T180410Z_H52.json`)
+- H53: `FAIL` (artifact: `results/runs/20260217T180414Z_H53.json`)
+- H54: `FAIL` (artifact: `results/runs/20260217T180418Z_H54.json`)
+- H55: `FAIL` (artifact: `results/runs/20260217T180422Z_H55.json`)
+- H56: `FAIL` (artifact: `results/runs/20260217T180426Z_H56.json`)
+- H59: `PASS` (artifact: `results/runs/20260217T181139Z_H59.json`)
+- H60: `PASS` (artifact: `results/runs/20260217T181143Z_H60.json`)
+- H61: `BORDERLINE` (artifact: `results/runs/20260217T181147Z_H61.json`)
+- H62: `BORDERLINE` (artifact: `results/runs/20260217T181610Z_H62.json`)
+- H63: `PASS` (artifact: `results/runs/20260217T181614Z_H63.json`)
+- H64: `PASS` (artifact: `results/runs/20260217T181618Z_H64.json`)
+- H65: `PASS` (artifact: `results/runs/20260217T181622Z_H65.json`)
+- H66: `INCONCLUSIVE` (artifact: `results/runs/20260218T074308Z_H66.json`)
+- H67: `INCONCLUSIVE` (artifact: `results/runs/20260218T074311Z_H67.json`)
+- H68: `PASS` (artifact: `results/runs/20260218T074315Z_H68.json`)
+- H69: `PASS` (artifact: `results/runs/20260218T074319Z_H69.json`)
+- H70: `PASS` (artifact: `results/runs/20260218T074323Z_H70.json`)
+- H71: `PASS` (artifact: `results/runs/20260218T074327Z_H71.json`)
+- H72: `PASS` (artifact: `results/runs/20260218T074331Z_H72.json`)
+- H73: `PASS` (artifact: `results/runs/20260218T074334Z_H73.json`)
+- H74: `INCONCLUSIVE` (artifact: `results/runs/20260218T074337Z_H74.json`)
+- H75: `INCONCLUSIVE` (artifact: `results/runs/20260218T074340Z_H75.json`)
+- H76: `PASS` (artifact: `results/runs/20260218T211324Z_H76.json`)
+- H77: `PASS` (artifact: `results/runs/20260218T211328Z_H77.json`)
+- H78: `PASS` (artifact: `results/runs/20260218T211332Z_H78.json`)
+- H79: `PASS` (artifact: `results/runs/20260218T211336Z_H79.json`)
+- H80: `FAIL` (artifact: `results/runs/20260218T211339Z_H80.json`)
+- H81: `PASS` (artifact: `results/runs/20260218T211344Z_H81.json`)
+- H82: `PASS` (artifact: `results/runs/20260218T211347Z_H82.json`)
+- H83: `PASS` (artifact: `results/runs/20260218T211351Z_H83.json`)
+- H84: `PASS` (artifact: `results/runs/20260218T211355Z_H84.json`)
+- H85: `PASS` (artifact: `results/runs/20260218T211400Z_H85.json`)
+
+<!-- DERIVED_STATUS_END -->

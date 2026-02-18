@@ -1,0 +1,234 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": -0.0005561184568501887,
+      "ci_low": -0.0009583849207592272,
+      "mean": -0.0007560967984188214,
+      "n": 2490,
+      "p_mean_gt_0": 0.0,
+      "std": 0.005084729483600029,
+      "win_rate": 0.3654618473895582
+    },
+    "bps8": {
+      "ci_high": -0.00035611845685018837,
+      "ci_low": -0.0007583849207592268,
+      "mean": -0.0005560967984188211,
+      "n": 2490,
+      "p_mean_gt_0": 0.0,
+      "std": 0.005084729483600029,
+      "win_rate": 0.3895582329317269
+    },
+    "gross": {
+      "ci_high": 0.0004438815431498117,
+      "ci_low": 4.161507924077322e-05,
+      "mean": 0.0002439032015811789,
+      "n": 2490,
+      "p_mean_gt_0": 0.989,
+      "std": 0.005084729483600029,
+      "win_rate": 0.4907630522088353
+    }
+  },
+  "classification": "FAIL",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H42 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h42_runner_20260217T180326Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H42 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h42_runner_20260217T180327Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H42 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h42_runner_20260217T180329Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 6,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H42",
+  "notes": "Adapter executed scripts/research_family_runner.py for shock_structure gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-17T18:03:30+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": -0.0007371786196449365,
+          "mean_ci_high": -0.000449989397699064,
+          "mean_ci_low": -0.0010307066345401957,
+          "n": 1401,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0007873027835862807,
+            "n": 297,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0005151893146623056,
+            "n": 156,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0009140209394440005,
+            "n": 199,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.0005205448842196081,
+            "n": 136,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.001179786827072189,
+            "n": 259,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.00045293708162483346,
+            "n": 354,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": -0.0005371786196449361,
+          "mean_ci_high": -0.0002499893976990637,
+          "mean_ci_low": -0.0008307066345401955,
+          "n": 1401,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0005873027835862805,
+            "n": 297,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0003151893146623055,
+            "n": 156,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0007140209394440002,
+            "n": 199,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.000320544884219608,
+            "n": 136,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0009797868270721886,
+            "n": 259,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.00025293708162483293,
+            "n": 354,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 0.000262821380355064,
+          "mean_ci_high": 0.0005500106023009363,
+          "mean_ci_low": -3.070663454019543e-05,
+          "n": 1401,
+          "p_mean_gt_0": 0.9566666666666667
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.00021269721641371952,
+            "n": 297,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.00048481068533769476,
+            "n": 156,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 8.597906055599976e-05,
+            "n": 199,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.00047945511578039216,
+            "n": 136,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0001797868270721886,
+            "n": 259,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.0005470629183751671,
+            "n": 354,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 5,
+          "pct": 83.33333333333333,
+          "total": 6
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

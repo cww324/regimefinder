@@ -1,0 +1,5 @@
+batch_size: 5
+next_index: 10
+queue: ["H76", "H77", "H78", "H79", "H80", "H81", "H82", "H83", "H84", "H85"]
+paused: false
+notes: ""

@@ -1,0 +1,255 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": 0.002216978057669983,
+      "ci_low": 0.0009535955877716724,
+      "mean": 0.0015646081394872513,
+      "n": 324,
+      "p_mean_gt_0": 1.0,
+      "std": 0.005812508399764163,
+      "win_rate": 0.5802469135802469
+    },
+    "bps8": {
+      "ci_high": 0.0024169780576699836,
+      "ci_low": 0.0011535955877716728,
+      "mean": 0.0017646081394872518,
+      "n": 324,
+      "p_mean_gt_0": 1.0,
+      "std": 0.005812508399764164,
+      "win_rate": 0.6111111111111112
+    },
+    "gross": {
+      "ci_high": 0.0032169780576699835,
+      "ci_low": 0.0019535955877716727,
+      "mean": 0.002564608139487252,
+      "n": 324,
+      "p_mean_gt_0": 1.0,
+      "std": 0.005812508399764164,
+      "win_rate": 0.6851851851851852
+    }
+  },
+  "classification": "PASS",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H60 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h60_runner_20260217T181139Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H60 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h60_runner_20260217T181140Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H60 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h60_runner_20260217T181142Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 6,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H60",
+  "notes": "Adapter executed scripts/research_family_runner.py for cross_asset_regime gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-17T18:11:43+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": 0.0017027564333464164,
+          "mean_ci_high": 0.002525236180437291,
+          "mean_ci_low": 0.000896431984622774,
+          "n": 191,
+          "p_mean_gt_0": 1.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0021402606583050313,
+            "n": 26,
+            "test_end": "2025-11-05T00:00:00+00:00",
+            "test_start": "2025-10-21T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0017625703513027087,
+            "n": 28,
+            "test_end": "2025-11-20T00:00:00+00:00",
+            "test_start": "2025-11-05T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0016740521854605374,
+            "n": 34,
+            "test_end": "2025-12-05T00:00:00+00:00",
+            "test_start": "2025-11-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.004586474384002962,
+            "n": 31,
+            "test_end": "2025-12-20T00:00:00+00:00",
+            "test_start": "2025-12-05T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0002784016316862382,
+            "n": 32,
+            "test_end": "2026-01-04T00:00:00+00:00",
+            "test_start": "2025-12-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.0004642583469261333,
+            "n": 23,
+            "test_end": "2026-01-19T00:00:00+00:00",
+            "test_start": "2026-01-04T00:00:00+00:00"
+          },
+          {
+            "fold_id": 7,
+            "mean": 0.0011388330495098505,
+            "n": 17,
+            "test_end": "2026-02-03T00:00:00+00:00",
+            "test_start": "2026-01-19T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 6,
+          "pct": 85.71428571428571,
+          "total": 7
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": 0.0019027564333464171,
+          "mean_ci_high": 0.002725236180437291,
+          "mean_ci_low": 0.0010964319846227745,
+          "n": 191,
+          "p_mean_gt_0": 1.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0023402606583050314,
+            "n": 26,
+            "test_end": "2025-11-05T00:00:00+00:00",
+            "test_start": "2025-10-21T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0019625703513027086,
+            "n": 28,
+            "test_end": "2025-11-20T00:00:00+00:00",
+            "test_start": "2025-11-05T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0018740521854605382,
+            "n": 34,
+            "test_end": "2025-12-05T00:00:00+00:00",
+            "test_start": "2025-11-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.004786474384002964,
+            "n": 31,
+            "test_end": "2025-12-20T00:00:00+00:00",
+            "test_start": "2025-12-05T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -7.840163168623828e-05,
+            "n": 32,
+            "test_end": "2026-01-04T00:00:00+00:00",
+            "test_start": "2025-12-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.0006642583469261337,
+            "n": 23,
+            "test_end": "2026-01-19T00:00:00+00:00",
+            "test_start": "2026-01-04T00:00:00+00:00"
+          },
+          {
+            "fold_id": 7,
+            "mean": 0.0013388330495098502,
+            "n": 17,
+            "test_end": "2026-02-03T00:00:00+00:00",
+            "test_start": "2026-01-19T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 6,
+          "pct": 85.71428571428571,
+          "total": 7
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 0.0027027564333464175,
+          "mean_ci_high": 0.003525236180437292,
+          "mean_ci_low": 0.0018964319846227744,
+          "n": 191,
+          "p_mean_gt_0": 1.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0031402606583050318,
+            "n": 26,
+            "test_end": "2025-11-05T00:00:00+00:00",
+            "test_start": "2025-10-21T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.002762570351302709,
+            "n": 28,
+            "test_end": "2025-11-20T00:00:00+00:00",
+            "test_start": "2025-11-05T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0026740521854605377,
+            "n": 34,
+            "test_end": "2025-12-05T00:00:00+00:00",
+            "test_start": "2025-11-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.005586474384002963,
+            "n": 31,
+            "test_end": "2025-12-20T00:00:00+00:00",
+            "test_start": "2025-12-05T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": 0.0007215983683137618,
+            "n": 32,
+            "test_end": "2026-01-04T00:00:00+00:00",
+            "test_start": "2025-12-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.0014642583469261336,
+            "n": 23,
+            "test_end": "2026-01-19T00:00:00+00:00",
+            "test_start": "2026-01-04T00:00:00+00:00"
+          },
+          {
+            "fold_id": 7,
+            "mean": 0.002138833049509851,
+            "n": 17,
+            "test_end": "2026-02-03T00:00:00+00:00",
+            "test_start": "2026-01-19T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 7,
+          "pct": 100.0,
+          "total": 7
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

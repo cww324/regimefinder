@@ -1,0 +1,150 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": -0.00023218193213187283,
+      "ci_low": -0.0013946702020166677,
+      "mean": -0.0008035595521548518,
+      "n": 372,
+      "p_mean_gt_0": 0.003,
+      "std": 0.005802895050060113,
+      "win_rate": 0.43010752688172044
+    },
+    "bps8": {
+      "ci_high": -3.218193213187234e-05,
+      "ci_low": -0.0011946702020166672,
+      "mean": -0.0006035595521548516,
+      "n": 372,
+      "p_mean_gt_0": 0.019666666666666666,
+      "std": 0.005802895050060113,
+      "win_rate": 0.45698924731182794
+    },
+    "gross": {
+      "ci_high": 0.0007678180678681275,
+      "ci_low": -0.00039467020201666714,
+      "mean": 0.0001964404478451486,
+      "n": 372,
+      "p_mean_gt_0": 0.7323333333333333,
+      "std": 0.005802895050060113,
+      "win_rate": 0.5698924731182796
+    }
+  },
+  "classification": "FAIL",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H51 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h51_runner_20260217T180402Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H51 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h51_runner_20260217T180404Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H51 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h51_runner_20260217T180405Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 6,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H51",
+  "notes": "Adapter executed scripts/research_family_runner.py for mean_reversion gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-17T18:04:06+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": -0.0009063938774321843,
+          "mean_ci_high": 2.2846841970865476e-05,
+          "mean_ci_low": -0.001840267428406455,
+          "n": 190,
+          "p_mean_gt_0": 0.027333333333333334
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0009725354321589624,
+            "n": 79,
+            "test_end": "2026-01-28T00:00:00+00:00",
+            "test_start": "2026-01-13T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0008593201583023157,
+            "n": 111,
+            "test_end": "2026-02-12T00:00:00+00:00",
+            "test_start": "2026-01-28T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 2
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": -0.0007063938774321842,
+          "mean_ci_high": 0.00022284684197086603,
+          "mean_ci_low": -0.0016402674284064548,
+          "n": 190,
+          "p_mean_gt_0": 0.06866666666666667
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0007725354321589622,
+            "n": 79,
+            "test_end": "2026-01-28T00:00:00+00:00",
+            "test_start": "2026-01-13T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0006593201583023147,
+            "n": 111,
+            "test_end": "2026-02-12T00:00:00+00:00",
+            "test_start": "2026-01-28T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 2
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 9.360612256781602e-05,
+          "mean_ci_high": 0.001022846841970866,
+          "mean_ci_low": -0.0008402674284064549,
+          "n": 190,
+          "p_mean_gt_0": 0.5863333333333334
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 2.7464567841038154e-05,
+            "n": 79,
+            "test_end": "2026-01-28T00:00:00+00:00",
+            "test_start": "2026-01-13T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.00014067984169768494,
+            "n": 111,
+            "test_end": "2026-02-12T00:00:00+00:00",
+            "test_start": "2026-01-28T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 2,
+          "pct": 100.0,
+          "total": 2
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

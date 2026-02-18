@@ -1,0 +1,234 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": -0.0005511627063266361,
+      "ci_low": -0.0010608458391539938,
+      "mean": -0.0008141638905442475,
+      "n": 1795,
+      "p_mean_gt_0": 0.0,
+      "std": 0.005526091729231508,
+      "win_rate": 0.38495821727019497
+    },
+    "bps8": {
+      "ci_high": -0.0003511627063266358,
+      "ci_low": -0.0008608458391539935,
+      "mean": -0.0006141638905442473,
+      "n": 1795,
+      "p_mean_gt_0": 0.0,
+      "std": 0.005526091729231508,
+      "win_rate": 0.403899721448468
+    },
+    "gross": {
+      "ci_high": 0.0004488372936733643,
+      "ci_low": -6.0845839153993456e-05,
+      "mean": 0.00018583610945575283,
+      "n": 1795,
+      "p_mean_gt_0": 0.932,
+      "std": 0.005526091729231508,
+      "win_rate": 0.4885793871866295
+    }
+  },
+  "classification": "FAIL",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H46 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h46_runner_20260217T180342Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H46 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h46_runner_20260217T180343Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H46 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h46_runner_20260217T180345Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 6,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H46",
+  "notes": "Adapter executed scripts/research_family_runner.py for shock_structure gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-17T18:03:46+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": -0.0007842064824153381,
+          "mean_ci_high": -0.00042768989217369135,
+          "mean_ci_low": -0.0011354832849207852,
+          "n": 1074,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0005762829700573614,
+            "n": 230,
+            "test_end": "2025-11-25T00:00:00+00:00",
+            "test_start": "2025-11-10T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0006838562558447751,
+            "n": 105,
+            "test_end": "2025-12-10T00:00:00+00:00",
+            "test_start": "2025-11-25T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0009661685606962336,
+            "n": 138,
+            "test_end": "2025-12-25T00:00:00+00:00",
+            "test_start": "2025-12-10T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.0008024010098649734,
+            "n": 108,
+            "test_end": "2026-01-09T00:00:00+00:00",
+            "test_start": "2025-12-25T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0009631053459199182,
+            "n": 189,
+            "test_end": "2026-01-24T00:00:00+00:00",
+            "test_start": "2026-01-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.0007758891161737389,
+            "n": 304,
+            "test_end": "2026-02-08T00:00:00+00:00",
+            "test_start": "2026-01-24T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": -0.000584206482415338,
+          "mean_ci_high": -0.00022768989217369107,
+          "mean_ci_low": -0.0009354832849207845,
+          "n": 1074,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0003762829700573614,
+            "n": 230,
+            "test_end": "2025-11-25T00:00:00+00:00",
+            "test_start": "2025-11-10T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0004838562558447749,
+            "n": 105,
+            "test_end": "2025-12-10T00:00:00+00:00",
+            "test_start": "2025-11-25T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0007661685606962335,
+            "n": 138,
+            "test_end": "2025-12-25T00:00:00+00:00",
+            "test_start": "2025-12-10T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.0006024010098649731,
+            "n": 108,
+            "test_end": "2026-01-09T00:00:00+00:00",
+            "test_start": "2025-12-25T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0007631053459199181,
+            "n": 189,
+            "test_end": "2026-01-24T00:00:00+00:00",
+            "test_start": "2026-01-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.0005758891161737388,
+            "n": 304,
+            "test_end": "2026-02-08T00:00:00+00:00",
+            "test_start": "2026-01-24T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 0.00021579351758466232,
+          "mean_ci_high": 0.000572310107826309,
+          "mean_ci_low": -0.00013548328492078452,
+          "n": 1074,
+          "p_mean_gt_0": 0.8893333333333333
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.00042371702994263897,
+            "n": 230,
+            "test_end": "2025-11-25T00:00:00+00:00",
+            "test_start": "2025-11-10T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0003161437441552252,
+            "n": 105,
+            "test_end": "2025-12-10T00:00:00+00:00",
+            "test_start": "2025-11-25T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 3.383143930376674e-05,
+            "n": 138,
+            "test_end": "2025-12-25T00:00:00+00:00",
+            "test_start": "2025-12-10T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 0.00019759899013502692,
+            "n": 108,
+            "test_end": "2026-01-09T00:00:00+00:00",
+            "test_start": "2025-12-25T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": 3.689465408008212e-05,
+            "n": 189,
+            "test_end": "2026-01-24T00:00:00+00:00",
+            "test_start": "2026-01-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.0002241108838262614,
+            "n": 304,
+            "test_end": "2026-02-08T00:00:00+00:00",
+            "test_start": "2026-01-24T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 6,
+          "pct": 100.0,
+          "total": 6
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

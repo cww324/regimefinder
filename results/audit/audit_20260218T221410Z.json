@@ -1,0 +1,1259 @@
+{
+  "artifact_count": 50,
+  "failure_count": 250,
+  "failures": [
+    {
+      "artifact": "20260217T171153Z_H32.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T171153Z_H32.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T171153Z_H32.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T171153Z_H32.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T171153Z_H32.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T172009Z_H33.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T172009Z_H33.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T172009Z_H33.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T172009Z_H33.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T172009Z_H33.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174740Z_H37.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174740Z_H37.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174740Z_H37.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174740Z_H37.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174740Z_H37.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174744Z_H38.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174744Z_H38.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174744Z_H38.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174744Z_H38.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174744Z_H38.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174748Z_H39.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174748Z_H39.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174748Z_H39.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174748Z_H39.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174748Z_H39.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174752Z_H40.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174752Z_H40.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174752Z_H40.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174752Z_H40.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174752Z_H40.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174756Z_H41.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174756Z_H41.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174756Z_H41.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174756Z_H41.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T174756Z_H41.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180330Z_H42.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180330Z_H42.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180330Z_H42.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180330Z_H42.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180330Z_H42.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180334Z_H43.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180334Z_H43.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180334Z_H43.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180334Z_H43.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180334Z_H43.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180338Z_H44.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180338Z_H44.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180338Z_H44.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180338Z_H44.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180338Z_H44.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180342Z_H45.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180342Z_H45.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180342Z_H45.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180342Z_H45.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180342Z_H45.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180346Z_H46.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180346Z_H46.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180346Z_H46.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180346Z_H46.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180346Z_H46.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180351Z_H47.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180351Z_H47.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180351Z_H47.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180351Z_H47.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180351Z_H47.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180355Z_H48.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180355Z_H48.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180355Z_H48.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180355Z_H48.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180355Z_H48.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180359Z_H49.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180359Z_H49.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180359Z_H49.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180359Z_H49.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180359Z_H49.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180402Z_H50.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180402Z_H50.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180402Z_H50.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180402Z_H50.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180402Z_H50.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180406Z_H51.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180406Z_H51.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180406Z_H51.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180406Z_H51.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180406Z_H51.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180410Z_H52.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180410Z_H52.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180410Z_H52.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180410Z_H52.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180410Z_H52.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180414Z_H53.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180414Z_H53.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180414Z_H53.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180414Z_H53.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180414Z_H53.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180418Z_H54.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180418Z_H54.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180418Z_H54.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180418Z_H54.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180418Z_H54.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180422Z_H55.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180422Z_H55.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180422Z_H55.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180422Z_H55.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180422Z_H55.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180426Z_H56.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180426Z_H56.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180426Z_H56.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180426Z_H56.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T180426Z_H56.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181139Z_H59.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181139Z_H59.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181139Z_H59.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181139Z_H59.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181139Z_H59.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181143Z_H60.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181143Z_H60.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181143Z_H60.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181143Z_H60.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181143Z_H60.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181147Z_H61.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181147Z_H61.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181147Z_H61.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181147Z_H61.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181147Z_H61.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181610Z_H62.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181610Z_H62.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181610Z_H62.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181610Z_H62.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181610Z_H62.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181614Z_H63.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181614Z_H63.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181614Z_H63.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181614Z_H63.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181614Z_H63.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181618Z_H64.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181618Z_H64.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181618Z_H64.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181618Z_H64.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181618Z_H64.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181622Z_H65.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181622Z_H65.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181622Z_H65.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181622Z_H65.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260217T181622Z_H65.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074308Z_H66.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074308Z_H66.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074308Z_H66.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074308Z_H66.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074308Z_H66.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074311Z_H67.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074311Z_H67.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074311Z_H67.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074311Z_H67.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074311Z_H67.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074315Z_H68.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074315Z_H68.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074315Z_H68.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074315Z_H68.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074315Z_H68.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074319Z_H69.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074319Z_H69.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074319Z_H69.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074319Z_H69.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074319Z_H69.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074323Z_H70.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074323Z_H70.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074323Z_H70.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074323Z_H70.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074323Z_H70.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074327Z_H71.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074327Z_H71.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074327Z_H71.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074327Z_H71.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074327Z_H71.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074331Z_H72.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074331Z_H72.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074331Z_H72.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074331Z_H72.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074331Z_H72.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074334Z_H73.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074334Z_H73.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074334Z_H73.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074334Z_H73.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074334Z_H73.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074337Z_H74.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074337Z_H74.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074337Z_H74.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074337Z_H74.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074337Z_H74.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074340Z_H75.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074340Z_H75.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074340Z_H75.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074340Z_H75.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T074340Z_H75.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211236Z_H76.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211236Z_H76.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211236Z_H76.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211236Z_H76.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211236Z_H76.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211324Z_H76.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211324Z_H76.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211324Z_H76.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211324Z_H76.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211324Z_H76.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211328Z_H77.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211328Z_H77.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211328Z_H77.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211328Z_H77.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211328Z_H77.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211332Z_H78.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211332Z_H78.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211332Z_H78.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211332Z_H78.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211332Z_H78.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211336Z_H79.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211336Z_H79.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211336Z_H79.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211336Z_H79.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211336Z_H79.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211339Z_H80.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211339Z_H80.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211339Z_H80.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211339Z_H80.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211339Z_H80.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211344Z_H81.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211344Z_H81.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211344Z_H81.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211344Z_H81.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211344Z_H81.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211347Z_H82.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211347Z_H82.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211347Z_H82.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211347Z_H82.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211347Z_H82.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211351Z_H83.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211351Z_H83.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211351Z_H83.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211351Z_H83.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211351Z_H83.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211355Z_H84.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211355Z_H84.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211355Z_H84.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211355Z_H84.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211355Z_H84.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211400Z_H85.json",
+      "detail": "start_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211400Z_H85.json",
+      "detail": "end_ts",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211400Z_H85.json",
+      "detail": "bar_count",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211400Z_H85.json",
+      "detail": "db_path",
+      "reason": "missing_dataset_key"
+    },
+    {
+      "artifact": "20260218T211400Z_H85.json",
+      "detail": "db_last_modified",
+      "reason": "missing_dataset_key"
+    }
+  ],
+  "ok": false,
+  "runs_dir": "results/runs",
+  "timestamp_utc": "2026-02-18T22:14:10+00:00"
+}

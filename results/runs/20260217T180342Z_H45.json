@@ -1,0 +1,234 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": -0.0008933209086581293,
+      "ci_low": -0.0013588110319920806,
+      "mean": -0.0011290926943585905,
+      "n": 1286,
+      "p_mean_gt_0": 0.0,
+      "std": 0.004308551486624351,
+      "win_rate": 0.33514774494556765
+    },
+    "bps8": {
+      "ci_high": -0.0006933209086581292,
+      "ci_low": -0.0011588110319920805,
+      "mean": -0.0009290926943585902,
+      "n": 1286,
+      "p_mean_gt_0": 0.0,
+      "std": 0.004308551486624351,
+      "win_rate": 0.3631415241057543
+    },
+    "gross": {
+      "ci_high": 0.00010667909134187086,
+      "ci_low": -0.00035881103199208043,
+      "mean": -0.00012909269435859016,
+      "n": 1286,
+      "p_mean_gt_0": 0.14,
+      "std": 0.004308551486624351,
+      "win_rate": 0.4821150855365474
+    }
+  },
+  "classification": "FAIL",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H45 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h45_runner_20260217T180338Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H45 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h45_runner_20260217T180339Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H45 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h45_runner_20260217T180341Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 6,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H45",
+  "notes": "Adapter executed scripts/research_family_runner.py for shock_structure gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-17T18:03:42+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": -0.001195161876999123,
+          "mean_ci_high": -0.0008249151184458732,
+          "mean_ci_low": -0.0015408822639630647,
+          "n": 700,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0008421438915940258,
+            "n": 153,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0004896271252609808,
+            "n": 70,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.002345072452039926,
+            "n": 92,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.001556368586668394,
+            "n": 70,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.001692346970028827,
+            "n": 133,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.0006797625607084432,
+            "n": 182,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": -0.0009951618769991227,
+          "mean_ci_high": -0.000624915118445873,
+          "mean_ci_low": -0.0013408822639630644,
+          "n": 700,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0006421438915940254,
+            "n": 153,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0002896271252609807,
+            "n": 70,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0021450724520399246,
+            "n": 92,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.0013563685866683937,
+            "n": 70,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0014923469700288269,
+            "n": 133,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.00047976256070844306,
+            "n": 182,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": -0.00019516187699912259,
+          "mean_ci_high": 0.00017508488155412705,
+          "mean_ci_low": -0.0005408822639630642,
+          "n": 700,
+          "p_mean_gt_0": 0.13133333333333333
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.00015785610840597463,
+            "n": 153,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0005103728747390195,
+            "n": 70,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0013450724520399251,
+            "n": 92,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.000556368586668394,
+            "n": 70,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.000692346970028827,
+            "n": 133,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.00032023743929155714,
+            "n": 182,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 3,
+          "pct": 50.0,
+          "total": 6
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

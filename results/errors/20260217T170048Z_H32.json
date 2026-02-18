@@ -1,0 +1,42 @@
+{
+  "context": {
+    "batch": [
+      "H32"
+    ],
+    "batch_size": 5,
+    "completed": [],
+    "missing": [
+      "scripts/run_h32_research.py",
+      "scripts/h32_research.py",
+      "scripts/run_hypothesis_h32.py",
+      "scripts/h32_pipeline.py",
+      "scripts/h32_eval.py"
+    ],
+    "next_index": 0,
+    "searched": [
+      "scripts/run_h32_research.py",
+      "scripts/h32_research.py",
+      "scripts/run_hypothesis_h32.py",
+      "scripts/h32_pipeline.py",
+      "scripts/h32_eval.py"
+    ]
+  },
+  "error": "H32 adapter requires an existing non-live research runner script; none found. Live runner scripts/run_paper_h32_live.py is explicitly excluded.",
+  "hypothesis_id": "H32",
+  "missing": [
+    "scripts/run_h32_research.py",
+    "scripts/h32_research.py",
+    "scripts/run_hypothesis_h32.py",
+    "scripts/h32_pipeline.py",
+    "scripts/h32_eval.py"
+  ],
+  "searched": [
+    "scripts/run_h32_research.py",
+    "scripts/h32_research.py",
+    "scripts/run_hypothesis_h32.py",
+    "scripts/h32_pipeline.py",
+    "scripts/h32_eval.py"
+  ],
+  "timestamp_utc": "2026-02-17T17:00:48+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 480, in main\n    result = run_adapter_for_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 416, in run_adapter_for_hypothesis\n    return run_h32_adapter(hypothesis_id, hypothesis_def, dataset_defaults, gates)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 344, in run_h32_adapter\n    raise MissingRunnerError(\nMissingRunnerError: H32 adapter requires an existing non-live research runner script; none found. Live runner scripts/run_paper_h32_live.py is explicitly excluded.\n"
+}

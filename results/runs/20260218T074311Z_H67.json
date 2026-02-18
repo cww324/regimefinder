@@ -1,0 +1,171 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": 0.0029257398233997903,
+      "ci_low": 0.0012291432923541945,
+      "mean": 0.0020613898043064295,
+      "n": 220,
+      "p_mean_gt_0": 1.0,
+      "std": 0.006315802637113411,
+      "win_rate": 0.5681818181818182
+    },
+    "bps8": {
+      "ci_high": 0.0031257398233997904,
+      "ci_low": 0.0014291432923541952,
+      "mean": 0.0022613898043064304,
+      "n": 220,
+      "p_mean_gt_0": 1.0,
+      "std": 0.006315802637113411,
+      "win_rate": 0.5909090909090909
+    },
+    "gross": {
+      "ci_high": 0.003925739823399791,
+      "ci_low": 0.0022291432923541954,
+      "mean": 0.0030613898043064303,
+      "n": 220,
+      "p_mean_gt_0": 1.0,
+      "std": 0.006315802637113411,
+      "win_rate": 0.7045454545454546
+    }
+  },
+  "classification": "INCONCLUSIVE",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H67 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h67_runner_20260218T074308Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H67 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h67_runner_20260218T074309Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H67 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h67_runner_20260218T074310Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 8,
+    "lookback_days": 120,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H67",
+  "notes": "Adapter executed scripts/research_family_runner.py for cross_asset_regime gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-18T07:43:11+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": 0.000762172248497272,
+          "mean_ci_high": 0.001672227054637115,
+          "mean_ci_low": -8.051758607935353e-05,
+          "n": 72,
+          "p_mean_gt_0": 0.9646666666666667
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0006877597869304724,
+            "n": 32,
+            "test_end": "2026-01-04T00:00:00+00:00",
+            "test_start": "2025-12-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0006205843545893669,
+            "n": 23,
+            "test_end": "2026-01-19T00:00:00+00:00",
+            "test_start": "2026-01-04T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0010938028561454718,
+            "n": 17,
+            "test_end": "2026-02-03T00:00:00+00:00",
+            "test_start": "2026-01-19T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 3,
+          "pct": 100.0,
+          "total": 3
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": 0.0009621722484972721,
+          "mean_ci_high": 0.0018722270546371153,
+          "mean_ci_low": 0.00011948241392064662,
+          "n": 72,
+          "p_mean_gt_0": 0.9866666666666667
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0008877597869304724,
+            "n": 32,
+            "test_end": "2026-01-04T00:00:00+00:00",
+            "test_start": "2025-12-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0008205843545893675,
+            "n": 23,
+            "test_end": "2026-01-19T00:00:00+00:00",
+            "test_start": "2026-01-04T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0012938028561454722,
+            "n": 17,
+            "test_end": "2026-02-03T00:00:00+00:00",
+            "test_start": "2026-01-19T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 3,
+          "pct": 100.0,
+          "total": 3
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 0.0017621722484972722,
+          "mean_ci_high": 0.0026722270546371153,
+          "mean_ci_low": 0.0009194824139206468,
+          "n": 72,
+          "p_mean_gt_0": 1.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 0.0016877597869304727,
+            "n": 32,
+            "test_end": "2026-01-04T00:00:00+00:00",
+            "test_start": "2025-12-20T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": 0.0016205843545893674,
+            "n": 23,
+            "test_end": "2026-01-19T00:00:00+00:00",
+            "test_start": "2026-01-04T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": 0.0020938028561454723,
+            "n": 17,
+            "test_end": "2026-02-03T00:00:00+00:00",
+            "test_start": "2026-01-19T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 3,
+          "pct": 100.0,
+          "total": 3
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

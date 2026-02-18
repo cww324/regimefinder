@@ -1,0 +1,97 @@
+{
+  "baseline": {
+    "gross": {
+      "mean": 0.0030613898043064303,
+      "mean_ci_high": 0.003925739823399791,
+      "mean_ci_low": 0.0022291432923541954,
+      "n": 220,
+      "p_mean_gt_0": 1.0,
+      "std": 0.006315802637113411,
+      "win_rate": 0.7045454545454546
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0,
+    "cost_mode": "gross",
+    "days": 120,
+    "horizon": 8,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "diagnostics": {
+    "mae_proxy_median": null,
+    "median_hold_return": 0.0018431516626127298,
+    "return_histogram_bins": [
+      "(-inf,-1%)",
+      "[-1%,-0.5%)",
+      "[-0.5%,-0.2%)",
+      "[-0.2%,0%)",
+      "[0%,0.2%)",
+      "[0.2%,0.5%)",
+      "[0.5%,1%)",
+      "[1%,inf)"
+    ],
+    "return_histogram_counts": [
+      2,
+      10,
+      13,
+      40,
+      47,
+      46,
+      33,
+      29
+    ],
+    "top10_pct_pnl_contribution": 0.5367119722053396,
+    "trades_per_day": 1.8545837723919916
+  },
+  "family": "cross_asset_regime",
+  "hypothesis_id": "H67",
+  "timestamp_utc": "2026-02-18T07:43:09+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": 0.0017621722484972722,
+      "mean_ci_high": 0.0026722270546371153,
+      "mean_ci_low": 0.0009194824139206468,
+      "n": 72,
+      "p_mean_gt_0": 1.0
+    },
+    "folds": [
+      {
+        "fold_id": 1,
+        "mean": 0.0016877597869304727,
+        "n": 32,
+        "test_end": "2026-01-04T00:00:00+00:00",
+        "test_start": "2025-12-20T00:00:00+00:00"
+      },
+      {
+        "fold_id": 2,
+        "mean": 0.0016205843545893674,
+        "n": 23,
+        "test_end": "2026-01-19T00:00:00+00:00",
+        "test_start": "2026-01-04T00:00:00+00:00"
+      },
+      {
+        "fold_id": 3,
+        "mean": 0.0020938028561454723,
+        "n": 17,
+        "test_end": "2026-02-03T00:00:00+00:00",
+        "test_start": "2026-01-19T00:00:00+00:00"
+      }
+    ],
+    "positive_folds": {
+      "count": 3,
+      "pct": 100.0,
+      "total": 3
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

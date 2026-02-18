@@ -1,0 +1,406 @@
+{
+  "context": {
+    "batch": [
+      "H32"
+    ],
+    "batch_size": 5,
+    "completed": [],
+    "missing": [
+      "scripts/run_h32_research.py",
+      "scripts/h32_research.py",
+      "scripts/run_hypothesis_h32.py",
+      "scripts/h32_pipeline.py",
+      "scripts/h32_eval.py"
+    ],
+    "next_index": 0,
+    "searched": [
+      "scripts/run_h32_research.py",
+      "scripts/h32_research.py",
+      "scripts/run_hypothesis_h32.py",
+      "scripts/h32_pipeline.py",
+      "scripts/h32_eval.py"
+    ]
+  },
+  "error": "H32 adapter requires an existing non-live research runner script; none found. Live runner scripts/run_paper_h32_live.py is explicitly excluded. Findings include kickoff command blocks but no dedicated reusable H32 WF/bootstrap runner command block.",
+  "evidence": {
+    "candidate_rejections": [
+      {
+        "reason": "not_h32_research_runner",
+        "script": "scripts/ablation.py"
+      },
+      {
+        "reason": "not_h32_research_runner",
+        "script": "scripts/h2s_vol_uncertainty.py"
+      },
+      {
+        "reason": "batch_orchestrator_not_strategy_runner",
+        "script": "scripts/run_hypothesis_batch.py"
+      },
+      {
+        "reason": "excluded_live_runner",
+        "script": "scripts/run_paper_h32_live.py"
+      }
+    ],
+    "candidate_script_hits": {
+      "scripts/ablation.py": [
+        {
+          "excerpt": "ema_slope_bars=3,",
+          "line": 215,
+          "query": "slope"
+        },
+        {
+          "excerpt": "ema_slope_min=0.0,",
+          "line": 216,
+          "query": "slope"
+        }
+      ],
+      "scripts/h2s_vol_uncertainty.py": [
+        {
+          "excerpt": "parser = argparse.ArgumentParser(description=\"Bootstrap uncertainty stats for H2S-VOL walkforward OOS returns.\")",
+          "line": 10,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "parser.add_argument(\"--bootstrap-iters\", type=int, default=3000)",
+          "line": 24,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "def bootstrap_ci(values: np.ndarray, iters: int, seed: int) -> tuple[float, float, float]:",
+          "line": 89,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "print(\"=== H2S-VOL Uncertainty (bootstrap OOS) ===\")",
+          "line": 121,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "low, _, high = bootstrap_ci(rets, args.bootstrap_iters, args.seed + int(h))",
+          "line": 156,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "samples = rng.choice(rets, size=(args.bootstrap_iters, n), replace=True)",
+          "line": 159,
+          "query": "bootstrap"
+        }
+      ],
+      "scripts/run_hypothesis_batch.py": [
+        {
+          "excerpt": "walkforward: dict[str, Any]",
+          "line": 30,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "\"walkforward\": {",
+          "line": 175,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "\"bootstrap\": {\"iterations\": get_int(\"iterations\", 3000)},",
+          "line": 180,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "f\"CI=[{m.get('ci_low')},{m.get('ci_high')}], P(mean>0)={m.get('p_mean_gt_0')}\"",
+          "line": 235,
+          "query": "P(mean>0)"
+        },
+        {
+          "excerpt": "wf = result.walkforward",
+          "line": 237,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "lines.append(f\"- walkforward split: {wf.get('split')}\")",
+          "line": 238,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "lines.append(f\"- walkforward aggregate: {wf.get('aggregate')}\")",
+          "line": 239,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "lines.append(f\"- walkforward positive_folds: {wf.get('positive_folds')}\")",
+          "line": 240,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "wf_agg = result.walkforward.get(\"aggregate\", {})",
+          "line": 254,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "wf = result.walkforward",
+          "line": 282,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "\"H32\",",
+          "line": 337,
+          "query": "H32"
+        },
+        {
+          "excerpt": "\"short_tail\",",
+          "line": 338,
+          "query": "short_tail"
+        },
+        {
+          "excerpt": "\"spread_pct\",",
+          "line": 339,
+          "query": "spread_pct"
+        },
+        {
+          "excerpt": "\"EMA20\",",
+          "line": 340,
+          "query": "EMA20"
+        },
+        {
+          "excerpt": "\"slope\",",
+          "line": 341,
+          "query": "slope"
+        },
+        {
+          "excerpt": "\"walkforward\",",
+          "line": 342,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "\"bootstrap\",",
+          "line": 343,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "\"P(mean>0)\",",
+          "line": 344,
+          "query": "P(mean>0)"
+        },
+        {
+          "excerpt": "\"CI\",",
+          "line": 345,
+          "query": "CI"
+        },
+        {
+          "excerpt": "tech_md, \"H32 Kickoff + Classification Lock (No Tuning): ETH 1h Slope Direction in H19 Short-Tail\"",
+          "line": 378,
+          "query": "H32"
+        },
+        {
+          "excerpt": "tech_md, \"H32 WF+Bootstrap Interpretation Lock (Frozen Rules)\"",
+          "line": 381,
+          "query": "H32"
+        },
+        {
+          "excerpt": "\"h32_wf_bootstrap_command_blocks_found\": len(h32_wf_cmds),",
+          "line": 395,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "split = gates.get(\"walkforward\", {\"train_days\": 60, \"test_days\": 15, \"step_days\": 15})",
+          "line": 420,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "bootstrap = gates.get(\"bootstrap\", {\"iterations\": 3000})",
+          "line": 421,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "\"H32 adapter requires an existing non-live research runner script; none found. \"",
+          "line": 436,
+          "query": "H32"
+        },
+        {
+          "excerpt": "\"Findings include kickoff command blocks but no dedicated reusable H32 WF/bootstrap runner command block.\",",
+          "line": 438,
+          "query": "H32"
+        },
+        {
+          "excerpt": "# Wrapper only: run existing H32 research runner(s) sequentially with required protocol.",
+          "line": 444,
+          "query": "H32"
+        },
+        {
+          "excerpt": "f\"PYTHONPATH=. .venv/bin/python {runner} --hypothesis H32 --days {days} --h {horizon} --mode baseline --cost gross\",",
+          "line": 449,
+          "query": "H32"
+        },
+        {
+          "excerpt": "f\"PYTHONPATH=. .venv/bin/python {runner} --hypothesis H32 --days {days} --h {horizon} --mode baseline --cost bps8\",",
+          "line": 450,
+          "query": "H32"
+        },
+        {
+          "excerpt": "f\"PYTHONPATH=. .venv/bin/python {runner} --hypothesis H32 --days {days} --h {horizon} --mode baseline --cost bps10\",",
+          "line": 451,
+          "query": "H32"
+        },
+        {
+          "excerpt": "f\"{runner} --hypothesis H32 --days {days} --h {horizon} --mode wf \"",
+          "line": 453,
+          "query": "H32"
+        },
+        {
+          "excerpt": "f\"--step-days {int(split.get('step_days', 15))} --bootstrap-iters {int(bootstrap.get('iterations', 3000))} \"",
+          "line": 455,
+          "query": "bootstrap"
+        },
+        {
+          "excerpt": "raise RuntimeError(f\"H32 runner command failed ({cp.returncode}): {cmd}\")",
+          "line": 463,
+          "query": "H32"
+        },
+        {
+          "excerpt": "walkforward=wf,",
+          "line": 494,
+          "query": "walkforward"
+        },
+        {
+          "excerpt": "notes=\"Adapter executed existing H32 runner(s). Parsed available metrics from runner outputs.\",",
+          "line": 496,
+          "query": "H32"
+        },
+        {
+          "excerpt": "if hypothesis_id == \"H32\":",
+          "line": 508,
+          "query": "H32"
+        },
+        {
+          "excerpt": "\"walkforward\": result.walkforward,",
+          "line": 523,
+          "query": "walkforward"
+        }
+      ],
+      "scripts/run_paper_h32_live.py": [
+        {
+          "excerpt": "class H32LiveState:",
+          "line": 18,
+          "query": "H32"
+        },
+        {
+          "excerpt": "def default_state(initial_equity: float) -> H32LiveState:",
+          "line": 32,
+          "query": "H32"
+        },
+        {
+          "excerpt": "return H32LiveState(",
+          "line": 33,
+          "query": "H32"
+        },
+        {
+          "excerpt": "def load_state(conn, key: str, initial_equity: float) -> H32LiveState:",
+          "line": 48,
+          "query": "H32"
+        },
+        {
+          "excerpt": "return H32LiveState(**defaults)",
+          "line": 55,
+          "query": "H32"
+        },
+        {
+          "excerpt": "def save_state(conn, key: str, state: H32LiveState) -> None:",
+          "line": 58,
+          "query": "H32"
+        },
+        {
+          "excerpt": "h1[\"spread_pct\"] = h1[\"spread\"].rolling(2000).apply(",
+          "line": 136,
+          "query": "spread_pct"
+        },
+        {
+          "excerpt": "h1[\"eth_ema_slope_1h\"] = h1[\"eth_ema20_1h\"].diff(3)",
+          "line": 140,
+          "query": "slope"
+        },
+        {
+          "excerpt": "h1[\"slope_sign\"] = np.sign(h1[\"eth_ema_slope_1h\"])",
+          "line": 141,
+          "query": "slope"
+        },
+        {
+          "excerpt": "h1[\"signal_dir\"] = np.where((h1[\"spread_pct\"] < 0.10) & (h1[\"slope_sign\"] != 0), h1[\"slope_sign\"], 0.0)",
+          "line": 142,
+          "query": "spread_pct"
+        },
+        {
+          "excerpt": "def print_daily_summary(daily_csv: Path, state: H32LiveState) -> None:",
+          "line": 188,
+          "query": "H32"
+        },
+        {
+          "excerpt": "state: H32LiveState,",
+          "line": 210,
+          "query": "H32"
+        },
+        {
+          "excerpt": ") -> H32LiveState:",
+          "line": 220,
+          "query": "H32"
+        },
+        {
+          "excerpt": "p = argparse.ArgumentParser(description=\"Run frozen H32 real-time paper trader.\")",
+          "line": 410,
+          "query": "H32"
+        },
+        {
+          "excerpt": "print(\"H32_REPLAY_VERIFICATION\")",
+          "line": 564,
+          "query": "H32"
+        },
+        {
+          "excerpt": "raise ValueError(\"H32 is frozen at h=6. Do not change --h.\")",
+          "line": 581,
+          "query": "H32"
+        }
+      ]
+    },
+    "candidate_scripts_checked": [
+      "scripts/ablation.py",
+      "scripts/h2s_vol_uncertainty.py",
+      "scripts/run_hypothesis_batch.py",
+      "scripts/run_paper_h32_live.py"
+    ],
+    "findings_technical_commands": {
+      "h19_command_blocks_found": 1,
+      "h19_commands": [
+        ".venv/bin/python - <<'PY'\nimport sqlite3\nimport numpy as np\nimport pandas as pd\n\nDAYS=180\nH=6\nWINDOW=2000\nRET_1H_LOOKBACK=6\n\nbtc_con=sqlite3.connect('data/market.sqlite')\neth_con=sqlite3.connect('data/market_eth.sqlite')\n\nbtc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)\neth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)\n\ncutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)\nbtc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)\neth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)\n\nm=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)\nm['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)\n\nh1=(m.set_index('dt')[['close_btc','close_eth']]\n      .resample('1h').last()\n      .dropna()\n      .reset_index())\nh1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0\nh1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0\nh1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']\nh1['spread_pct']=h1['spread'].rolling(WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)\n\nx=pd.merge_asof(m.sort_values('dt'), h1[['dt','spread_pct']].sort_values('dt'), on='dt', direction='backward')\nx['btc_fwd_h']=x['close_btc'].shift(-H)/x['close_btc']-1.0\n\nx['sig_long']=x['spread_pct']>=0.90\nx['sig_short']=x['spread_pct']<0.10\nx['cont']=0.0\nx.loc[x['sig_long'],'cont']=x.loc[x['sig_long'],'btc_fwd_h']\nx.loc[x['sig_short'],'cont']=-x.loc[x['sig_short'],'btc_fwd_h']\n\nsig=x[(x['sig_long']|x['sig_short']) & x['btc_fwd_h'].notna()]\nlon=x[x['sig_long'] & x['btc_fwd_h'].notna()]\nsho=x[x['sig_short'] & x['btc_fwd_h'].notna()]\n\ndef s(series):\n    series=series.dropna()\n    if len(series)==0:\n        return (0,0.0,0.0,0.0)\n    return (len(series), float((series>0).mean()), float(series.mean()), float(series.std(ddof=0)))\n\nln,lp,lm,ls=s(lon['btc_fwd_h'])\nsn,sp,sm,ss=s(-sho['btc_fwd_h'])\ncn,cp,cm,cs=s(sig['cont'])\n\nprint(f'H19 kickoff config: DAYS={DAYS}, horizon={H}, signal=1h relative momentum spread (ETH-BTC, 6h lookback), tails=top/bottom decile, no tuning, no friction')\nprint('bucket | n | p_cont_gt_0 | mean_cont | std_cont')\nprint(f\"long_tail (spread>=90pct) | {ln} | {lp:.2%} | {lm:.6f} | {ls:.6f}\")\nprint(f\"short_tail (spread<10pct) | {sn} | {sp:.2%} | {sm:.6f} | {ss:.6f}\")\nprint(f\"combined | {cn} | {cp:.2%} | {cm:.6f} | {cs:.6f}\")\nPY"
+      ],
+      "h32_kickoff_command_blocks_found": 1,
+      "h32_kickoff_commands": [
+        ".venv/bin/python - <<'PY'\nimport sqlite3\nimport numpy as np\nimport pandas as pd\n\nDAYS=180\nH=6\nSPREAD_WINDOW=2000\nRET_1H_LOOKBACK=6\nCOSTS=[('gross',0.0000),('slip4',0.0008),('slip5',0.0010)]\n\nbtc_con=sqlite3.connect('data/market.sqlite')\neth_con=sqlite3.connect('data/market_eth.sqlite')\n\nbtc=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', btc_con)\neth=pd.read_sql_query('SELECT ts, close FROM candles_5m ORDER BY ts', eth_con)\n\ncutoff=int(pd.Timestamp.now('UTC').timestamp())-(DAYS*86400)\nbtc=btc[btc.ts>=cutoff].copy().reset_index(drop=True)\neth=eth[eth.ts>=cutoff].copy().reset_index(drop=True)\n\nm=btc.merge(eth, on='ts', how='inner', suffixes=('_btc','_eth')).sort_values('ts').reset_index(drop=True)\nm['dt']=pd.to_datetime(m['ts'], unit='s', utc=True)\n\nh1=(m.set_index('dt')[['close_btc','close_eth']]\n      .resample('1h').last()\n      .dropna()\n      .reset_index())\nh1['ret_btc_1h_6h']=h1['close_btc']/h1['close_btc'].shift(RET_1H_LOOKBACK)-1.0\nh1['ret_eth_1h_6h']=h1['close_eth']/h1['close_eth'].shift(RET_1H_LOOKBACK)-1.0\nh1['spread']=h1['ret_eth_1h_6h']-h1['ret_btc_1h_6h']\nh1['spread_pct']=h1['spread'].rolling(SPREAD_WINDOW).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)\n\nh1['eth_ema20_1h']=h1['close_eth'].ewm(span=20, adjust=False).mean()\nh1['eth_ema_slope_1h']=h1['eth_ema20_1h'].diff(3)\nh1['slope_sign']=np.sign(h1['eth_ema_slope_1h'])\nh1['is_short_tail']=h1['spread_pct']<0.10\nh1['signal_dir']=np.where(h1['is_short_tail'] & (h1['slope_sign']!=0), h1['slope_sign'], 0.0)\n\nx=pd.merge_asof(m.sort_values('dt'), h1[['dt','signal_dir']].sort_values('dt'), on='dt', direction='backward')\nx['entry_h32']=x['signal_dir']!=0\nx['fwd_r']=x['close_btc'].shift(-H)/x['close_btc']-1.0\n\ndef dedup_idx(mask, gap):\n    idx=np.flatnonzero(mask.to_numpy())\n    out=[]\n    last=-10**9\n    for i in idx:\n        if i-last>=gap:\n            out.append(i)\n            last=i\n    return out\n\nidx=dedup_idx(x['entry_h32'], H)\nbase=x.loc[idx,['signal_dir','fwd_r']].dropna().copy()\nbase['gross_r']=base['signal_dir']*base['fwd_r']\n\nprint(f'H32 kickoff config: DAYS={DAYS}, horizon={H}, no tuning')\nprint('definition: trade BTC in direction of ETH 1h EMA20 slope sign only when H19 short_tail (spread_pct<0.10)')\nprint('cost | n | win_rate | mean_return | std_return')\nfor label,cost in COSTS:\n    r=(base['gross_r']-cost).to_numpy()\n    n=len(r)\n    win=float((r>0).mean()) if n else 0.0\n    mean=float(r.mean()) if n else 0.0\n    std=float(r.std(ddof=0)) if n else 0.0\n    print(f'{label} | {n} | {win:.2%} | {mean:.6f} | {std:.6f}')\nPY"
+      ],
+      "h32_wf_bootstrap_command_blocks_found": 0,
+      "h33_command_blocks_found": 0
+    },
+    "repo_grep_queries_executed": [
+      "H32",
+      "short_tail",
+      "spread_pct",
+      "EMA20",
+      "slope",
+      "walkforward",
+      "bootstrap",
+      "P(mean>0)",
+      "CI"
+    ]
+  },
+  "hypothesis_id": "H32",
+  "missing": [
+    "scripts/run_h32_research.py",
+    "scripts/h32_research.py",
+    "scripts/run_hypothesis_h32.py",
+    "scripts/h32_pipeline.py",
+    "scripts/h32_eval.py"
+  ],
+  "searched": [
+    "scripts/run_h32_research.py",
+    "scripts/h32_research.py",
+    "scripts/run_hypothesis_h32.py",
+    "scripts/h32_pipeline.py",
+    "scripts/h32_eval.py"
+  ],
+  "timestamp_utc": "2026-02-17T17:07:44+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 573, in main\n    result = run_adapter_for_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 509, in run_adapter_for_hypothesis\n    return run_h32_adapter(hypothesis_id, hypothesis_def, dataset_defaults, gates)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 435, in run_h32_adapter\n    raise MissingRunnerError(\nMissingRunnerError: H32 adapter requires an existing non-live research runner script; none found. Live runner scripts/run_paper_h32_live.py is explicitly excluded. Findings include kickoff command blocks but no dedicated reusable H32 WF/bootstrap runner command block.\n"
+}

@@ -1,4 +1,5 @@
 # Findings Technical Appendix
+Canonical truth = `results/runs` artifacts; `results/summary.json` and findings are derived.
 
 Date: 2026-02-16
 
@@ -4934,3 +4935,1395 @@ Per-fold table (trade count + mean return):
 `22 | 2026-02-02 | 2026-02-07 | 58 | +0.001264`
 `23 | 2026-02-07 | 2026-02-12 | 28 | -0.000199`
 `24 | 2026-02-12 | 2026-02-17 | 30 | +0.000253`
+
+## H32 Batch Automation Run
+Run: 2026-02-17T17:11:53+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_h32_runner.py --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h32_runner_20260217T171150Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_h32_runner.py --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h32_runner_20260217T171151Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_h32_runner.py --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h32_runner_20260217T171152Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=462, mean=0.0012576996831051052, CI=[0.0007434350499822985,0.001804342911140899], P(mean>0)=1.0
+- baseline `bps8`: n=462, mean=0.00045769968310510514, CI=[-5.6564950017701574e-05,0.0010043429111408991], P(mean>0)=0.959
+- baseline `bps10`: n=462, mean=0.0002576996831051049, CI=[-0.00025656495001770185,0.0008043429111408986], P(mean>0)=0.8276666666666667
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.001242142871467038, 'mean_ci_high': 0.001996706912921526, 'mean_ci_low': 0.00048753410284824573, 'n': 234, 'p_mean_gt_0': 0.9996666666666667}
+- walkforward `gross` positive_folds: {'count': 2, 'pct': 100.0, 'total': 2}
+- walkforward `gross` fold means: [0.0008602989026582231, 0.0014330648558714453]
+- walkforward `bps8` aggregate: {'mean': 0.0004421428714670377, 'mean_ci_high': 0.0011967069129215258, 'mean_ci_low': -0.0003124658971517545, 'n': 234, 'p_mean_gt_0': 0.8813333333333333}
+- walkforward `bps8` positive_folds: {'count': 2, 'pct': 100.0, 'total': 2}
+- walkforward `bps8` fold means: [6.0298902658223034e-05, 0.000633064855871445]
+- walkforward `bps10` aggregate: {'mean': 0.00024214287146703752, 'mean_ci_high': 0.0009967069129215252, 'mean_ci_low': -0.0005124658971517548, 'n': 234, 'p_mean_gt_0': 0.7393333333333333}
+- walkforward `bps10` positive_folds: {'count': 1, 'pct': 50.0, 'total': 2}
+- walkforward `bps10` fold means: [-0.00013970109734177708, 0.00043306485587144467]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T171153Z_H32.json`
+
+## H33 Batch Automation Run
+Run: 2026-02-17T17:20:09+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_h33_runner.py --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h33_runner_20260217T172006Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_h33_runner.py --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h33_runner_20260217T172007Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_h33_runner.py --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h33_runner_20260217T172008Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=462, mean=-0.0012576996831051052, CI=[-0.0018043429111408989,-0.0007434350499822982], P(mean>0)=0.0
+- baseline `bps8`: n=462, mean=-0.002057699683105106, CI=[-0.0026043429111408988,-0.0015434350499822984], P(mean>0)=0.0
+- baseline `bps10`: n=462, mean=-0.002257699683105106, CI=[-0.0028043429111408997,-0.0017434350499822987], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.001242142871467038, 'mean_ci_high': -0.000487534102848245, 'mean_ci_low': -0.0019967069129215257, 'n': 234, 'p_mean_gt_0': 0.0003333333333333333}
+- walkforward `gross` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `gross` fold means: [-0.0008602989026582231, -0.0014330648558714453]
+- walkforward `bps8` aggregate: {'mean': -0.002042142871467038, 'mean_ci_high': -0.0012875341028482452, 'mean_ci_low': -0.002796706912921526, 'n': 234, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps8` fold means: [-0.0016602989026582226, -0.002233064855871445]
+- walkforward `bps10` aggregate: {'mean': -0.002242142871467038, 'mean_ci_high': -0.001487534102848246, 'mean_ci_low': -0.0029967069129215266, 'n': 234, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps10` fold means: [-0.0018602989026582234, -0.002433064855871446]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T172009Z_H33.json`
+
+## H37 Batch Automation Run
+Run: 2026-02-17T17:47:40+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H37 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h37_runner_20260217T174736Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H37 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h37_runner_20260217T174737Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H37 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h37_runner_20260217T174739Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=3747, mean=0.0001242807689119162, CI=[1.6882302597672192e-05,0.00023445034375637827], P(mean>0)=0.9883333333333333
+- baseline `bps8`: n=3747, mean=-0.0006757192310880838, CI=[-0.0007831176974023279,-0.0005655496562436219], P(mean>0)=0.0
+- baseline `bps10`: n=3747, mean=-0.0008757192310880842, CI=[-0.000983117697402328,-0.0007655496562436221], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.00020495563662748775, 'mean_ci_high': 0.0004410651208007892, 'mean_ci_low': -3.443752878732085e-05, 'n': 1066, 'p_mean_gt_0': 0.9483333333333334}
+- walkforward `gross` positive_folds: {'count': 2, 'pct': 100.0, 'total': 2}
+- walkforward `gross` fold means: [0.00010294917501156686, 0.0003362944284076434]
+- walkforward `bps8` aggregate: {'mean': -0.0005950443633725123, 'mean_ci_high': -0.0003589348791992108, 'mean_ci_low': -0.0008344375287873209, 'n': 1066, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps8` fold means: [-0.0006970508249884332, -0.0004637055715923568]
+- walkforward `bps10` aggregate: {'mean': -0.0007950443633725125, 'mean_ci_high': -0.000558934879199211, 'mean_ci_low': -0.0010344375287873213, 'n': 1066, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps10` fold means: [-0.0008970508249884333, -0.000663705571592357]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T174740Z_H37.json`
+
+## H38 Batch Automation Run
+Run: 2026-02-17T17:47:44+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H38 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h38_runner_20260217T174740Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H38 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h38_runner_20260217T174741Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H38 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h38_runner_20260217T174743Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=406, mean=4.860961500463064e-06, CI=[-0.00047019765180695926,0.00047737270809052404], P(mean>0)=0.506
+- baseline `bps8`: n=406, mean=-0.000795139038499537, CI=[-0.0012701976518069594,-0.00032262729190947595], P(mean>0)=0.0003333333333333333
+- baseline `bps10`: n=406, mean=-0.0009951390384995372, CI=[-0.0014701976518069597,-0.0005226272919094764], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.00035926309326017196, 'mean_ci_high': 0.0005104113086308837, 'mean_ci_low': -0.0012573280097427297, 'n': 140, 'p_mean_gt_0': 0.216}
+- walkforward `gross` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `gross` fold means: [-2.784022615858512e-05, -0.0005802116713278964]
+- walkforward `bps8` aggregate: {'mean': -0.001159263093260172, 'mean_ci_high': -0.0002895886913691163, 'mean_ci_low': -0.00205732800974273, 'n': 140, 'p_mean_gt_0': 0.005}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps8` fold means: [-0.0008278402261585851, -0.0013802116713278964]
+- walkforward `bps10` aggregate: {'mean': -0.0013592630932601725, 'mean_ci_high': -0.0004895886913691168, 'mean_ci_low': -0.0022573280097427308, 'n': 140, 'p_mean_gt_0': 0.0006666666666666666}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps10` fold means: [-0.0010278402261585853, -0.0015802116713278971]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T174744Z_H38.json`
+
+## H39 Batch Automation Run
+Run: 2026-02-17T17:47:48+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H39 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h39_runner_20260217T174744Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H39 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h39_runner_20260217T174745Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H39 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h39_runner_20260217T174746Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=326, mean=0.001408531221681871, CI=[0.0010107313995304317,0.001840445282024877], P(mean>0)=1.0
+- baseline `bps8`: n=326, mean=0.000608531221681871, CI=[0.00021073139953043185,0.0010404452820248768], P(mean>0)=0.9983333333333333
+- baseline `bps10`: n=326, mean=0.00040853122168187084, CI=[1.0731399530431646e-05,0.0008404452820248765], P(mean>0)=0.9773333333333334
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0017142505375646337, 'mean_ci_high': 0.002270320883329708, 'mean_ci_low': 0.0011707770201814897, 'n': 222, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `gross` fold means: [0.002354483345814367, 0.0007453723333350304, 0.0022727558514032214, 0.0031745487016278037, 0.0006406687047127776, 0.0014401004199527743, 0.0010503278834353396, 0.0013833213450207117]
+- walkforward `bps8` aggregate: {'mean': 0.0009142505375646338, 'mean_ci_high': 0.0014703208833297086, 'mean_ci_low': 0.00037077702018148976, 'n': 222, 'p_mean_gt_0': 0.9993333333333333}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 75.0, 'total': 8}
+- walkforward `bps8` fold means: [0.001554483345814366, -5.4627666664969537e-05, 0.0014727558514032208, 0.002374548701627804, -0.00015933129528722249, 0.0006401004199527743, 0.00025032788343533953, 0.0005833213450207116]
+- walkforward `bps10` aggregate: {'mean': 0.0007142505375646333, 'mean_ci_high': 0.0012703208833297081, 'mean_ci_low': 0.00017077702018148931, 'n': 222, 'p_mean_gt_0': 0.9943333333333333}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 75.0, 'total': 8}
+- walkforward `bps10` fold means: [0.0013544833458143666, -0.00025462766666496976, 0.0012727558514032211, 0.0021745487016278033, -0.0003593312952872226, 0.00044010041995277385, 5.0327883435339505e-05, 0.0003833213450207117]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260217T174748Z_H39.json`
+
+## H40 Batch Automation Run
+Run: 2026-02-17T17:47:52+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H40 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h40_runner_20260217T174748Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H40 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h40_runner_20260217T174749Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H40 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h40_runner_20260217T174751Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=7146, mean=0.0002591610259789572, CI=[0.00017739128954333546,0.0003443414452622376], P(mean>0)=1.0
+- baseline `bps8`: n=7146, mean=-0.0005408389740210429, CI=[-0.0006226087104566645,-0.0004556585547377625], P(mean>0)=0.0
+- baseline `bps10`: n=7146, mean=-0.0007408389740210431, CI=[-0.000822608710456665,-0.0006556585547377627], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0002990613282219788, 'mean_ci_high': 0.000407649056672684, 'mean_ci_low': 0.00019187169679777817, 'n': 4923, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `gross` fold means: [0.00032344179750098473, 0.0003245602690930523, 0.00048108891796332445, 0.00017473696443509194, 0.00011596770973984304, 0.00015250714931753292, 0.0003723558211539725, 0.0004580854280594175]
+- walkforward `bps8` aggregate: {'mean': -0.0005009386717780214, 'mean_ci_high': -0.000392350943327316, 'mean_ci_low': -0.0006081283032022219, 'n': 4923, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps8` fold means: [-0.0004765582024990153, -0.0004754397309069478, -0.00031891108203667564, -0.000625263035564908, -0.0006840322902601571, -0.0006474928506824671, -0.0004276441788460277, -0.0003419145719405826]
+- walkforward `bps10` aggregate: {'mean': -0.0007009386717780215, 'mean_ci_high': -0.0005923509433273162, 'mean_ci_low': -0.000808128303202222, 'n': 4923, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps10` fold means: [-0.0006765582024990154, -0.0006754397309069479, -0.0005189110820366759, -0.0008252630355649082, -0.0008840322902601571, -0.0008474928506824672, -0.0006276441788460276, -0.000541914571940583]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T174752Z_H40.json`
+
+## H41 Batch Automation Run
+Run: 2026-02-17T17:47:56+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H41 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h41_runner_20260217T174752Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H41 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h41_runner_20260217T174753Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H41 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h41_runner_20260217T174755Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=1472, mean=-0.00017298366106310075, CI=[-0.00030895000146935345,-3.397889737787867e-05], P(mean>0)=0.007333333333333333
+- baseline `bps8`: n=1472, mean=-0.0009729836610631007, CI=[-0.0011089500014693535,-0.0008339788973778786], P(mean>0)=0.0
+- baseline `bps10`: n=1472, mean=-0.001172983661063101, CI=[-0.0013089500014693538,-0.0010339788973778789], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.00020138465614223693, 'mean_ci_high': 9.427679882324149e-06, 'mean_ci_low': -0.0004127780764765679, 'n': 714, 'p_mean_gt_0': 0.03233333333333333}
+- walkforward `gross` positive_folds: {'count': 1, 'pct': 14.285714285714286, 'total': 7}
+- walkforward `gross` fold means: [-2.0403999022046272e-05, -0.000514568096801177, -0.00012485374617888126, -0.00036716242409371303, -0.00046406218737448876, -0.00011022262992908555, 1.5705986761794697e-05]
+- walkforward `bps8` aggregate: {'mean': -0.0010013846561422368, 'mean_ci_high': -0.000790572320117676, 'mean_ci_low': -0.0012127780764765678, 'n': 714, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 7}
+- walkforward `bps8` fold means: [-0.0008204039990220463, -0.0013145680968011763, -0.0009248537461788812, -0.0011671624240937129, -0.0012640621873744886, -0.0009102226299290854, -0.0007842940132382052]
+- walkforward `bps10` aggregate: {'mean': -0.0012013846561422371, 'mean_ci_high': -0.0009905723201176762, 'mean_ci_low': -0.001412778076476568, 'n': 714, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 7}
+- walkforward `bps10` fold means: [-0.0010204039990220465, -0.001514568096801177, -0.0011248537461788818, -0.0013671624240937134, -0.0014640621873744889, -0.001110222629929086, -0.0009842940132382056]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T174756Z_H41.json`
+
+## H42 Batch Automation Run
+Run: 2026-02-17T18:03:30+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H42 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h42_runner_20260217T180326Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H42 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h42_runner_20260217T180327Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H42 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h42_runner_20260217T180329Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=2490, mean=0.0002439032015811789, CI=[4.161507924077322e-05,0.0004438815431498117], P(mean>0)=0.989
+- baseline `bps8`: n=2490, mean=-0.0005560967984188211, CI=[-0.0007583849207592268,-0.00035611845685018837], P(mean>0)=0.0
+- baseline `bps10`: n=2490, mean=-0.0007560967984188214, CI=[-0.0009583849207592272,-0.0005561184568501887], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.000262821380355064, 'mean_ci_high': 0.0005500106023009363, 'mean_ci_low': -3.070663454019543e-05, 'n': 1401, 'p_mean_gt_0': 0.9566666666666667}
+- walkforward `gross` positive_folds: {'count': 5, 'pct': 83.33333333333333, 'total': 6}
+- walkforward `gross` fold means: [0.00021269721641371952, 0.00048481068533769476, 8.597906055599976e-05, 0.00047945511578039216, -0.0001797868270721886, 0.0005470629183751671]
+- walkforward `bps8` aggregate: {'mean': -0.0005371786196449361, 'mean_ci_high': -0.0002499893976990637, 'mean_ci_low': -0.0008307066345401955, 'n': 1401, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0005873027835862805, -0.0003151893146623055, -0.0007140209394440002, -0.000320544884219608, -0.0009797868270721886, -0.00025293708162483293]
+- walkforward `bps10` aggregate: {'mean': -0.0007371786196449365, 'mean_ci_high': -0.000449989397699064, 'mean_ci_low': -0.0010307066345401957, 'n': 1401, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0007873027835862807, -0.0005151893146623056, -0.0009140209394440005, -0.0005205448842196081, -0.001179786827072189, -0.00045293708162483346]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180330Z_H42.json`
+
+## H43 Batch Automation Run
+Run: 2026-02-17T18:03:34+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H43 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h43_runner_20260217T180330Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H43 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h43_runner_20260217T180331Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H43 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h43_runner_20260217T180333Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=2490, mean=-0.0002439032015811789, CI=[-0.0004438815431498117,-4.1615079240773056e-05], P(mean>0)=0.011
+- baseline `bps8`: n=2490, mean=-0.0010439032015811792, CI=[-0.0012438815431498117,-0.000841615079240773], P(mean>0)=0.0
+- baseline `bps10`: n=2490, mean=-0.0012439032015811792, CI=[-0.001443881543149812,-0.0010416150792407735], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.000262821380355064, 'mean_ci_high': 3.070663454019556e-05, 'mean_ci_low': -0.0005500106023009363, 'n': 1401, 'p_mean_gt_0': 0.043333333333333335}
+- walkforward `gross` positive_folds: {'count': 1, 'pct': 16.666666666666668, 'total': 6}
+- walkforward `gross` fold means: [-0.00021269721641371952, -0.00048481068533769476, -8.597906055599976e-05, -0.00047945511578039216, 0.0001797868270721886, -0.0005470629183751671]
+- walkforward `bps8` aggregate: {'mean': -0.001062821380355064, 'mean_ci_high': -0.0007692933654598046, 'mean_ci_low': -0.0013500106023009364, 'n': 1401, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0010126972164137197, -0.0012848106853376947, -0.0008859790605559996, -0.0012794551157803923, -0.0006202131729278114, -0.001347062918375167]
+- walkforward `bps10` aggregate: {'mean': -0.0012628213803550644, 'mean_ci_high': -0.0009692933654598049, 'mean_ci_low': -0.0015500106023009369, 'n': 1401, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.00121269721641372, -0.0014848106853376953, -0.0010859790605560005, -0.0014794551157803924, -0.0008202131729278116, -0.0015470629183751677]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180334Z_H43.json`
+
+## H44 Batch Automation Run
+Run: 2026-02-17T18:03:38+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H44 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h44_runner_20260217T180334Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H44 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h44_runner_20260217T180335Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H44 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h44_runner_20260217T180337Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=2449, mean=0.00014786272987174132, CI=[-5.268696562668455e-05,0.00034348941358723514], P(mean>0)=0.9303333333333333
+- baseline `bps8`: n=2449, mean=-0.0006521372701282587, CI=[-0.0008526869656266846,-0.00045651058641276495], P(mean>0)=0.0
+- baseline `bps10`: n=2449, mean=-0.0008521372701282589, CI=[-0.001052686965626685,-0.0006565105864127653], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.00015474568804842338, 'mean_ci_high': 0.0004368627001359347, 'mean_ci_low': -0.00012672982052293943, 'n': 1397, 'p_mean_gt_0': 0.869}
+- walkforward `gross` positive_folds: {'count': 5, 'pct': 83.33333333333333, 'total': 6}
+- walkforward `gross` fold means: [0.00012913811997844677, 2.7473377696652545e-05, 0.00010636693368371664, 7.553391867262649e-05, -0.00023102729717159313, 0.000554006364633476]
+- walkforward `bps8` aggregate: {'mean': -0.0006452543119515767, 'mean_ci_high': -0.00036313729986406536, 'mean_ci_low': -0.0009267298205229396, 'n': 1397, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0006708618800215534, -0.0007725266223033476, -0.0006936330663162834, -0.0007244660813273735, -0.0010310272971715932, -0.00024599363536652416]
+- walkforward `bps10` aggregate: {'mean': -0.0008452543119515769, 'mean_ci_high': -0.0005631372998640656, 'mean_ci_low': -0.0011267298205229397, 'n': 1397, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0008708618800215534, -0.0009725266223033478, -0.0008936330663162836, -0.0009244660813273737, -0.0012310272971715935, -0.0004459936353665244]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180338Z_H44.json`
+
+## H45 Batch Automation Run
+Run: 2026-02-17T18:03:42+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H45 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h45_runner_20260217T180338Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H45 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h45_runner_20260217T180339Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H45 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h45_runner_20260217T180341Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=1286, mean=-0.00012909269435859016, CI=[-0.00035881103199208043,0.00010667909134187086], P(mean>0)=0.14
+- baseline `bps8`: n=1286, mean=-0.0009290926943585902, CI=[-0.0011588110319920805,-0.0006933209086581292], P(mean>0)=0.0
+- baseline `bps10`: n=1286, mean=-0.0011290926943585905, CI=[-0.0013588110319920806,-0.0008933209086581293], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.00019516187699912259, 'mean_ci_high': 0.00017508488155412705, 'mean_ci_low': -0.0005408822639630642, 'n': 700, 'p_mean_gt_0': 0.13133333333333333}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 50.0, 'total': 6}
+- walkforward `gross` fold means: [0.00015785610840597463, 0.0005103728747390195, -0.0013450724520399251, -0.000556368586668394, -0.000692346970028827, 0.00032023743929155714]
+- walkforward `bps8` aggregate: {'mean': -0.0009951618769991227, 'mean_ci_high': -0.000624915118445873, 'mean_ci_low': -0.0013408822639630644, 'n': 700, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0006421438915940254, -0.0002896271252609807, -0.0021450724520399246, -0.0013563685866683937, -0.0014923469700288269, -0.00047976256070844306]
+- walkforward `bps10` aggregate: {'mean': -0.001195161876999123, 'mean_ci_high': -0.0008249151184458732, 'mean_ci_low': -0.0015408822639630647, 'n': 700, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0008421438915940258, -0.0004896271252609808, -0.002345072452039926, -0.001556368586668394, -0.001692346970028827, -0.0006797625607084432]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180342Z_H45.json`
+
+## H46 Batch Automation Run
+Run: 2026-02-17T18:03:46+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H46 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h46_runner_20260217T180342Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H46 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h46_runner_20260217T180343Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H46 --family shock_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h46_runner_20260217T180345Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=1795, mean=0.00018583610945575283, CI=[-6.0845839153993456e-05,0.0004488372936733643], P(mean>0)=0.932
+- baseline `bps8`: n=1795, mean=-0.0006141638905442473, CI=[-0.0008608458391539935,-0.0003511627063266358], P(mean>0)=0.0
+- baseline `bps10`: n=1795, mean=-0.0008141638905442475, CI=[-0.0010608458391539938,-0.0005511627063266361], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.00021579351758466232, 'mean_ci_high': 0.000572310107826309, 'mean_ci_low': -0.00013548328492078452, 'n': 1074, 'p_mean_gt_0': 0.8893333333333333}
+- walkforward `gross` positive_folds: {'count': 6, 'pct': 100.0, 'total': 6}
+- walkforward `gross` fold means: [0.00042371702994263897, 0.0003161437441552252, 3.383143930376674e-05, 0.00019759899013502692, 3.689465408008212e-05, 0.0002241108838262614]
+- walkforward `bps8` aggregate: {'mean': -0.000584206482415338, 'mean_ci_high': -0.00022768989217369107, 'mean_ci_low': -0.0009354832849207845, 'n': 1074, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0003762829700573614, -0.0004838562558447749, -0.0007661685606962335, -0.0006024010098649731, -0.0007631053459199181, -0.0005758891161737388]
+- walkforward `bps10` aggregate: {'mean': -0.0007842064824153381, 'mean_ci_high': -0.00042768989217369135, 'mean_ci_low': -0.0011354832849207852, 'n': 1074, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0005762829700573614, -0.0006838562558447751, -0.0009661685606962336, -0.0008024010098649734, -0.0009631053459199182, -0.0007758891161737389]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180346Z_H46.json`
+
+## H47 Batch Automation Run
+Run: 2026-02-17T18:03:51+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H47 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h47_runner_20260217T180346Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H47 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h47_runner_20260217T180348Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H47 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h47_runner_20260217T180349Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=2017, mean=3.968861435668354e-05, CI=[-0.0002037976897359599,0.0002805698299421377], P(mean>0)=0.619
+- baseline `bps8`: n=2017, mean=-0.0007603113856433166, CI=[-0.00100379768973596,-0.0005194301700578624], P(mean>0)=0.0
+- baseline `bps10`: n=2017, mean=-0.0009603113856433169, CI=[-0.0012037976897359606,-0.0007194301700578627], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 1.3917490019990983e-05, 'mean_ci_high': 0.0003885088474505378, 'mean_ci_low': -0.0003452063966455567, 'n': 1083, 'p_mean_gt_0': 0.5406666666666666}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 50.0, 'total': 6}
+- walkforward `gross` fold means: [2.628119700713272e-07, -0.0005136064741841017, 0.00033235675751219133, -9.573613663654941e-05, -0.0002392364858410073, 0.00026442982729693755]
+- walkforward `bps8` aggregate: {'mean': -0.0007860825099800092, 'mean_ci_high': -0.00041149115254946237, 'mean_ci_low': -0.001145206396645557, 'n': 1083, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0007997371880299287, -0.0013136064741841016, -0.0004676432424878088, -0.0008957361366365494, -0.0010392364858410072, -0.0005355701727030625]
+- walkforward `bps10` aggregate: {'mean': -0.0009860825099800095, 'mean_ci_high': -0.0006114911525494627, 'mean_ci_low': -0.0013452063966455572, 'n': 1083, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.000999737188029929, -0.0015136064741841022, -0.000667643242487809, -0.0010957361366365499, -0.0012392364858410077, -0.0007355701727030631]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180351Z_H47.json`
+
+## H48 Batch Automation Run
+Run: 2026-02-17T18:03:55+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H48 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h48_runner_20260217T180351Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H48 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h48_runner_20260217T180352Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H48 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h48_runner_20260217T180353Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=1892, mean=-3.565827677053134e-05, CI=[-0.0001183638901096254,5.092864543191271e-05], P(mean>0)=0.212
+- baseline `bps8`: n=1892, mean=-0.0008356582767705313, CI=[-0.0009183638901096254,-0.0007490713545680873], P(mean>0)=0.0
+- baseline `bps10`: n=1892, mean=-0.0010356582767705317, CI=[-0.0011183638901096258,-0.0009490713545680876], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 1.5356163803095924e-05, 'mean_ci_high': 0.00012682388662089536, 'mean_ci_low': -0.00010109184933848377, 'n': 1125, 'p_mean_gt_0': 0.5983333333333334}
+- walkforward `gross` positive_folds: {'count': 4, 'pct': 66.66666666666667, 'total': 6}
+- walkforward `gross` fold means: [6.356336852397781e-05, -2.280778671907855e-05, -0.00020413709976599743, 9.675754637239996e-05, 0.00019561483523226523, 0.00014597674337029945]
+- walkforward `bps8` aggregate: {'mean': -0.0007846438361969042, 'mean_ci_high': -0.0006731761133791047, 'mean_ci_low': -0.000901091849338484, 'n': 1125, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.000736436631476022, -0.0008228077867190786, -0.0010041370997659973, -0.0007032424536276001, -0.0006043851647677349, -0.0006540232566297009]
+- walkforward `bps10` aggregate: {'mean': -0.0009846438361969041, 'mean_ci_high': -0.0008731761133791046, 'mean_ci_low': -0.0011010918493384839, 'n': 1125, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0009364366314760226, -0.0010228077867190787, -0.0012041370997659979, -0.0009032424536276003, -0.000804385164767735, -0.0008540232566297006]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180355Z_H48.json`
+
+## H49 Batch Automation Run
+Run: 2026-02-17T18:03:59+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H49 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h49_runner_20260217T180355Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H49 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h49_runner_20260217T180356Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H49 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h49_runner_20260217T180357Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=514, mean=-0.00012798920706915342, CI=[-0.0002815001982646802,2.550104230081242e-05], P(mean>0)=0.048666666666666664
+- baseline `bps8`: n=514, mean=-0.0009279892070691534, CI=[-0.00108150019826468,-0.0007744989576991876], P(mean>0)=0.0
+- baseline `bps10`: n=514, mean=-0.0011279892070691537, CI=[-0.0012815001982646804,-0.000974498957699188], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.00022496949280395289, 'mean_ci_high': -4.490650449193789e-05, 'mean_ci_low': -0.0003983317543285915, 'n': 309, 'p_mean_gt_0': 0.006333333333333333}
+- walkforward `gross` positive_folds: {'count': 1, 'pct': 16.666666666666668, 'total': 6}
+- walkforward `gross` fold means: [0.0001926030522434244, -0.0003282160854506134, -0.00039596657708611916, -0.00022901039732907072, -8.977279463433375e-05, -2.698580090909619e-05]
+- walkforward `bps8` aggregate: {'mean': -0.0010249694928039527, 'mean_ci_high': -0.0008449065044919378, 'mean_ci_low': -0.0011983317543285913, 'n': 309, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0006073969477565756, -0.0011282160854506134, -0.001195966577086119, -0.0010290103973290708, -0.000889772794634334, -0.0008269858009090958]
+- walkforward `bps10` aggregate: {'mean': -0.001224969492803953, 'mean_ci_high': -0.001044906504491938, 'mean_ci_low': -0.0013983317543285916, 'n': 309, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0008073969477565756, -0.0013282160854506137, -0.0013959665770861196, -0.0012290103973290707, -0.0010897727946343337, -0.0010269858009090964]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180359Z_H49.json`
+
+## H50 Batch Automation Run
+Run: 2026-02-17T18:04:02+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H50 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h50_runner_20260217T180359Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H50 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h50_runner_20260217T180400Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H50 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h50_runner_20260217T180401Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=1929, mean=3.341866749776154e-06, CI=[-0.0002332005975901054,0.00024735568512031773], P(mean>0)=0.5156666666666667
+- baseline `bps8`: n=1929, mean=-0.0007966581332502239, CI=[-0.0010332005975901054,-0.0005526443148796825], P(mean>0)=0.0
+- baseline `bps10`: n=1929, mean=-0.0009966581332502243, CI=[-0.0012332005975901057,-0.0007526443148796828], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 2.3764279691552323e-05, 'mean_ci_high': 0.0003511325183939953, 'mean_ci_low': -0.0003168873516917365, 'n': 1094, 'p_mean_gt_0': 0.543}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 50.0, 'total': 6}
+- walkforward `gross` fold means: [0.00014315777996866096, 0.0005594695488856402, 0.0002909640772343236, -0.00016405098187912483, -0.0001398357862863862, -0.00021808144178680968]
+- walkforward `bps8` aggregate: {'mean': -0.0007762357203084478, 'mean_ci_high': -0.0004488674816060048, 'mean_ci_low': -0.0011168873516917365, 'n': 1094, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps8` fold means: [-0.0006568422200313391, -0.00024053045111435995, -0.0005090359227656765, -0.0009640509818791245, -0.0009398357862863861, -0.00101808144178681]
+- walkforward `bps10` aggregate: {'mean': -0.000976235720308448, 'mean_ci_high': -0.0006488674816060052, 'mean_ci_low': -0.001316887351691737, 'n': 1094, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 6}
+- walkforward `bps10` fold means: [-0.0008568422200313393, -0.0004405304511143601, -0.0007090359227656768, -0.0011640509818791251, -0.0011398357862863865, -0.00121808144178681]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180402Z_H50.json`
+
+## H51 Batch Automation Run
+Run: 2026-02-17T18:04:06+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H51 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h51_runner_20260217T180402Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H51 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h51_runner_20260217T180404Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H51 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h51_runner_20260217T180405Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=372, mean=0.0001964404478451486, CI=[-0.00039467020201666714,0.0007678180678681275], P(mean>0)=0.7323333333333333
+- baseline `bps8`: n=372, mean=-0.0006035595521548516, CI=[-0.0011946702020166672,-3.218193213187234e-05], P(mean>0)=0.019666666666666666
+- baseline `bps10`: n=372, mean=-0.0008035595521548518, CI=[-0.0013946702020166677,-0.00023218193213187283], P(mean>0)=0.003
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 9.360612256781602e-05, 'mean_ci_high': 0.001022846841970866, 'mean_ci_low': -0.0008402674284064549, 'n': 190, 'p_mean_gt_0': 0.5863333333333334}
+- walkforward `gross` positive_folds: {'count': 2, 'pct': 100.0, 'total': 2}
+- walkforward `gross` fold means: [2.7464567841038154e-05, 0.00014067984169768494]
+- walkforward `bps8` aggregate: {'mean': -0.0007063938774321842, 'mean_ci_high': 0.00022284684197086603, 'mean_ci_low': -0.0016402674284064548, 'n': 190, 'p_mean_gt_0': 0.06866666666666667}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps8` fold means: [-0.0007725354321589622, -0.0006593201583023147]
+- walkforward `bps10` aggregate: {'mean': -0.0009063938774321843, 'mean_ci_high': 2.2846841970865476e-05, 'mean_ci_low': -0.001840267428406455, 'n': 190, 'p_mean_gt_0': 0.027333333333333334}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 2}
+- walkforward `bps10` fold means: [-0.0009725354321589624, -0.0008593201583023157]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180406Z_H51.json`
+
+## H52 Batch Automation Run
+Run: 2026-02-17T18:04:10+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H52 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h52_runner_20260217T180406Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H52 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h52_runner_20260217T180408Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H52 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h52_runner_20260217T180409Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=363, mean=0.00028829489933070027, CI=[-5.7830456010484067e-05,0.0006389441442322081], P(mean>0)=0.9476666666666667
+- baseline `bps8`: n=363, mean=-0.0005117051006692997, CI=[-0.0008578304560104841,-0.00016105585576779198], P(mean>0)=0.0036666666666666666
+- baseline `bps10`: n=363, mean=-0.0007117051006693, CI=[-0.0010578304560104842,-0.0003610558557677922], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0007592961356158954, 'mean_ci_high': 0.0021301721464477364, 'mean_ci_low': -0.0002927593607320673, 'n': 48, 'p_mean_gt_0': 0.904}
+- walkforward `gross` positive_folds: {'count': 2, 'pct': 100.0, 'total': 2}
+- walkforward `gross` fold means: [0.00037243340407380445, 0.0019198843302421682]
+- walkforward `bps8` aggregate: {'mean': -4.0703864384104664e-05, 'mean_ci_high': 0.0013301721464477362, 'mean_ci_low': -0.0010927593607320673, 'n': 48, 'p_mean_gt_0': 0.424}
+- walkforward `bps8` positive_folds: {'count': 1, 'pct': 50.0, 'total': 2}
+- walkforward `bps8` fold means: [-0.0004275665959261955, 0.001119884330242168]
+- walkforward `bps10` aggregate: {'mean': -0.00024070386438410484, 'mean_ci_high': 0.0011301721464477357, 'mean_ci_low': -0.0012927593607320676, 'n': 48, 'p_mean_gt_0': 0.308}
+- walkforward `bps10` positive_folds: {'count': 1, 'pct': 50.0, 'total': 2}
+- walkforward `bps10` fold means: [-0.0006275665959261957, 0.000919884330242168]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260217T180410Z_H52.json`
+
+## H53 Batch Automation Run
+Run: 2026-02-17T18:04:14+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H53 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h53_runner_20260217T180410Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H53 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h53_runner_20260217T180411Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H53 --family mean_reversion --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h53_runner_20260217T180413Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=612, mean=3.470726869969613e-05, CI=[-0.00042503712784086893,0.0004948774580693252], P(mean>0)=0.5676666666666667
+- baseline `bps8`: n=612, mean=-0.0007652927313003039, CI=[-0.001225037127840869,-0.0003051225419306748], P(mean>0)=0.0003333333333333333
+- baseline `bps10`: n=612, mean=-0.0009652927313003042, CI=[-0.0014250371278408693,-0.0005051225419306751], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.00030907620564964497, 'mean_ci_high': 0.0007910768002304879, 'mean_ci_low': -0.00018963007510659736, 'n': 372, 'p_mean_gt_0': 0.8966666666666666}
+- walkforward `gross` positive_folds: {'count': 4, 'pct': 57.142857142857146, 'total': 7}
+- walkforward `gross` fold means: [0.0006451665857525203, 0.0018732966050309184, -0.00013488700891658805, -0.0011223194678864489, 0.000510040455282668, -0.00019091234896850668, 0.0007120972667620337]
+- walkforward `bps8` aggregate: {'mean': -0.0004909237943503551, 'mean_ci_high': -8.923199769512018e-06, 'mean_ci_low': -0.0009896300751065974, 'n': 372, 'p_mean_gt_0': 0.023333333333333334}
+- walkforward `bps8` positive_folds: {'count': 1, 'pct': 14.285714285714286, 'total': 7}
+- walkforward `bps8` fold means: [-0.0001548334142474798, 0.0010732966050309184, -0.0009348870089165884, -0.0019223194678864494, -0.00028995954471733196, -0.0009909123489685063, -8.79027332379663e-05]
+- walkforward `bps10` aggregate: {'mean': -0.0006909237943503553, 'mean_ci_high': -0.00020892319976951245, 'mean_ci_low': -0.001189630075106598, 'n': 372, 'p_mean_gt_0': 0.0026666666666666666}
+- walkforward `bps10` positive_folds: {'count': 1, 'pct': 14.285714285714286, 'total': 7}
+- walkforward `bps10` fold means: [-0.0003548334142474798, 0.0008732966050309182, -0.0011348870089165884, -0.0021223194678864493, -0.000489959544717332, -0.0011909123489685072, -0.0002879027332379664]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180414Z_H53.json`
+
+## H54 Batch Automation Run
+Run: 2026-02-17T18:04:18+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H54 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h54_runner_20260217T180414Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H54 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h54_runner_20260217T180415Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H54 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h54_runner_20260217T180417Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=3884, mean=-7.02141746363644e-05, CI=[-0.00019456810643029833,5.496640559100935e-05], P(mean>0)=0.129
+- baseline `bps8`: n=3884, mean=-0.0008702141746363642, CI=[-0.0009945681064302983,-0.0007450335944089905], P(mean>0)=0.0
+- baseline `bps10`: n=3884, mean=-0.001070214174636365, CI=[-0.0011945681064302986,-0.000945033594408991], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.00010345683496899077, 'mean_ci_high': 6.882784273612754e-05, 'mean_ci_low': -0.000269502655967676, 'n': 2528, 'p_mean_gt_0': 0.11633333333333333}
+- walkforward `gross` positive_folds: {'count': 1, 'pct': 12.5, 'total': 8}
+- walkforward `gross` fold means: [-1.0970870700549351e-05, -0.0001836282564211954, 0.0002076491695986389, -0.00010471406658133708, -1.8099086110204576e-05, -0.0002669484786614177, -0.00015644620135527246, -0.0002958351909508907]
+- walkforward `bps8` aggregate: {'mean': -0.0009034568349689908, 'mean_ci_high': -0.0007311721572638725, 'mean_ci_low': -0.0010695026559676762, 'n': 2528, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps8` fold means: [-0.0008109708707005493, -0.0009836282564211953, -0.0005923508304013611, -0.000904714066581337, -0.0008180990861102047, -0.0010669484786614176, -0.0009564462013552725, -0.0010958351909508906]
+- walkforward `bps10` aggregate: {'mean': -0.0011034568349689911, 'mean_ci_high': -0.0009311721572638726, 'mean_ci_low': -0.0012695026559676763, 'n': 2528, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps10` fold means: [-0.0010109708707005496, -0.0011836282564211956, -0.0007923508304013613, -0.0011047140665813371, -0.0010180990861102049, -0.001266948478661418, -0.0011564462013552727, -0.0012958351909508913]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180418Z_H54.json`
+
+## H55 Batch Automation Run
+Run: 2026-02-17T18:04:22+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H55 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h55_runner_20260217T180418Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H55 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h55_runner_20260217T180419Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H55 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h55_runner_20260217T180421Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=2012, mean=1.800370838387203e-05, CI=[-0.00013373735135994056,0.0001818268060196566], P(mean>0)=0.601
+- baseline `bps8`: n=2012, mean=-0.000781996291616128, CI=[-0.0009337373513599405,-0.0006181731939803434], P(mean>0)=0.0
+- baseline `bps10`: n=2012, mean=-0.0009819962916161283, CI=[-0.001133737351359941,-0.0008181731939803439], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -2.6965304880118588e-05, 'mean_ci_high': 0.00018802819620034378, 'mean_ci_low': -0.00024206840131910313, 'n': 1313, 'p_mean_gt_0': 0.41433333333333333}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 37.5, 'total': 8}
+- walkforward `gross` fold means: [-0.0005591056149030146, -0.00010469020850085168, -6.808284297669629e-06, -0.00033566167691972097, -0.00027400250251857316, 0.00014341279037447704, 0.0003332089577434568, 0.0005306356122486639]
+- walkforward `bps8` aggregate: {'mean': -0.0008269653048801187, 'mean_ci_high': -0.0006119718037996563, 'mean_ci_low': -0.0010420684013191031, 'n': 1313, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps8` fold means: [-0.0013591056149030146, -0.0009046902085008516, -0.0008068082842976696, -0.001135661676919721, -0.0010740025025185733, -0.0006565872096255228, -0.00046679104225654325, -0.00026936438775133627]
+- walkforward `bps10` aggregate: {'mean': -0.0010269653048801189, 'mean_ci_high': -0.0008119718037996564, 'mean_ci_low': -0.0012420684013191034, 'n': 1313, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps10` fold means: [-0.0015591056149030149, -0.001104690208500852, -0.00100680828429767, -0.0013356616769197212, -0.0012740025025185734, -0.0008565872096255232, -0.0006667910422565434, -0.0004693643877513365]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180422Z_H55.json`
+
+## H56 Batch Automation Run
+Run: 2026-02-17T18:04:26+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H56 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h56_runner_20260217T180422Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H56 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h56_runner_20260217T180424Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H56 --family range_structure --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h56_runner_20260217T180425Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=5092, mean=-0.00017072597392502409, CI=[-0.0002741288618606189,-7.37761748586248e-05], P(mean>0)=0.0006666666666666666
+- baseline `bps8`: n=5092, mean=-0.0009707259739250243, CI=[-0.0010741288618606188,-0.0008737761748586249], P(mean>0)=0.0
+- baseline `bps10`: n=5092, mean=-0.0011707259739250242, CI=[-0.0012741288618606191,-0.0010737761748586248], P(mean>0)=0.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': -0.0002278733088273663, 'mean_ci_high': -9.593000895162189e-05, 'mean_ci_low': -0.00036450066471841754, 'n': 3379, 'p_mean_gt_0': 0.001}
+- walkforward `gross` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `gross` fold means: [-0.0003360631087274918, -0.0002360447001175712, -0.0002545651110787925, -0.00016560611406069684, -0.00022348857070369354, -0.0001205325715800772, -0.00019518799610432152, -0.0002963552238963562]
+- walkforward `bps8` aggregate: {'mean': -0.0010278733088273664, 'mean_ci_high': -0.000895930008951622, 'mean_ci_low': -0.0011645006647184176, 'n': 3379, 'p_mean_gt_0': 0.0}
+- walkforward `bps8` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps8` fold means: [-0.0011360631087274917, -0.0010360447001175714, -0.0010545651110787926, -0.0009656061140606969, -0.0010234885707036936, -0.0009205325715800773, -0.0009951879961043214, -0.0010963552238963563]
+- walkforward `bps10` aggregate: {'mean': -0.0012278733088273667, 'mean_ci_high': -0.0010959300089516224, 'mean_ci_low': -0.0013645006647184182, 'n': 3379, 'p_mean_gt_0': 0.0}
+- walkforward `bps10` positive_folds: {'count': 0, 'pct': 0.0, 'total': 8}
+- walkforward `bps10` fold means: [-0.0013360631087274923, -0.0012360447001175715, -0.0012545651110787929, -0.001165606114060697, -0.001223488570703694, -0.0011205325715800776, -0.001195187996104322, -0.0012963552238963564]
+- Final classification: `FAIL`
+- Artifact: `results/runs/20260217T180426Z_H56.json`
+
+## H59 Batch Automation Run
+Run: 2026-02-17T18:11:39+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H59 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h59_runner_20260217T181135Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H59 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h59_runner_20260217T181136Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H59 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h59_runner_20260217T181137Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=334, mean=0.0018149890861475868, CI=[0.0014460375549408197,0.00221143564441102], P(mean>0)=1.0
+- baseline `bps8`: n=334, mean=0.0010149890861475869, CI=[0.0006460375549408198,0.0014114356444110204], P(mean>0)=1.0
+- baseline `bps10`: n=334, mean=0.0008149890861475866, CI=[0.0004460375549408197,0.00121143564441102], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002086650129754504, 'mean_ci_high': 0.002675211069165513, 'mean_ci_low': 0.001511002660574899, 'n': 182, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0011049639250203737, 0.00267218630987869, 0.0026507305398977663, 0.0023188228436077105, 0.002005771898215648, 0.0013074688653142918, 0.002532268973272363]
+- walkforward `bps8` aggregate: {'mean': 0.0012866501297545039, 'mean_ci_high': 0.0018752110691655133, 'mean_ci_low': 0.0007110026605748991, 'n': 182, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0003049639250203734, 0.0018721863098786903, 0.0018507305398977655, 0.0015188228436077103, 0.0012057718982156481, 0.0005074688653142918, 0.0017322689732723624]
+- walkforward `bps10` aggregate: {'mean': 0.0010866501297545036, 'mean_ci_high': 0.0016752110691655125, 'mean_ci_low': 0.0005110026605748988, 'n': 182, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.00010496392502037341, 0.00167218630987869, 0.0016507305398977656, 0.0013188228436077103, 0.0010057718982156476, 0.0003074688653142916, 0.0015322689732723627]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260217T181139Z_H59.json`
+
+## H60 Batch Automation Run
+Run: 2026-02-17T18:11:43+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H60 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h60_runner_20260217T181139Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H60 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h60_runner_20260217T181140Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H60 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h60_runner_20260217T181142Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=324, mean=0.002564608139487252, CI=[0.0019535955877716727,0.0032169780576699835], P(mean>0)=1.0
+- baseline `bps8`: n=324, mean=0.0017646081394872518, CI=[0.0011535955877716728,0.0024169780576699836], P(mean>0)=1.0
+- baseline `bps10`: n=324, mean=0.0015646081394872513, CI=[0.0009535955877716724,0.002216978057669983], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0027027564333464175, 'mean_ci_high': 0.003525236180437292, 'mean_ci_low': 0.0018964319846227744, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0031402606583050318, 0.002762570351302709, 0.0026740521854605377, 0.005586474384002963, 0.0007215983683137618, 0.0014642583469261336, 0.002138833049509851]
+- walkforward `bps8` aggregate: {'mean': 0.0019027564333464171, 'mean_ci_high': 0.002725236180437291, 'mean_ci_low': 0.0010964319846227745, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [0.0023402606583050314, 0.0019625703513027086, 0.0018740521854605382, 0.004786474384002964, -7.840163168623828e-05, 0.0006642583469261337, 0.0013388330495098502]
+- walkforward `bps10` aggregate: {'mean': 0.0017027564333464164, 'mean_ci_high': 0.002525236180437291, 'mean_ci_low': 0.000896431984622774, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps10` fold means: [0.0021402606583050313, 0.0017625703513027087, 0.0016740521854605374, 0.004586474384002962, -0.0002784016316862382, 0.0004642583469261333, 0.0011388330495098505]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260217T181143Z_H60.json`
+
+## H61 Batch Automation Run
+Run: 2026-02-17T18:11:47+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H61 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h61_runner_20260217T181143Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H61 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h61_runner_20260217T181144Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H61 --family cross_asset_regime --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h61_runner_20260217T181146Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=324, mean=0.0013443140281774568, CI=[0.0009447235990640016,0.0017448664654252564], P(mean>0)=1.0
+- baseline `bps8`: n=324, mean=0.0005443140281774565, CI=[0.00014472359906400161,0.0009448664654252564], P(mean>0)=0.9956666666666667
+- baseline `bps10`: n=324, mean=0.0003443140281774565, CI=[-5.527640093599861e-05,0.0007448664654252562], P(mean>0)=0.9563333333333334
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.00150964164555974, 'mean_ci_high': 0.0020645215988437135, 'mean_ci_low': 0.000987423065512059, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0018557696935008322, 0.0008038862609132233, 0.001812560302572711, 0.0030928776345186698, 0.0005489181321234882, 0.001116239255670354, 0.000990446288199867]
+- walkforward `bps8` aggregate: {'mean': 0.0007096416455597401, 'mean_ci_high': 0.001264521598843714, 'mean_ci_low': 0.00018742306551205892, 'n': 191, 'p_mean_gt_0': 0.9956666666666667}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [0.001055769693500832, 3.886260913223232e-06, 0.0010125603025727108, 0.00229287763451867, -0.00025108186787651187, 0.00031623925567035376, 0.00019044628819986692]
+- walkforward `bps10` aggregate: {'mean': 0.0005096416455597396, 'mean_ci_high': 0.0010645215988437135, 'mean_ci_low': -1.2576934487941157e-05, 'n': 191, 'p_mean_gt_0': 0.9716666666666667}
+- walkforward `bps10` positive_folds: {'count': 4, 'pct': 57.142857142857146, 'total': 7}
+- walkforward `bps10` fold means: [0.0008557696935008322, -0.00019611373908677695, 0.0008125603025727109, 0.0020928776345186693, -0.00045108186787651185, 0.0001162392556703539, -9.553711800133155e-06]
+- Final classification: `BORDERLINE`
+- Artifact: `results/runs/20260217T181147Z_H61.json`
+
+## H59/H60/H61 Freeze Classification Lock (Phase-2 Replication)
+Run: 2026-02-17T18:11:47+00:00
+
+Freeze decisions (no rule changes):
+- H59: `PASS gross / PASS bps8 / PASS bps10`
+  - WF bps8 positive_folds: `100.00%`
+  - WF bps10 positive_folds: `100.00%`
+- H60: `PASS gross / PASS bps8 / PASS bps10`
+  - WF bps8 positive_folds: `85.71%`
+  - WF bps10 positive_folds: `85.71%`
+- H61 (execution realism variant, next-bar entry): `PASS gross / PASS bps8 / BORDERLINE bps10`
+  - WF bps10 CI crosses zero and positive_folds: `57.14%`
+
+Rule state:
+- `Freeze rules` for H59/H60/H61.
+- H61 remains explicit next-bar-close execution realism replication.
+
+## H62 Batch Automation Run
+Run: 2026-02-17T18:16:10+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H62 --family cross_asset_regime --days 180 --timeframe 5m --horizon 4 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h62_runner_20260217T181606Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H62 --family cross_asset_regime --days 180 --timeframe 5m --horizon 4 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h62_runner_20260217T181607Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H62 --family cross_asset_regime --days 180 --timeframe 5m --horizon 4 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h62_runner_20260217T181609Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=335, mean=0.00113426024334175, CI=[0.0007953778238206088,0.001467687184866424], P(mean>0)=1.0
+- baseline `bps8`: n=335, mean=0.00033426024334174987, CI=[-4.622176179391252e-06,0.0006676871848664244], P(mean>0)=0.974
+- baseline `bps10`: n=335, mean=0.00013426024334174983, CI=[-0.00020462217617939134,0.000467687184866424], P(mean>0)=0.7766666666666666
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0013426922388723895, 'mean_ci_high': 0.0018419709088955613, 'mean_ci_low': 0.0008832335484692616, 'n': 210, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `gross` fold means: [0.0011928453567330193, 0.0020558964058200496, 0.002035696162006708, 0.0011174570286673162, 0.001422608451955839, 0.001052960285023065, 0.0013682155542881001, 0.0005976278137468449]
+- walkforward `bps8` aggregate: {'mean': 0.0005426922388723893, 'mean_ci_high': 0.0010419709088955612, 'mean_ci_low': 8.323354846926147e-05, 'n': 210, 'p_mean_gt_0': 0.991}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 87.5, 'total': 8}
+- walkforward `bps8` fold means: [0.000392845356733019, 0.0012558964058200497, 0.0012356961620067078, 0.0003174570286673159, 0.000622608451955839, 0.0002529602850230648, 0.0005682155542881, -0.00020237218625315513]
+- walkforward `bps10` aggregate: {'mean': 0.00034269223887238917, 'mean_ci_high': 0.0008419709088955613, 'mean_ci_low': -0.00011676645153073869, 'n': 210, 'p_mean_gt_0': 0.9213333333333333}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 87.5, 'total': 8}
+- walkforward `bps10` fold means: [0.00019284535673301913, 0.0010558964058200492, 0.0010356961620067078, 0.000117457028667316, 0.0004226084519558389, 5.2960285023064904e-05, 0.0003682155542880999, -0.0004023721862531551]
+- Final classification: `BORDERLINE`
+- Artifact: `results/runs/20260217T181610Z_H62.json`
+
+## H63 Batch Automation Run
+Run: 2026-02-17T18:16:14+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H63 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h63_runner_20260217T181610Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H63 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h63_runner_20260217T181611Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H63 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h63_runner_20260217T181613Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=335, mean=0.002237958090431262, CI=[0.0018024159082848114,0.0026758980012157787], P(mean>0)=1.0
+- baseline `bps8`: n=335, mean=0.0014379580904312621, CI=[0.0010024159082848115,0.0018758980012157785], P(mean>0)=1.0
+- baseline `bps10`: n=335, mean=0.0012379580904312616, CI=[0.0008024159082848113,0.0016758980012157778], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0025501702449459884, 'mean_ci_high': 0.0032116139404594845, 'mean_ci_low': 0.0019473371652712235, 'n': 210, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `gross` fold means: [0.0017933025739766222, 0.0028267530626530013, 0.0037331898852360026, 0.00268594220058382, 0.002537824037493832, 0.0016663491299301085, 0.002897986863514548, 0.0023589354332832603]
+- walkforward `bps8` aggregate: {'mean': 0.0017501702449459885, 'mean_ci_high': 0.002411613940459484, 'mean_ci_low': 0.0011473371652712236, 'n': 210, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `bps8` fold means: [0.0009933025739766223, 0.0020267530626530018, 0.002933189885236003, 0.00188594220058382, 0.001737824037493831, 0.0008663491299301086, 0.002097986863514548, 0.0015589354332832604]
+- walkforward `bps10` aggregate: {'mean': 0.0015501702449459882, 'mean_ci_high': 0.002211613940459484, 'mean_ci_low': 0.0009473371652712234, 'n': 210, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `bps10` fold means: [0.0007933025739766217, 0.001826753062653001, 0.002733189885236003, 0.0016859422005838195, 0.0015378240374938315, 0.0006663491299301083, 0.0018979868635145478, 0.00135893543328326]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260217T181614Z_H63.json`
+
+## H64 Batch Automation Run
+Run: 2026-02-17T18:16:18+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H64 --family cross_asset_regime --days 180 --timeframe 5m --horizon 4 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h64_runner_20260217T181614Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H64 --family cross_asset_regime --days 180 --timeframe 5m --horizon 4 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h64_runner_20260217T181615Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H64 --family cross_asset_regime --days 180 --timeframe 5m --horizon 4 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h64_runner_20260217T181616Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=325, mean=0.0018149075180192583, CI=[0.0013332366962586848,0.0023231693694348594], P(mean>0)=1.0
+- baseline `bps8`: n=325, mean=0.0010149075180192581, CI=[0.0005332366962586848,0.0015231693694348594], P(mean>0)=1.0
+- baseline `bps10`: n=325, mean=0.000814907518019258, CI=[0.0003332366962586846,0.0013231693694348591], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0019027892932372361, 'mean_ci_high': 0.0024996663149579814, 'mean_ci_low': 0.0013022394693794298, 'n': 222, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `gross` fold means: [0.0022645460577692717, 0.0025928361889734843, 0.002489284713168064, 0.0026416826316187038, 0.00037703666201776583, 0.0013505328979378254, 0.0005223717552434945, 0.0023720811027958533]
+- walkforward `bps8` aggregate: {'mean': 0.0011027892932372364, 'mean_ci_high': 0.001699666314957981, 'mean_ci_low': 0.0005022394693794297, 'n': 222, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 75.0, 'total': 8}
+- walkforward `bps8` fold means: [0.0014645460577692713, 0.0017928361889734843, 0.0016892847131680638, 0.0018416826316187034, -0.0004229633379822342, 0.0005505328979378254, -0.0002776282447565055, 0.001572081102795853]
+- walkforward `bps10` aggregate: {'mean': 0.0009027892932372359, 'mean_ci_high': 0.0014996663149579811, 'mean_ci_low': 0.0003022394693794294, 'n': 222, 'p_mean_gt_0': 0.999}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 75.0, 'total': 8}
+- walkforward `bps10` fold means: [0.0012645460577692714, 0.0015928361889734838, 0.0014892847131680637, 0.0016416826316187037, -0.0006229633379822342, 0.00035053289793782514, -0.00047762824475650566, 0.0013720811027958528]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260217T181618Z_H64.json`
+
+## H65 Batch Automation Run
+Run: 2026-02-17T18:16:22+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H65 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h65_runner_20260217T181618Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H65 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h65_runner_20260217T181619Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H65 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h65_runner_20260217T181620Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=325, mean=0.0030590782222857543, CI=[0.0024037035268930627,0.003723170694778903], P(mean>0)=1.0
+- baseline `bps8`: n=325, mean=0.002259078222285754, CI=[0.0016037035268930623,0.002923170694778903], P(mean>0)=1.0
+- baseline `bps10`: n=325, mean=0.0020590782222857534, CI=[0.0014037035268930618,0.0027231706947789024], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0030546748687393975, 'mean_ci_high': 0.0038429909923880646, 'mean_ci_low': 0.002256493823632098, 'n': 222, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `gross` fold means: [0.003518272489694006, 0.0023114513965801285, 0.0032330661436584577, 0.0058458912818584036, 0.0020923502200117694, 0.0017356662527485437, 0.001887642233205647, 0.00264035364645041]
+- walkforward `bps8` aggregate: {'mean': 0.002254674868739397, 'mean_ci_high': 0.003042990992388064, 'mean_ci_low': 0.001456493823632098, 'n': 222, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `bps8` fold means: [0.002718272489694006, 0.0015114513965801286, 0.0024330661436584577, 0.005045891281858404, 0.0012923502200117688, 0.0009356662527485438, 0.001087642233205647, 0.0018403536464504096]
+- walkforward `bps10` aggregate: {'mean': 0.0020546748687393966, 'mean_ci_high': 0.0028429909923880638, 'mean_ci_low': 0.0012564938236320974, 'n': 222, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 8, 'pct': 100.0, 'total': 8}
+- walkforward `bps10` fold means: [0.0025182724896940056, 0.001311451396580128, 0.0022330661436584572, 0.004845891281858403, 0.0010923502200117692, 0.0007356662527485431, 0.0008876422332056465, 0.0016403536464504095]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260217T181622Z_H65.json`
+
+## H66 Batch Automation Run
+Run: 2026-02-18T07:43:08+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H66 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h66_runner_20260218T074305Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H66 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h66_runner_20260218T074306Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H66 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h66_runner_20260218T074307Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=210, mean=0.002482866287913043, CI=[0.0018760844570424719,0.0031264504722152754], P(mean>0)=1.0
+- baseline `bps8`: n=210, mean=0.001682866287913043, CI=[0.0010760844570424717,0.0023264504722152754], P(mean>0)=1.0
+- baseline `bps10`: n=210, mean=0.0014828662879130428, CI=[0.0008760844570424713,0.002126450472215275], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0023062658827210313, 'mean_ci_high': 0.003222896725743215, 'mean_ci_low': 0.0014537026077413415, 'n': 78, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `gross` fold means: [0.0026779782632965514, 0.001617279229910177, 0.002939260977073064]
+- walkforward `bps8` aggregate: {'mean': 0.0015062658827210316, 'mean_ci_high': 0.0024228967257432146, 'mean_ci_low': 0.0006537026077413411, 'n': 78, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `bps8` fold means: [0.0018779782632965508, 0.0008172792299101768, 0.0021392609770730635]
+- walkforward `bps10` aggregate: {'mean': 0.0013062658827210308, 'mean_ci_high': 0.0022228967257432145, 'mean_ci_low': 0.00045370260774134114, 'n': 78, 'p_mean_gt_0': 0.9993333333333333}
+- walkforward `bps10` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `bps10` fold means: [0.0016779782632965511, 0.0006172792299101767, 0.0019392609770730635]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074308Z_H66.json`
+
+## H67 Batch Automation Run
+Run: 2026-02-18T07:43:11+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H67 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h67_runner_20260218T074308Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H67 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h67_runner_20260218T074309Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H67 --family cross_asset_regime --days 120 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h67_runner_20260218T074310Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=220, mean=0.0030613898043064303, CI=[0.0022291432923541954,0.003925739823399791], P(mean>0)=1.0
+- baseline `bps8`: n=220, mean=0.0022613898043064304, CI=[0.0014291432923541952,0.0031257398233997904], P(mean>0)=1.0
+- baseline `bps10`: n=220, mean=0.0020613898043064295, CI=[0.0012291432923541945,0.0029257398233997903], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0017621722484972722, 'mean_ci_high': 0.0026722270546371153, 'mean_ci_low': 0.0009194824139206468, 'n': 72, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `gross` fold means: [0.0016877597869304727, 0.0016205843545893674, 0.0020938028561454723]
+- walkforward `bps8` aggregate: {'mean': 0.0009621722484972721, 'mean_ci_high': 0.0018722270546371153, 'mean_ci_low': 0.00011948241392064662, 'n': 72, 'p_mean_gt_0': 0.9866666666666667}
+- walkforward `bps8` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `bps8` fold means: [0.0008877597869304724, 0.0008205843545893675, 0.0012938028561454722]
+- walkforward `bps10` aggregate: {'mean': 0.000762172248497272, 'mean_ci_high': 0.001672227054637115, 'mean_ci_low': -8.051758607935353e-05, 'n': 72, 'p_mean_gt_0': 0.9646666666666667}
+- walkforward `bps10` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `bps10` fold means: [0.0006877597869304724, 0.0006205843545893669, 0.0010938028561454718]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074311Z_H67.json`
+
+## H68 Batch Automation Run
+Run: 2026-02-18T07:43:15+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H68 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h68_runner_20260218T074311Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H68 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h68_runner_20260218T074312Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H68 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h68_runner_20260218T074314Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=170, mean=0.0023565755365926636, CI=[0.0018107200516362474,0.0029190865006821745], P(mean>0)=1.0
+- baseline `bps8`: n=170, mean=0.0015565755365926637, CI=[0.0010107200516362475,0.002119086500682174], P(mean>0)=1.0
+- baseline `bps10`: n=170, mean=0.0013565755365926636, CI=[0.0008107200516362473,0.0019190865006821743], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002307908163014443, 'mean_ci_high': 0.0031122331269788357, 'mean_ci_low': 0.001592357044508144, 'n': 93, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0002917262597478882, 0.003038124195489347, 0.000890648748670889, 0.0030046316150653595, 0.002143469838360693, 0.001209762673168622, 0.004039548673975809]
+- walkforward `bps8` aggregate: {'mean': 0.0015079081630144436, 'mean_ci_high': 0.0023122331269788358, 'mean_ci_low': 0.0007923570445081444, 'n': 93, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [-0.0005082737402521118, 0.0022381241954893463, 9.064874867088884e-05, 0.0022046316150653596, 0.0013434698383606933, 0.00040976267316862196, 0.003239548673975808]
+- walkforward `bps10` aggregate: {'mean': 0.0013079081630144429, 'mean_ci_high': 0.002112233126978835, 'mean_ci_low': 0.0005923570445081442, 'n': 93, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 5, 'pct': 71.42857142857143, 'total': 7}
+- walkforward `bps10` fold means: [-0.0007082737402521118, 0.0020381241954893466, -0.00010935125132911101, 0.002004631615065359, 0.001143469838360693, 0.00020976267316862198, 0.003039548673975808]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074315Z_H68.json`
+
+## H69 Batch Automation Run
+Run: 2026-02-18T07:43:19+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H69 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h69_runner_20260218T074315Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H69 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h69_runner_20260218T074316Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H69 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h69_runner_20260218T074318Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=162, mean=0.0021403511705525347, CI=[0.0014813989363365926,0.0028934272629610822], P(mean>0)=1.0
+- baseline `bps8`: n=162, mean=0.0013403511705525348, CI=[0.0006813989363365924,0.0020934272629610823], P(mean>0)=1.0
+- baseline `bps10`: n=162, mean=0.0011403511705525345, CI=[0.0004813989363365922,0.001893427262961082], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0026307265769311026, 'mean_ci_high': 0.003749446964007393, 'mean_ci_low': 0.0016308793593584811, 'n': 87, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0009692796688519634, 0.0032204267901253802, 0.004374968711346829, 0.0023901732087350915, 0.0034500459882039016, 0.002050265571448079, 0.0012031703859335262]
+- walkforward `bps8` aggregate: {'mean': 0.0018307265769311031, 'mean_ci_high': 0.002949446964007394, 'mean_ci_low': 0.0008308793593584817, 'n': 87, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.00016927966885196328, 0.0024204267901253803, 0.0035749687113468286, 0.001590173208735092, 0.0026500459882039026, 0.0012502655714480787, 0.00040317038593352624]
+- walkforward `bps10` aggregate: {'mean': 0.0016307265769311022, 'mean_ci_high': 0.002749446964007393, 'mean_ci_low': 0.0006308793593584808, 'n': 87, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps10` fold means: [-3.072033114803665e-05, 0.00222042679012538, 0.0033749687113468277, 0.0013901732087350906, 0.002450045988203901, 0.0010502655714480788, 0.00020317038593352618]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074319Z_H69.json`
+
+## H70 Batch Automation Run
+Run: 2026-02-18T07:43:23+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H70 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h70_runner_20260218T074319Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H70 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h70_runner_20260218T074320Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H70 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h70_runner_20260218T074322Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=163, mean=0.0033294005359594476, CI=[0.0023301649090000914,0.004341716626413409], P(mean>0)=1.0
+- baseline `bps8`: n=163, mean=0.0025294005359594476, CI=[0.0015301649090000912,0.003541716626413408], P(mean>0)=1.0
+- baseline `bps10`: n=163, mean=0.0023294005359594467, CI=[0.0013301649090000911,0.003341716626413408], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002863329956339998, 'mean_ci_high': 0.004263271858445283, 'mean_ci_low': 0.0014649816914387463, 'n': 101, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `gross` fold means: [0.005203850341886, 0.001985611962991111, 0.003973129976757611, 0.005155710053496632, 0.0026322089141501206, 0.001776280794148454, -0.002981776184043783]
+- walkforward `bps8` aggregate: {'mean': 0.002063329956339998, 'mean_ci_high': 0.003463271858445282, 'mean_ci_low': 0.0006649816914387465, 'n': 101, 'p_mean_gt_0': 0.9976666666666667}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [0.004403850341885999, 0.001185611962991111, 0.003173129976757611, 0.004355710053496633, 0.0018322089141501203, 0.0009762807941484539, -0.0037817761840437834]
+- walkforward `bps10` aggregate: {'mean': 0.0018633299563399972, 'mean_ci_high': 0.0032632718584452818, 'mean_ci_low': 0.0004649816914387459, 'n': 101, 'p_mean_gt_0': 0.996}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps10` fold means: [0.004203850341885999, 0.0009856119629911106, 0.0029731299767576107, 0.004155710053496631, 0.0016322089141501204, 0.0007762807941484539, -0.003981776184043784]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T074323Z_H70.json`
+
+## H71 Batch Automation Run
+Run: 2026-02-18T07:43:27+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H71 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h71_runner_20260218T074323Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H71 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h71_runner_20260218T074324Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H71 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h71_runner_20260218T074325Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=159, mean=0.0027813068126899152, CI=[0.0018900631200982631,0.0037545905853960167], P(mean>0)=1.0
+- baseline `bps8`: n=159, mean=0.0019813068126899153, CI=[0.0010900631200982634,0.002954590585396016], P(mean>0)=1.0
+- baseline `bps10`: n=159, mean=0.0017813068126899146, CI=[0.0008900631200982628,0.002754590585396016], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002688763804805619, 'mean_ci_high': 0.0038882508796198464, 'mean_ci_low': 0.0016181652293101687, 'n': 91, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.002657947727563781, 0.0012856424027669622, 0.004132085586792447, 0.004338914542877115, 0.001190107971041086, 0.0012927799616280118, 0.001992819808519508]
+- walkforward `bps8` aggregate: {'mean': 0.001888763804805619, 'mean_ci_high': 0.0030882508796198456, 'mean_ci_low': 0.0008181652293101688, 'n': 91, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.001857947727563781, 0.00048564240276696203, 0.0033320855867924474, 0.003538914542877114, 0.00039010797104108586, 0.0004927799616280118, 0.001192819808519508]
+- walkforward `bps10` aggregate: {'mean': 0.0016887638048056187, 'mean_ci_high': 0.0028882508796198455, 'mean_ci_low': 0.0006181652293101685, 'n': 91, 'p_mean_gt_0': 0.999}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0016579477275637804, 0.00028564240276696194, 0.0031320855867924473, 0.003338914542877114, 0.00019010797104108577, 0.0002927799616280117, 0.000992819808519508]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074327Z_H71.json`
+
+## H72 Batch Automation Run
+Run: 2026-02-18T07:43:31+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H72 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h72_runner_20260218T074327Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H72 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h72_runner_20260218T074328Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H72 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h72_runner_20260218T074329Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=332, mean=0.0022510684664164564, CI=[0.0018352412361342955,0.0027013417674560686], P(mean>0)=1.0
+- baseline `bps8`: n=332, mean=0.0014510684664164565, CI=[0.0010352412361342956,0.0019013417674560687], P(mean>0)=1.0
+- baseline `bps10`: n=332, mean=0.0012510684664164562, CI=[0.0008352412361342955,0.0017013417674560682], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0025604547965901833, 'mean_ci_high': 0.0032560135757989154, 'mean_ci_low': 0.001924733078953065, 'n': 182, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0017933025739766222, 0.0030420386680476454, 0.003314523505315021, 0.0026868083014462553, 0.0026779782632965514, 0.001617279229910177, 0.002939260977073064]
+- walkforward `bps8` aggregate: {'mean': 0.0017604547965901834, 'mean_ci_high': 0.0024560135757989154, 'mean_ci_low': 0.0011247330789530652, 'n': 182, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0009933025739766223, 0.0022420386680476463, 0.002514523505315021, 0.0018868083014462551, 0.0018779782632965508, 0.0008172792299101768, 0.0021392609770730635]
+- walkforward `bps10` aggregate: {'mean': 0.001560454796590183, 'mean_ci_high': 0.002256013575798915, 'mean_ci_low': 0.0009247330789530649, 'n': 182, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0007933025739766217, 0.002042038668047645, 0.0023145235053150205, 0.001686808301446255, 0.0016779782632965511, 0.0006172792299101767, 0.0019392609770730635]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T074331Z_H72.json`
+
+## H73 Batch Automation Run
+Run: 2026-02-18T07:43:34+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H73 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h73_runner_20260218T074331Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H73 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h73_runner_20260218T074332Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H73 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h73_runner_20260218T074333Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=322, mean=0.0030587579831648647, CI=[0.0024235799938175794,0.0037800680392085346], P(mean>0)=1.0
+- baseline `bps8`: n=322, mean=0.002258757983164865, CI=[0.0016235799938175792,0.002980068039208534], P(mean>0)=1.0
+- baseline `bps10`: n=322, mean=0.0020587579831648642, CI=[0.0014235799938175787,0.0027800680392085337], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.003103707771554055, 'mean_ci_high': 0.003984978842415476, 'mean_ci_low': 0.0022373649094045767, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0034395079392674412, 0.0028373022006037934, 0.0032330239823697426, 0.00603668706569645, 0.0016877597869304727, 0.0016205843545893674, 0.0020938028561454723]
+- walkforward `bps8` aggregate: {'mean': 0.0023037077715540545, 'mean_ci_high': 0.0031849788424154753, 'mean_ci_low': 0.0014373649094045773, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0026395079392674413, 0.002037302200603793, 0.002433023982369743, 0.00523668706569645, 0.0008877597869304724, 0.0008205843545893675, 0.0012938028561454722]
+- walkforward `bps10` aggregate: {'mean': 0.002103707771554054, 'mean_ci_high': 0.002984978842415475, 'mean_ci_low': 0.0012373649094045765, 'n': 191, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.002439507939267441, 0.0018373022006037928, 0.002233023982369742, 0.005036687065696449, 0.0006877597869304724, 0.0006205843545893669, 0.0010938028561454718]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T074334Z_H73.json`
+
+## H74 Batch Automation Run
+Run: 2026-02-18T07:43:37+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H74 --family cross_asset_regime --days 120 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h74_runner_20260218T074334Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H74 --family cross_asset_regime --days 120 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h74_runner_20260218T074335Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H74 --family cross_asset_regime --days 120 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h74_runner_20260218T074336Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=210, mean=0.002039301134905177, CI=[0.0014933465103572836,0.002618877324450325], P(mean>0)=1.0
+- baseline `bps8`: n=210, mean=0.0012393011349051773, CI=[0.0006933465103572836,0.0018188773244503247], P(mean>0)=1.0
+- baseline `bps10`: n=210, mean=0.001039301134905177, CI=[0.0004933465103572834,0.0016188773244503244], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0018655851371971826, 'mean_ci_high': 0.002595861573413681, 'mean_ci_low': 0.0011886593427936879, 'n': 78, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `gross` fold means: [0.002005771898215648, 0.0013074688653142918, 0.002532268973272363]
+- walkforward `bps8` aggregate: {'mean': 0.0010655851371971826, 'mean_ci_high': 0.0017958615734136815, 'mean_ci_low': 0.0003886593427936879, 'n': 78, 'p_mean_gt_0': 0.9996666666666667}
+- walkforward `bps8` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `bps8` fold means: [0.0012057718982156481, 0.0005074688653142918, 0.0017322689732723624]
+- walkforward `bps10` aggregate: {'mean': 0.0008655851371971821, 'mean_ci_high': 0.0015958615734136803, 'mean_ci_low': 0.0001886593427936878, 'n': 78, 'p_mean_gt_0': 0.996}
+- walkforward `bps10` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `bps10` fold means: [0.0010057718982156476, 0.0003074688653142916, 0.0015322689732723627]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074337Z_H74.json`
+
+## H75 Batch Automation Run
+Run: 2026-02-18T07:43:40+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H75 --family cross_asset_regime --days 120 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h75_runner_20260218T074337Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H75 --family cross_asset_regime --days 120 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h75_runner_20260218T074338Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H75 --family cross_asset_regime --days 120 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h75_runner_20260218T074339Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=220, mean=0.00274597952600853, CI=[0.0019644856352308876,0.0035463873957719636], P(mean>0)=1.0
+- baseline `bps8`: n=220, mean=0.0019459795260085302, CI=[0.0011644856352308872,0.0027463873957719633], P(mean>0)=1.0
+- baseline `bps10`: n=220, mean=0.0017459795260085294, CI=[0.0009644856352308869,0.0025463873957719627], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0012934618278751238, 'mean_ci_high': 0.0021124872597991402, 'mean_ci_low': 0.0005178807101238901, 'n': 72, 'p_mean_gt_0': 0.9993333333333333}
+- walkforward `gross` positive_folds: {'count': 3, 'pct': 100.0, 'total': 3}
+- walkforward `gross` fold means: [0.0007215983683137618, 0.0014642583469261336, 0.002138833049509851]
+- walkforward `bps8` aggregate: {'mean': 0.0004934618278751236, 'mean_ci_high': 0.00131248725979914, 'mean_ci_low': -0.00028211928987611004, 'n': 72, 'p_mean_gt_0': 0.8883333333333333}
+- walkforward `bps8` positive_folds: {'count': 2, 'pct': 66.66666666666667, 'total': 3}
+- walkforward `bps8` fold means: [-7.840163168623828e-05, 0.0006642583469261337, 0.0013388330495098502]
+- walkforward `bps10` aggregate: {'mean': 0.00029346182787512367, 'mean_ci_high': 0.00111248725979914, 'mean_ci_low': -0.00048211928987611, 'n': 72, 'p_mean_gt_0': 0.7606666666666667}
+- walkforward `bps10` positive_folds: {'count': 2, 'pct': 66.66666666666667, 'total': 3}
+- walkforward `bps10` fold means: [-0.0002784016316862382, 0.0004642583469261333, 0.0011388330495098505]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T074340Z_H75.json`
+
+
+## Phase-2c Robustness + Sanity Replications
+Run: 2026-02-18 UTC
+
+Scope: no rule changes; replication-only checks for H63/H65 with H59/H60 references.
+
+- H66: bps8 baseline n=210, mean=0.001682866287913043; bps10 baseline n=210, mean=0.0014828662879130428
+  WF bps8 mean=0.0015062658827210316, CI=[0.0006537026077413411,0.0024228967257432146], pos_folds=100.0%
+  WF bps10 mean=0.0013062658827210308, CI=[0.00045370260774134114,0.0022228967257432145], pos_folds=100.0%
+- H67: bps8 baseline n=220, mean=0.0022613898043064304; bps10 baseline n=220, mean=0.0020613898043064295
+  WF bps8 mean=0.0009621722484972721, CI=[0.00011948241392064662,0.0018722270546371153], pos_folds=100.0%
+  WF bps10 mean=0.000762172248497272, CI=[-8.051758607935353e-05,0.001672227054637115], pos_folds=100.0%
+- H68: bps8 baseline n=170, mean=0.0015565755365926637; bps10 baseline n=170, mean=0.0013565755365926636
+  WF bps8 mean=0.0015079081630144436, CI=[0.0007923570445081444,0.0023122331269788358], pos_folds=85.71428571428571%
+  WF bps10 mean=0.0013079081630144429, CI=[0.0005923570445081442,0.002112233126978835], pos_folds=71.42857142857143%
+- H69: bps8 baseline n=162, mean=0.0013403511705525348; bps10 baseline n=162, mean=0.0011403511705525345
+  WF bps8 mean=0.0018307265769311031, CI=[0.0008308793593584817,0.002949446964007394], pos_folds=100.0%
+  WF bps10 mean=0.0016307265769311022, CI=[0.0006308793593584808,0.002749446964007393], pos_folds=85.71428571428571%
+- H70: bps8 baseline n=163, mean=0.0025294005359594476; bps10 baseline n=163, mean=0.0023294005359594467
+  WF bps8 mean=0.002063329956339998, CI=[0.0006649816914387465,0.003463271858445282], pos_folds=85.71428571428571%
+  WF bps10 mean=0.0018633299563399972, CI=[0.0004649816914387459,0.0032632718584452818], pos_folds=85.71428571428571%
+- H71: bps8 baseline n=159, mean=0.0019813068126899153; bps10 baseline n=159, mean=0.0017813068126899146
+  WF bps8 mean=0.001888763804805619, CI=[0.0008181652293101688,0.0030882508796198456], pos_folds=100.0%
+  WF bps10 mean=0.0016887638048056187, CI=[0.0006181652293101685,0.0028882508796198455], pos_folds=100.0%
+- H72: bps8 baseline n=332, mean=0.0014510684664164565; bps10 baseline n=332, mean=0.0012510684664164562
+  WF bps8 mean=0.0017604547965901834, CI=[0.0011247330789530652,0.0024560135757989154], pos_folds=100.0%
+  WF bps10 mean=0.001560454796590183, CI=[0.0009247330789530649,0.002256013575798915], pos_folds=100.0%
+- H73: bps8 baseline n=322, mean=0.002258757983164865; bps10 baseline n=322, mean=0.0020587579831648642
+  WF bps8 mean=0.0023037077715540545, CI=[0.0014373649094045773,0.0031849788424154753], pos_folds=100.0%
+  WF bps10 mean=0.002103707771554054, CI=[0.0012373649094045765,0.002984978842415475], pos_folds=100.0%
+- H74: bps8 baseline n=210, mean=0.0012393011349051773; bps10 baseline n=210, mean=0.001039301134905177
+  WF bps8 mean=0.0010655851371971826, CI=[0.0003886593427936879,0.0017958615734136815], pos_folds=100.0%
+  WF bps10 mean=0.0008655851371971821, CI=[0.0001886593427936878,0.0015958615734136803], pos_folds=100.0%
+- H75: bps8 baseline n=220, mean=0.0019459795260085302; bps10 baseline n=220, mean=0.0017459795260085294
+  WF bps8 mean=0.0004934618278751236, CI=[-0.00028211928987611004,0.00131248725979914], pos_folds=66.66666666666667%
+  WF bps10 mean=0.00029346182787512367, CI=[-0.00048211928987611,0.00111248725979914], pos_folds=66.66666666666667%
+
+Trade density + concentration (bps8 diagnostics from archive):
+- H72: trades_per_day=1.8586424072778167, median_hold_return=0.0006717676670282231, top10_pct_pnl_contribution=0.7536031213382745, mae_proxy_median=None, return_hist=[0, 7, 28, 101, 89, 67, 24, 16]
+- H73: trades_per_day=1.8026592022393282, median_hold_return=0.001192918772867114, top10_pct_pnl_contribution=0.6996007727233282, mae_proxy_median=None, return_hist=[4, 14, 35, 71, 69, 55, 43, 31]
+- H66: trades_per_day=1.768421052631579, median_hold_return=0.0006918611558843442, top10_pct_pnl_contribution=0.7123592806224022, mae_proxy_median=None, return_hist=[0, 5, 17, 65, 50, 43, 17, 13]
+- H67: trades_per_day=1.8545837723919916, median_hold_return=0.0010431516626127298, top10_pct_pnl_contribution=0.69120527411152, mae_proxy_median=None, return_hist=[4, 10, 22, 54, 40, 41, 23, 26]
+- H68: trades_per_day=0.9561752988047809, median_hold_return=0.00081586318396717, top10_pct_pnl_contribution=0.6046998960474292, mae_proxy_median=None, return_hist=[0, 3, 15, 41, 50, 41, 15, 5]
+- H69: trades_per_day=0.9084112149532709, median_hold_return=0.00016563109001396304, top10_pct_pnl_contribution=0.929135657359512, mae_proxy_median=None, return_hist=[0, 4, 13, 60, 39, 26, 9, 11]
+- H70: trades_per_day=0.9399327246516098, median_hold_return=0.0014347873584862566, top10_pct_pnl_contribution=0.6446905781737566, mae_proxy_median=None, return_hist=[3, 9, 13, 32, 32, 32, 22, 20]
+- H71: trades_per_day=0.8920056100981767, median_hold_return=0.0007718209920434489, top10_pct_pnl_contribution=0.7655698307587441, mae_proxy_median=None, return_hist=[1, 5, 22, 39, 37, 23, 21, 11]
+
+## H76 Batch Automation Run
+Run: 2026-02-18T21:12:36+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H76 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h76_runner_20260218T211232Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H76 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h76_runner_20260218T211234Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H76 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h76_runner_20260218T211235Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=328, mean=0.002394927755786214, CI=[0.0020070726656811946,0.002820331724774157], P(mean>0)=1.0
+- baseline `bps8`: n=328, mean=0.0015949277557862135, CI=[0.0012070726656811944,0.002020331724774157], P(mean>0)=1.0
+- baseline `bps10`: n=328, mean=0.0013949277557862136, CI=[0.0010070726656811943,0.0018203317247741566], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002688404180074488, 'mean_ci_high': 0.0032843749654908063, 'mean_ci_low': 0.002113999403782833, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0019500975142489273, 0.0027609894326350785, 0.0033006468678055075, 0.0030501864476931784, 0.0036173104490876988, 0.0017402782290981342, 0.002611711321603746]
+- diagnostics `gross`: trades_per_day=1.868945868945869, median_hold_return=0.0016625414401740257, top10_pct_pnl_contrib=0.44926647564157784, mae_proxy_median=None
+- diagnostics `gross` return_hist=[0, 1, 20, 51, 106, 94, 41, 15]
+- walkforward `bps8` aggregate: {'mean': 0.001888404180074488, 'mean_ci_high': 0.0024843749654908064, 'mean_ci_low': 0.0013139994037828328, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0011500975142489274, 0.001960989432635078, 0.002500646867805508, 0.002250186447693179, 0.0028173104490876984, 0.0009402782290981341, 0.001811711321603745]
+- diagnostics `bps8`: trades_per_day=1.868945868945869, median_hold_return=0.0008625414401740257, top10_pct_pnl_contrib=0.6241492404710848, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[0, 2, 33, 86, 92, 70, 34, 11]
+- walkforward `bps10` aggregate: {'mean': 0.0016884041800744878, 'mean_ci_high': 0.0022843749654908063, 'mean_ci_low': 0.0011139994037828325, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0009500975142489272, 0.001760989432635078, 0.0023006468678055075, 0.002050186447693178, 0.0026173104490876983, 0.0007402782290981342, 0.0016117113216037454]
+- diagnostics `bps10`: trades_per_day=1.868945868945869, median_hold_return=0.0006625414401740257, top10_pct_pnl_contrib=0.6992125521303246, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[0, 3, 39, 86, 90, 70, 29, 11]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T211236Z_H76.json`
+
+## H76 Batch Automation Run
+Run: 2026-02-18T21:13:24+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H76 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h76_runner_20260218T211320Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H76 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h76_runner_20260218T211322Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H76 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h76_runner_20260218T211323Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=328, mean=0.002394927755786214, CI=[0.0020070726656811946,0.002820331724774157], P(mean>0)=1.0
+- baseline `bps8`: n=328, mean=0.0015949277557862135, CI=[0.0012070726656811944,0.002020331724774157], P(mean>0)=1.0
+- baseline `bps10`: n=328, mean=0.0013949277557862136, CI=[0.0010070726656811943,0.0018203317247741566], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002688404180074488, 'mean_ci_high': 0.0032843749654908063, 'mean_ci_low': 0.002113999403782833, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0019500975142489273, 0.0027609894326350785, 0.0033006468678055075, 0.0030501864476931784, 0.0036173104490876988, 0.0017402782290981342, 0.002611711321603746]
+- diagnostics `gross`: trades_per_day=1.868945868945869, median_hold_return=0.0016625414401740257, top10_pct_pnl_contrib=0.44926647564157784, mae_proxy_median=-0.00040541752879036386
+- diagnostics `gross` return_hist=[0, 1, 20, 51, 106, 94, 41, 15]
+- walkforward `bps8` aggregate: {'mean': 0.001888404180074488, 'mean_ci_high': 0.0024843749654908064, 'mean_ci_low': 0.0013139994037828328, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0011500975142489274, 0.001960989432635078, 0.002500646867805508, 0.002250186447693179, 0.0028173104490876984, 0.0009402782290981341, 0.001811711321603745]
+- diagnostics `bps8`: trades_per_day=1.868945868945869, median_hold_return=0.0008625414401740257, top10_pct_pnl_contrib=0.6241492404710848, mae_proxy_median=-0.00040541752879036386
+- diagnostics `bps8` return_hist=[0, 2, 33, 86, 92, 70, 34, 11]
+- walkforward `bps10` aggregate: {'mean': 0.0016884041800744878, 'mean_ci_high': 0.0022843749654908063, 'mean_ci_low': 0.0011139994037828325, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0009500975142489272, 0.001760989432635078, 0.0023006468678055075, 0.002050186447693178, 0.0026173104490876983, 0.0007402782290981342, 0.0016117113216037454]
+- diagnostics `bps10`: trades_per_day=1.868945868945869, median_hold_return=0.0006625414401740257, top10_pct_pnl_contrib=0.6992125521303246, mae_proxy_median=-0.00040541752879036386
+- diagnostics `bps10` return_hist=[0, 3, 39, 86, 90, 70, 29, 11]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T211324Z_H76.json`
+
+## H77 Batch Automation Run
+Run: 2026-02-18T21:13:28+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H77 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h77_runner_20260218T211324Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H77 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h77_runner_20260218T211325Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H77 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h77_runner_20260218T211327Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=324, mean=0.00293298458606954, CI=[0.0022936038350879983,0.0035930714764498477], P(mean>0)=1.0
+- baseline `bps8`: n=324, mean=0.00213298458606954, CI=[0.0014936038350879986,0.0027930714764498477], P(mean>0)=1.0
+- baseline `bps10`: n=324, mean=0.0019329845860695397, CI=[0.0012936038350879978,0.002593071476449847], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0027903163752861027, 'mean_ci_high': 0.0036649396305698453, 'mean_ci_low': 0.0018814392527400278, 'n': 194, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.002816074493172387, 0.0029178999916053645, 0.003625659450579368, 0.005740828316427978, 0.0016650454286544737, 0.0016509623220513556, 0.00023919176755446666]
+- diagnostics `gross`: trades_per_day=1.826209488022546, median_hold_return=0.0019189612585002735, top10_pct_pnl_contrib=0.5335654715059668, mae_proxy_median=-0.000795462013099768
+- diagnostics `gross` return_hist=[2, 14, 20, 61, 66, 71, 53, 37]
+- walkforward `bps8` aggregate: {'mean': 0.0019903163752861028, 'mean_ci_high': 0.0028649396305698463, 'mean_ci_low': 0.0010814392527400275, 'n': 194, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [0.0020160744931723863, 0.002117899991605364, 0.0028256594505793684, 0.004940828316427979, 0.0008650454286544735, 0.0008509623220513552, -0.0005608082324455336]
+- diagnostics `bps8`: trades_per_day=1.826209488022546, median_hold_return=0.0011189612585002736, top10_pct_pnl_contrib=0.6954845486427165, mae_proxy_median=-0.000795462013099768
+- diagnostics `bps8` return_hist=[4, 14, 35, 73, 69, 56, 43, 30]
+- walkforward `bps10` aggregate: {'mean': 0.0017903163752861022, 'mean_ci_high': 0.0026649396305698445, 'mean_ci_low': 0.0008814392527400274, 'n': 194, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps10` fold means: [0.0018160744931723866, 0.001917899991605364, 0.0026256594505793675, 0.0047408283164279775, 0.0006650454286544734, 0.0006509623220513552, -0.0007608082324455339]
+- diagnostics `bps10`: trades_per_day=1.826209488022546, median_hold_return=0.0009189612585002735, top10_pct_pnl_contrib=0.7569059072059461, mae_proxy_median=-0.000795462013099768
+- diagnostics `bps10` return_hist=[4, 17, 38, 74, 68, 53, 41, 29]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T211328Z_H77.json`
+
+## H78 Batch Automation Run
+Run: 2026-02-18T21:13:32+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H78 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h78_runner_20260218T211328Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H78 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h78_runner_20260218T211329Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H78 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h78_runner_20260218T211330Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=328, mean=0.0022201780443425723, CI=[0.001794154712517274,0.002674908351589559], P(mean>0)=1.0
+- baseline `bps8`: n=328, mean=0.0014201780443425722, CI=[0.0009941547125172738,0.0018749083515895593], P(mean>0)=1.0
+- baseline `bps10`: n=328, mean=0.0012201780443425719, CI=[0.0007941547125172735,0.001674908351589559], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0025240476861219385, 'mean_ci_high': 0.0031687659167024713, 'mean_ci_low': 0.0019096619062236716, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0014712196474233551, 0.003163773213076493, 0.0030367502836539753, 0.002600758751535621, 0.003145010685236173, 0.0018365585530605265, 0.002362949468910445]
+- diagnostics `gross`: trades_per_day=1.868945868945869, median_hold_return=0.0014717676670282231, top10_pct_pnl_contrib=0.516515246054781, mae_proxy_median=-0.0004897337997943341
+- diagnostics `gross` return_hist=[0, 4, 24, 63, 108, 81, 31, 17]
+- walkforward `bps8` aggregate: {'mean': 0.0017240476861219388, 'mean_ci_high': 0.0023687659167024714, 'mean_ci_low': 0.0011096619062236717, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0006712196474233552, 0.002363773213076493, 0.0022367502836539758, 0.0018007587515356208, 0.0023450106852361727, 0.0010365585530605266, 0.0015629494689104449]
+- diagnostics `bps8`: trades_per_day=1.868945868945869, median_hold_return=0.0006717676670282231, top10_pct_pnl_contrib=0.7507988228860231, mae_proxy_median=-0.0004897337997943341
+- diagnostics `bps8` return_hist=[0, 7, 28, 101, 87, 66, 24, 15]
+- walkforward `bps10` aggregate: {'mean': 0.0015240476861219385, 'mean_ci_high': 0.002168765916702471, 'mean_ci_low': 0.0009096619062236713, 'n': 179, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0004712196474233552, 0.0021637732130764926, 0.0020367502836539752, 0.001600758751535621, 0.0021450106852361726, 0.0008365585530605265, 0.0013629494689104446]
+- diagnostics `bps10`: trades_per_day=1.868945868945869, median_hold_return=0.0004717676670282231, top10_pct_pnl_contrib=0.8573716414682132, mae_proxy_median=-0.0004897337997943341
+- diagnostics `bps10` return_hist=[0, 9, 32, 104, 83, 62, 24, 14]
+- stress `bps12` baseline: n=328, mean=0.0010201780443425724, CI=[0.0005941547125172741,0.0014749083515895596], P(mean>0)=1.0
+- stress `bps12` WF: mean=0.0013240476861219388, CI=[0.0007096619062236718,0.0019687659167024712], pos_folds=100.0%
+- stress `bps12` diagnostics: trades_per_day=1.868945868945869, median_hold_return=0.00027176766702822325, top10_pct_pnl_contrib=1.0057304283617945, mae_proxy_median=-0.0004897337997943341, return_hist=[0, 9, 39, 103, 79, 61, 23, 14]
+- stress `bps15` baseline: n=328, mean=0.0007201780443425721, CI=[0.00029415471251727384,0.0011749083515895592], P(mean>0)=1.0
+- stress `bps15` WF: mean=0.0010240476861219385, CI=[0.0004096619062236716,0.0016687659167024709], pos_folds=85.71428571428571%
+- stress `bps15` diagnostics: trades_per_day=1.868945868945869, median_hold_return=-2.8232332971776884e-05, top10_pct_pnl_contrib=1.3827708058244914, mae_proxy_median=-0.0004897337997943341, return_hist=[0, 9, 51, 108, 69, 56, 21, 14]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T211332Z_H78.json`
+
+## H79 Batch Automation Run
+Run: 2026-02-18T21:13:36+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H79 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h79_runner_20260218T211332Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H79 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h79_runner_20260218T211333Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H79 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h79_runner_20260218T211334Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=324, mean=0.00293298458606954, CI=[0.0022936038350879983,0.0035930714764498477], P(mean>0)=1.0
+- baseline `bps8`: n=324, mean=0.00213298458606954, CI=[0.0014936038350879986,0.0027930714764498477], P(mean>0)=1.0
+- baseline `bps10`: n=324, mean=0.0019329845860695397, CI=[0.0012936038350879978,0.002593071476449847], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0027903163752861027, 'mean_ci_high': 0.0036649396305698453, 'mean_ci_low': 0.0018814392527400278, 'n': 194, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.002816074493172387, 0.0029178999916053645, 0.003625659450579368, 0.005740828316427978, 0.0016650454286544737, 0.0016509623220513556, 0.00023919176755446666]
+- diagnostics `gross`: trades_per_day=1.826209488022546, median_hold_return=0.0019189612585002735, top10_pct_pnl_contrib=0.5335654715059668, mae_proxy_median=-0.000795462013099768
+- diagnostics `gross` return_hist=[2, 14, 20, 61, 66, 71, 53, 37]
+- walkforward `bps8` aggregate: {'mean': 0.0019903163752861028, 'mean_ci_high': 0.0028649396305698463, 'mean_ci_low': 0.0010814392527400275, 'n': 194, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [0.0020160744931723863, 0.002117899991605364, 0.0028256594505793684, 0.004940828316427979, 0.0008650454286544735, 0.0008509623220513552, -0.0005608082324455336]
+- diagnostics `bps8`: trades_per_day=1.826209488022546, median_hold_return=0.0011189612585002736, top10_pct_pnl_contrib=0.6954845486427165, mae_proxy_median=-0.000795462013099768
+- diagnostics `bps8` return_hist=[4, 14, 35, 73, 69, 56, 43, 30]
+- walkforward `bps10` aggregate: {'mean': 0.0017903163752861022, 'mean_ci_high': 0.0026649396305698445, 'mean_ci_low': 0.0008814392527400274, 'n': 194, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps10` fold means: [0.0018160744931723866, 0.001917899991605364, 0.0026256594505793675, 0.0047408283164279775, 0.0006650454286544734, 0.0006509623220513552, -0.0007608082324455339]
+- diagnostics `bps10`: trades_per_day=1.826209488022546, median_hold_return=0.0009189612585002735, top10_pct_pnl_contrib=0.7569059072059461, mae_proxy_median=-0.000795462013099768
+- diagnostics `bps10` return_hist=[4, 17, 38, 74, 68, 53, 41, 29]
+- stress `bps12` baseline: n=324, mean=0.0017329845860695405, CI=[0.0010936038350879986,0.0023930714764498484], P(mean>0)=1.0
+- stress `bps12` WF: mean=0.0015903163752861032, CI=[0.0006814392527400282,0.0024649396305698457], pos_folds=85.71428571428571%
+- stress `bps12` diagnostics: trades_per_day=1.826209488022546, median_hold_return=0.0007189612585002737, top10_pct_pnl_contrib=0.832504277857329, mae_proxy_median=-0.000795462013099768, return_hist=[4, 18, 44, 72, 65, 53, 41, 27]
+- stress `bps15` baseline: n=324, mean=0.0014329845860695401, CI=[0.0007936038350879986,0.002093071476449848], P(mean>0)=1.0
+- stress `bps15` WF: mean=0.0012903163752861027, CI=[0.0003814392527400275,0.0021649396305698453], pos_folds=85.71428571428571%
+- stress `bps15` diagnostics: trades_per_day=1.826209488022546, median_hold_return=0.0004189612585002735, top10_pct_pnl_contrib=0.9854687479099091, mae_proxy_median=-0.000795462013099768, return_hist=[4, 18, 53, 73, 63, 48, 41, 24]
+- Final classification: `PASS`
+- Artifact: `results/runs/20260218T211336Z_H79.json`
+
+## H80 Batch Automation Run
+Run: 2026-02-18T21:13:39+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H80 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h80_runner_20260218T211336Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H80 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h80_runner_20260218T211337Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H80 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h80_runner_20260218T211338Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=112, mean=0.001451790163080153, CI=[0.0009035212383297972,0.002060122973829415], P(mean>0)=1.0
+- baseline `bps8`: n=112, mean=0.0006517901630801529, CI=[0.00010352123832979724,0.0012601229738294147], P(mean>0)=0.99
+- baseline `bps10`: n=112, mean=0.0004517901630801527, CI=[-9.647876167020294e-05,0.0010601229738294144], P(mean>0)=0.9466666666666667
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.001530420007106334, 'mean_ci_high': 0.0024589123031827265, 'mean_ci_low': 0.000739301359713618, 'n': 56, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.00038461896136837085, 0.002268584307037624, 0.0008775139616725436, 0.000615441479579901, 0.007991941288094995, 0.00046366979378473987, 0.0019857777563303093]
+- diagnostics `gross`: trades_per_day=0.6439865836128414, median_hold_return=0.0011506250749871438, top10_pct_pnl_contrib=0.5131187533375481, mae_proxy_median=None
+- diagnostics `gross` return_hist=[0, 2, 8, 23, 41, 29, 8, 1]
+- walkforward `bps8` aggregate: {'mean': 0.0007304200071063339, 'mean_ci_high': 0.0016589123031827266, 'mean_ci_low': -6.069864028638211e-05, 'n': 56, 'p_mean_gt_0': 0.9596666666666667}
+- walkforward `bps8` positive_folds: {'count': 4, 'pct': 57.142857142857146, 'total': 7}
+- walkforward `bps8` fold means: [-0.0004153810386316291, 0.0014685843070376243, 7.751396167254366e-05, -0.00018455852042009897, 0.007191941288094996, -0.0003363302062152601, 0.0011857777563303092]
+- diagnostics `bps8`: trades_per_day=0.6439865836128414, median_hold_return=0.0003506250749871438, top10_pct_pnl_contrib=1.0114090549599941, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[0, 2, 9, 42, 30, 24, 4, 1]
+- walkforward `bps10` aggregate: {'mean': 0.0005304200071063341, 'mean_ci_high': 0.001458912303182727, 'mean_ci_low': -0.0002606986402863821, 'n': 56, 'p_mean_gt_0': 0.8853333333333333}
+- walkforward `bps10` positive_folds: {'count': 3, 'pct': 42.857142857142854, 'total': 7}
+- walkforward `bps10` fold means: [-0.0006153810386316292, 0.0012685843070376244, -0.00012248603832745644, -0.000384558520420099, 0.006991941288094994, -0.0005363302062152602, 0.0009857777563303091]
+- diagnostics `bps10`: trades_per_day=0.6439865836128414, median_hold_return=0.00015062507498714382, top10_pct_pnl_contrib=1.4117126789486867, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[0, 3, 11, 40, 29, 24, 4, 1]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T211339Z_H80.json`
+
+## H81 Batch Automation Run
+Run: 2026-02-18T21:13:44+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H81 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h81_runner_20260218T211339Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H81 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h81_runner_20260218T211341Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H81 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h81_runner_20260218T211342Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=106, mean=0.0026863729313158606, CI=[0.0019258273060179152,0.0035267719309127216], P(mean>0)=1.0
+- baseline `bps8`: n=106, mean=0.0018863729313158602, CI=[0.0011258273060179155,0.002726771930912721], P(mean>0)=1.0
+- baseline `bps10`: n=106, mean=0.0016863729313158604, CI=[0.000925827306017915,0.0025267719309127207], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0033269968210485564, 'mean_ci_high': 0.0045688020370045325, 'mean_ci_low': 0.0022519580121503607, 'n': 58, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0014972048618523256, 0.0066811320503174735, 0.0030618496247928817, 0.004202363675243675, 0.0021306965760545062, 0.0018868615863248826, 0.002894545310359645]
+- diagnostics `gross`: trades_per_day=0.612274368231047, median_hold_return=0.00163429864554826, top10_pct_pnl_contrib=0.48615497424273213, mae_proxy_median=None
+- diagnostics `gross` return_hist=[0, 0, 6, 21, 34, 28, 9, 8]
+- walkforward `bps8` aggregate: {'mean': 0.0025269968210485565, 'mean_ci_high': 0.003768802037004533, 'mean_ci_low': 0.0014519580121503612, 'n': 58, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0006972048618523255, 0.005881132050317472, 0.0022618496247928813, 0.003402363675243675, 0.0013306965760545063, 0.0010868615863248827, 0.002094545310359645]
+- diagnostics `bps8`: trades_per_day=0.612274368231047, median_hold_return=0.00083429864554826, top10_pct_pnl_contrib=0.6483207402963566, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[0, 2, 8, 28, 30, 24, 7, 7]
+- walkforward `bps10` aggregate: {'mean': 0.002326996821048556, 'mean_ci_high': 0.0035688020370045325, 'mean_ci_low': 0.0012519580121503609, 'n': 58, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0004972048618523256, 0.005681132050317473, 0.002061849624792881, 0.0032023636752436745, 0.0011306965760545062, 0.0008868615863248825, 0.0018945453103596452]
+- diagnostics `bps10`: trades_per_day=0.612274368231047, median_hold_return=0.00063429864554826, top10_pct_pnl_contrib=0.712902796291028, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[0, 2, 11, 30, 26, 23, 8, 6]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T211344Z_H81.json`
+
+## H82 Batch Automation Run
+Run: 2026-02-18T21:13:47+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H82 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h82_runner_20260218T211344Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H82 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h82_runner_20260218T211345Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H82 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h82_runner_20260218T211346Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=110, mean=0.0025532942687264116, CI=[0.0017071919742240658,0.003478374437898767], P(mean>0)=1.0
+- baseline `bps8`: n=110, mean=0.001753294268726412, CI=[0.0009071919742240661,0.0026783744378987657], P(mean>0)=1.0
+- baseline `bps10`: n=110, mean=0.0015532942687264111, CI=[0.0007071919742240656,0.002478374437898766], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002799492473436476, 'mean_ci_high': 0.00397761681366713, 'mean_ci_low': 0.0017139421794503179, 'n': 67, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.002366471754913113, 0.0021571395864867413, 0.0046809952561951826, 0.0015446030519728816, 0.0025694207872399527, 0.0024849064557028178, 0.003270888175783965]
+- diagnostics `gross`: trades_per_day=0.6278240190249702, median_hold_return=0.001576131896731725, top10_pct_pnl_contrib=0.509478437646505, mae_proxy_median=None
+- diagnostics `gross` return_hist=[0, 2, 10, 19, 33, 24, 14, 8]
+- walkforward `bps8` aggregate: {'mean': 0.001999492473436476, 'mean_ci_high': 0.00317761681366713, 'mean_ci_low': 0.0009139421794503179, 'n': 67, 'p_mean_gt_0': 1.0}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.001566471754913113, 0.0013571395864867412, 0.0038809952561951818, 0.0007446030519728813, 0.0017694207872399525, 0.0016849064557028178, 0.002470888175783965]
+- diagnostics `bps8`: trades_per_day=0.6278240190249702, median_hold_return=0.000776131896731725, top10_pct_pnl_contrib=0.696316868570687, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[0, 3, 11, 31, 27, 18, 13, 7]
+- walkforward `bps10` aggregate: {'mean': 0.0017994924734364758, 'mean_ci_high': 0.0029776168136671287, 'mean_ci_low': 0.0007139421794503176, 'n': 67, 'p_mean_gt_0': 1.0}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0013664717549131129, 0.001157139586486741, 0.0036809952561951812, 0.0005446030519728815, 0.0015694207872399522, 0.0014849064557028175, 0.002270888175783965]
+- diagnostics `bps10`: trades_per_day=0.6278240190249702, median_hold_return=0.000576131896731725, top10_pct_pnl_contrib=0.7730977954789703, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[0, 4, 10, 34, 28, 15, 12, 7]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T211347Z_H82.json`
+
+## H83 Batch Automation Run
+Run: 2026-02-18T21:13:51+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H83 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h83_runner_20260218T211347Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H83 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h83_runner_20260218T211349Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H83 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h83_runner_20260218T211350Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=116, mean=0.002312895939069123, CI=[0.0015452791240960241,0.003185016062986096], P(mean>0)=1.0
+- baseline `bps8`: n=116, mean=0.001512895939069123, CI=[0.0007452791240960242,0.0023850160629860953], P(mean>0)=1.0
+- baseline `bps10`: n=116, mean=0.0013128959390691225, CI=[0.0005452791240960238,0.002185016062986095], P(mean>0)=0.9996666666666667
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.002365095976989144, 'mean_ci_high': 0.0035345043921004506, 'mean_ci_low': 0.0012154547000358448, 'n': 69, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0015184073258949417, 0.001948937054043633, 0.0032053350133797297, 0.005859389657319469, 0.0007536822719454347, 0.000434903405574949, 0.0020646546151923653]
+- diagnostics `gross`: trades_per_day=0.6556759302873293, median_hold_return=0.0012307477476757867, top10_pct_pnl_contrib=0.5236523923840755, mae_proxy_median=None
+- diagnostics `gross` return_hist=[0, 3, 8, 30, 25, 22, 20, 8]
+- walkforward `bps8` aggregate: {'mean': 0.0015650959769891444, 'mean_ci_high': 0.0027345043921004506, 'mean_ci_low': 0.0004154547000358448, 'n': 69, 'p_mean_gt_0': 0.9953333333333333}
+- walkforward `bps8` positive_folds: {'count': 5, 'pct': 71.42857142857143, 'total': 7}
+- walkforward `bps8` fold means: [0.0007184073258949417, 0.0011489370540436327, 0.00240533501337973, 0.005059389657319468, -4.631772805456543e-05, -0.00036509659442505104, 0.001264654615192365]
+- diagnostics `bps8`: trades_per_day=0.6556759302873293, median_hold_return=0.0004307477476757866, top10_pct_pnl_contrib=0.745850948501851, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[0, 4, 15, 33, 22, 19, 17, 6]
+- walkforward `bps10` aggregate: {'mean': 0.0013650959769891436, 'mean_ci_high': 0.0025345043921004497, 'mean_ci_low': 0.00021545470003584446, 'n': 69, 'p_mean_gt_0': 0.9903333333333333}
+- walkforward `bps10` positive_folds: {'count': 5, 'pct': 71.42857142857143, 'total': 7}
+- walkforward `bps10` fold means: [0.0005184073258949416, 0.0009489370540436329, 0.0022053350133797297, 0.004859389657319468, -0.00024631772805456544, -0.000565096594425051, 0.001064654615192365]
+- diagnostics `bps10`: trades_per_day=0.6556759302873293, median_hold_return=0.00023074774767578663, top10_pct_pnl_contrib=0.8437113582301746, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[0, 5, 15, 36, 21, 17, 16, 6]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T211351Z_H83.json`
+
+## H84 Batch Automation Run
+Run: 2026-02-18T21:13:55+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H84 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h84_runner_20260218T211351Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H84 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h84_runner_20260218T211352Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H84 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h84_runner_20260218T211354Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=109, mean=0.0035326544665684368, CI=[0.002316284152548626,0.004852587577549719], P(mean>0)=1.0
+- baseline `bps8`: n=109, mean=0.002732654466568435, CI=[0.0015162841525486266,0.004052587577549717], P(mean>0)=1.0
+- baseline `bps10`: n=109, mean=0.002532654466568436, CI=[0.0013162841525486257,0.0038525875775497183], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0031198403515230954, 'mean_ci_high': 0.004989594716411637, 'mean_ci_low': 0.0013678706425734144, 'n': 63, 'p_mean_gt_0': 0.9996666666666667}
+- walkforward `gross` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `gross` fold means: [0.0033585279095728537, 0.0019318354496231278, 0.0038981771422354223, 0.005359315259749397, 0.0020184706133022923, 0.0026822340833418724, 0.001372246054885747]
+- diagnostics `gross`: trades_per_day=0.6185859541262709, median_hold_return=0.0023669612218408798, top10_pct_pnl_contrib=0.4938627311334378, mae_proxy_median=None
+- diagnostics `gross` return_hist=[2, 3, 6, 15, 21, 29, 16, 17]
+- walkforward `bps8` aggregate: {'mean': 0.002319840351523096, 'mean_ci_high': 0.0041895947164116345, 'mean_ci_low': 0.0005678706425734143, 'n': 63, 'p_mean_gt_0': 0.9956666666666667}
+- walkforward `bps8` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps8` fold means: [0.0025585279095728533, 0.0011318354496231279, 0.003098177142235423, 0.004559315259749397, 0.0012184706133022921, 0.001882234083341872, 0.0005722460548857469]
+- diagnostics `bps8`: trades_per_day=0.6185859541262709, median_hold_return=0.0015669612218408798, top10_pct_pnl_contrib=0.6088996828587613, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[2, 3, 11, 19, 26, 23, 12, 13]
+- walkforward `bps10` aggregate: {'mean': 0.0021198403515230945, 'mean_ci_high': 0.003989594716411636, 'mean_ci_low': 0.00036787064257341403, 'n': 63, 'p_mean_gt_0': 0.9906666666666667}
+- walkforward `bps10` positive_folds: {'count': 7, 'pct': 100.0, 'total': 7}
+- walkforward `bps10` fold means: [0.0023585279095728533, 0.0009318354496231272, 0.0028981771422354214, 0.004359315259749396, 0.001018470613302292, 0.0016822340833418715, 0.00037224605488574695]
+- diagnostics `bps10`: trades_per_day=0.6185859541262709, median_hold_return=0.0013669612218408797, top10_pct_pnl_contrib=0.6490142944942267, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[2, 4, 13, 18, 27, 21, 12, 12]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T211355Z_H84.json`
+
+## H85 Batch Automation Run
+Run: 2026-02-18T21:14:00+00:00
+
+Commands:
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H85 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h85_runner_20260218T211355Z_gross.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H85 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h85_runner_20260218T211356Z_bps8.json`
+- `PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H85 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h85_runner_20260218T211358Z_bps10.json`
+
+Key metrics:
+- baseline `gross`: n=99, mean=0.0029993105060459914, CI=[0.0017859758720419454,0.0043068682207304315], P(mean>0)=1.0
+- baseline `bps8`: n=99, mean=0.0021993105060459915, CI=[0.0009859758720419454,0.003506868220730431], P(mean>0)=1.0
+- baseline `bps10`: n=99, mean=0.0019993105060459914, CI=[0.0007859758720419448,0.0033068682207304306], P(mean>0)=1.0
+- walkforward split: {'step_days': 15, 'test_days': 15, 'train_days': 60}
+- walkforward `gross` aggregate: {'mean': 0.0030020625296173498, 'mean_ci_high': 0.004791403337503946, 'mean_ci_low': 0.0013027746124275694, 'n': 64, 'p_mean_gt_0': 1.0}
+- walkforward `gross` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `gross` fold means: [0.004133079373283749, 0.008793720275934946, 0.003170334143022752, 0.0058790970041501574, 0.0016914725306680367, 0.002137739624855491, -0.0012223288146261267]
+- diagnostics `gross`: trades_per_day=0.5591903977406449, median_hold_return=0.0018363557748557469, top10_pct_pnl_contrib=0.5765388041193704, mae_proxy_median=None
+- diagnostics `gross` return_hist=[0, 8, 6, 16, 20, 20, 17, 12]
+- walkforward `bps8` aggregate: {'mean': 0.0022020625296173494, 'mean_ci_high': 0.003991403337503946, 'mean_ci_low': 0.0005027746124275694, 'n': 64, 'p_mean_gt_0': 0.996}
+- walkforward `bps8` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps8` fold means: [0.0033330793732837486, 0.007993720275934948, 0.002370334143022752, 0.005079097004150158, 0.0008914725306680365, 0.0013377396248554908, -0.0020223288146261273]
+- diagnostics `bps8`: trades_per_day=0.5591903977406449, median_hold_return=0.001036355774855747, top10_pct_pnl_contrib=0.7495125435898172, mae_proxy_median=None
+- diagnostics `bps8` return_hist=[2, 7, 9, 21, 21, 14, 14, 11]
+- walkforward `bps10` aggregate: {'mean': 0.002002062529617349, 'mean_ci_high': 0.0037914033375039454, 'mean_ci_low': 0.0003027746124275691, 'n': 64, 'p_mean_gt_0': 0.9896666666666667}
+- walkforward `bps10` positive_folds: {'count': 6, 'pct': 85.71428571428571, 'total': 7}
+- walkforward `bps10` fold means: [0.0031330793732837485, 0.0077937202759349455, 0.002170334143022752, 0.0048790970041501566, 0.0006914725306680365, 0.001137739624855491, -0.0022223288146261274]
+- diagnostics `bps10`: trades_per_day=0.5591903977406449, median_hold_return=0.0008363557748557468, top10_pct_pnl_contrib=0.8143851524835952, mae_proxy_median=None
+- diagnostics `bps10` return_hist=[2, 8, 10, 20, 20, 15, 13, 11]
+- Final classification: `INCONCLUSIVE`
+- Artifact: `results/runs/20260218T211400Z_H85.json`

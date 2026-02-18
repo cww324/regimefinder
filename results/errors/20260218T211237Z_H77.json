@@ -1,0 +1,20 @@
+{
+  "context": {
+    "batch": [
+      "H76",
+      "H77",
+      "H78",
+      "H79",
+      "H80"
+    ],
+    "batch_size": 5,
+    "completed": [
+      "H76"
+    ],
+    "next_index": 0
+  },
+  "error": "H77 family runner command failed (1): PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H77 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h77_runner_20260218T211236Z_gross.json",
+  "hypothesis_id": "H77",
+  "timestamp_utc": "2026-02-18T21:12:37+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 853, in main\n    result = run_adapter_for_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 789, in run_adapter_for_hypothesis\n    return run_family_adapter(hypothesis_id, hypothesis_def, dataset_defaults, gates)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 712, in run_family_adapter\n    raise RuntimeError(f\"{hypothesis_id} family runner command failed ({cp.returncode}): {cmd}\")\nRuntimeError: H77 family runner command failed (1): PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H77 --family cross_asset_regime --days 180 --timeframe 5m --horizon 8 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h77_runner_20260218T211236Z_gross.json\n"
+}

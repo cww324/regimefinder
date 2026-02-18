@@ -1,0 +1,63 @@
+{
+  "baseline": {
+    "bps8": {
+      "mean": 0.00045769968310510514,
+      "mean_ci_high": 0.0010043429111408991,
+      "mean_ci_low": -5.6564950017701574e-05,
+      "n": 462,
+      "p_mean_gt_0": 0.959,
+      "std": 0.005683466964715993,
+      "win_rate": 0.5086580086580087
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0008,
+    "cost_mode": "bps8",
+    "days": 180,
+    "horizon": 6,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "hypothesis_id": "H32",
+  "timestamp_utc": "2026-02-17T17:11:52+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": 0.0004421428714670377,
+      "mean_ci_high": 0.0011967069129215258,
+      "mean_ci_low": -0.0003124658971517545,
+      "n": 234,
+      "p_mean_gt_0": 0.8813333333333333
+    },
+    "folds": [
+      {
+        "fold_id": 1,
+        "mean": 6.0298902658223034e-05,
+        "n": 78,
+        "test_end": "2026-01-27T00:00:00+00:00",
+        "test_start": "2026-01-12T00:00:00+00:00"
+      },
+      {
+        "fold_id": 2,
+        "mean": 0.000633064855871445,
+        "n": 156,
+        "test_end": "2026-02-11T00:00:00+00:00",
+        "test_start": "2026-01-27T00:00:00+00:00"
+      }
+    ],
+    "positive_folds": {
+      "count": 2,
+      "pct": 100.0,
+      "total": 2
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

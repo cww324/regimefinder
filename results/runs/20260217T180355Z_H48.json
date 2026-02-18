@@ -1,0 +1,234 @@
+{
+  "baseline": {
+    "bps10": {
+      "ci_high": -0.0009490713545680876,
+      "ci_low": -0.0011183638901096258,
+      "mean": -0.0010356582767705317,
+      "n": 1892,
+      "p_mean_gt_0": 0.0,
+      "std": 0.0018998777458915904,
+      "win_rate": 0.2156448202959831
+    },
+    "bps8": {
+      "ci_high": -0.0007490713545680873,
+      "ci_low": -0.0009183638901096254,
+      "mean": -0.0008356582767705313,
+      "n": 1892,
+      "p_mean_gt_0": 0.0,
+      "std": 0.0018998777458915904,
+      "win_rate": 0.2584566596194503
+    },
+    "gross": {
+      "ci_high": 5.092864543191271e-05,
+      "ci_low": -0.0001183638901096254,
+      "mean": -3.565827677053134e-05,
+      "n": 1892,
+      "p_mean_gt_0": 0.212,
+      "std": 0.0018998777458915904,
+      "win_rate": 0.48255813953488375
+    }
+  },
+  "classification": "FAIL",
+  "commands": [
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H48 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode gross --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h48_runner_20260217T180351Z_gross.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H48 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps8 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h48_runner_20260217T180352Z_bps8.json",
+    "PYTHONPATH=. .venv/bin/python scripts/research_family_runner.py --hypothesis-id H48 --family volatility_conditioning --days 180 --timeframe 5m --horizon 6 --cost-mode bps10 --wf 60 15 15 --bootstrap-iters 3000 --output-json results/archive/h48_runner_20260217T180353Z_bps10.json"
+  ],
+  "dataset": {
+    "horizon_bars": 6,
+    "lookback_days": 180,
+    "primary_symbols": [
+      "BTC-USD"
+    ],
+    "secondary_symbols": [
+      "ETH-USD"
+    ],
+    "timeframe": "5m"
+  },
+  "hypothesis_id": "H48",
+  "notes": "Adapter executed scripts/research_family_runner.py for volatility_conditioning gross/bps8/bps10 and combined machine JSON outputs.",
+  "timestamp_utc": "2026-02-17T18:03:55+00:00",
+  "walkforward": {
+    "modes": {
+      "bps10": {
+        "aggregate": {
+          "mean": -0.0009846438361969041,
+          "mean_ci_high": -0.0008731761133791046,
+          "mean_ci_low": -0.0011010918493384839,
+          "n": 1125,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.0009364366314760226,
+            "n": 117,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0010228077867190787,
+            "n": 306,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0012041370997659979,
+            "n": 236,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.0009032424536276003,
+            "n": 230,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.000804385164767735,
+            "n": 167,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.0008540232566297006,
+            "n": 69,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "bps8": {
+        "aggregate": {
+          "mean": -0.0007846438361969042,
+          "mean_ci_high": -0.0006731761133791047,
+          "mean_ci_low": -0.000901091849338484,
+          "n": 1125,
+          "p_mean_gt_0": 0.0
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": -0.000736436631476022,
+            "n": 117,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -0.0008228077867190786,
+            "n": 306,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.0010041370997659973,
+            "n": 236,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": -0.0007032424536276001,
+            "n": 230,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": -0.0006043851647677349,
+            "n": 167,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": -0.0006540232566297009,
+            "n": 69,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 0,
+          "pct": 0.0,
+          "total": 6
+        }
+      },
+      "gross": {
+        "aggregate": {
+          "mean": 1.5356163803095924e-05,
+          "mean_ci_high": 0.00012682388662089536,
+          "mean_ci_low": -0.00010109184933848377,
+          "n": 1125,
+          "p_mean_gt_0": 0.5983333333333334
+        },
+        "folds": [
+          {
+            "fold_id": 1,
+            "mean": 6.356336852397781e-05,
+            "n": 117,
+            "test_end": "2025-11-24T00:00:00+00:00",
+            "test_start": "2025-11-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 2,
+            "mean": -2.280778671907855e-05,
+            "n": 306,
+            "test_end": "2025-12-09T00:00:00+00:00",
+            "test_start": "2025-11-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 3,
+            "mean": -0.00020413709976599743,
+            "n": 236,
+            "test_end": "2025-12-24T00:00:00+00:00",
+            "test_start": "2025-12-09T00:00:00+00:00"
+          },
+          {
+            "fold_id": 4,
+            "mean": 9.675754637239996e-05,
+            "n": 230,
+            "test_end": "2026-01-08T00:00:00+00:00",
+            "test_start": "2025-12-24T00:00:00+00:00"
+          },
+          {
+            "fold_id": 5,
+            "mean": 0.00019561483523226523,
+            "n": 167,
+            "test_end": "2026-01-23T00:00:00+00:00",
+            "test_start": "2026-01-08T00:00:00+00:00"
+          },
+          {
+            "fold_id": 6,
+            "mean": 0.00014597674337029945,
+            "n": 69,
+            "test_end": "2026-02-07T00:00:00+00:00",
+            "test_start": "2026-01-23T00:00:00+00:00"
+          }
+        ],
+        "positive_folds": {
+          "count": 4,
+          "pct": 66.66666666666667,
+          "total": 6
+        }
+      }
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}
