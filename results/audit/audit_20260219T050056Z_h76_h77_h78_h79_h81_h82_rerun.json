@@ -1,0 +1,157 @@
+{
+  "dataset_fingerprints": [
+    {
+      "artifact": "results/runs/20260219T045701Z_H76.json",
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:01+00:00",
+        "ETH-USD": "2026-02-19T04:57:01+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "hypothesis_id": "H76",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:00:00+00:00",
+      "timeframe": "5m"
+    },
+    {
+      "artifact": "results/runs/20260219T045712Z_H77.json",
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:12+00:00",
+        "ETH-USD": "2026-02-19T04:57:12+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "hypothesis_id": "H77",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:00:00+00:00",
+      "timeframe": "5m"
+    },
+    {
+      "artifact": "results/runs/20260219T045725Z_H79.json",
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:25+00:00",
+        "ETH-USD": "2026-02-19T04:57:25+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "hypothesis_id": "H79",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:00:00+00:00",
+      "timeframe": "5m"
+    },
+    {
+      "artifact": "results/runs/20260219T045737Z_H81.json",
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:37+00:00",
+        "ETH-USD": "2026-02-19T04:57:37+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "hypothesis_id": "H81",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:00:00+00:00",
+      "timeframe": "5m"
+    },
+    {
+      "artifact": "results/runs/20260219T045750Z_H78.json",
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:50+00:00",
+        "ETH-USD": "2026-02-19T04:57:50+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "hypothesis_id": "H78",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:00:00+00:00",
+      "timeframe": "5m"
+    },
+    {
+      "artifact": "results/runs/20260219T045802Z_H82.json",
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:58:02+00:00",
+        "ETH-USD": "2026-02-19T04:58:02+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "hypothesis_id": "H82",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:00:00+00:00",
+      "timeframe": "5m"
+    }
+  ],
+  "gate_validation": {
+    "issue_count": 0,
+    "issues": [],
+    "ok": true
+  },
+  "overall_ok": true,
+  "schema_validation": {
+    "failure_count": 0,
+    "failures": [],
+    "ok": true
+  },
+  "scope": [
+    "results/runs/20260219T045701Z_H76.json",
+    "results/runs/20260219T045712Z_H77.json",
+    "results/runs/20260219T045725Z_H79.json",
+    "results/runs/20260219T045737Z_H81.json",
+    "results/runs/20260219T045750Z_H78.json",
+    "results/runs/20260219T045802Z_H82.json"
+  ],
+  "scoped_artifact_count": 6,
+  "timestamp_utc": "2026-02-19T05:00:56+00:00"
+}

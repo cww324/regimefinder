@@ -1,0 +1,18 @@
+{
+  "context": {
+    "batch_ids": [
+      "H101",
+      "H102",
+      "H103",
+      "H104",
+      "H105"
+    ],
+    "completed": [],
+    "next_index": 0,
+    "targeted_mode": false
+  },
+  "error": "Runner failed for H101 mode=gross rc=1 stdout= stderr=Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 867, in <module>\n    main()\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 790, in main\n    raise ValueError(f\"Unsupported family: {args.family}\")\nValueError: Unsupported family: volatility_state\n",
+  "hypothesis_id": "H101",
+  "timestamp_utc": "2026-02-19T16:07:28+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 729, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 618, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H101 mode=gross rc=1 stdout= stderr=Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 867, in <module>\n    main()\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 790, in main\n    raise ValueError(f\"Unsupported family: {args.family}\")\nValueError: Unsupported family: volatility_state\n\n"
+}

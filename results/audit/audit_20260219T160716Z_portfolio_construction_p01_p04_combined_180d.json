@@ -1,0 +1,215 @@
+{
+  "checks_description": {
+    "1": "schema/completeness vs spec",
+    "2": "dataset fingerprint presence/coherence",
+    "3": "metadata consistency (combined/180/bps8)",
+    "4": "metrics integrity + finite numerics + exposure/concentration coherence",
+    "5": "portfolio-construction block presence/coherence (heat_audit block)",
+    "6": "heat gates (pairwise corr, single-strategy pnl share, single-family share)"
+  },
+  "constraint_note": "365d combined remains deferred until true 365d data coverage is available.",
+  "per_id": {
+    "P01": {
+      "artifact": "results/paper/20260219T154337Z_P01_combined_180d.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "metadata_consistency_ok": true,
+        "metrics_integrity_ok": true,
+        "portfolio_construction_block_ok": true,
+        "schema_completeness_ok": true
+      },
+      "decision": "BLOCKED_HEAT",
+      "heat_checks": {
+        "max_pairwise_corr_le_0_75": {
+          "pass": true,
+          "threshold": 0.75,
+          "value": 0.0
+        },
+        "max_single_family_share_le_0_60": {
+          "pass": false,
+          "threshold": 0.6,
+          "value": 1.4134450895627633
+        },
+        "max_single_strategy_pnl_share_le_0_40": {
+          "pass": false,
+          "threshold": 0.4,
+          "value": 1.0
+        }
+      },
+      "issues": [],
+      "notes": [
+        "No off-diagonal correlation pairs (single hypothesis id); max_pairwise_corr treated as 0.0"
+      ],
+      "summary_snapshot": {
+        "max_drawdown": -0.03941315991822181,
+        "net_return": 0.023843861559540068,
+        "trade_count": 582,
+        "win_rate": 0.4948453608247423
+      }
+    },
+    "P02": {
+      "artifact": "results/paper/20260219T154801Z_P02_combined_180d.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "metadata_consistency_ok": true,
+        "metrics_integrity_ok": true,
+        "portfolio_construction_block_ok": true,
+        "schema_completeness_ok": true
+      },
+      "decision": "BLOCKED_HEAT",
+      "heat_checks": {
+        "max_pairwise_corr_le_0_75": {
+          "pass": true,
+          "threshold": 0.75,
+          "value": 0.0
+        },
+        "max_single_family_share_le_0_60": {
+          "pass": false,
+          "threshold": 0.6,
+          "value": 1.4275716056205658
+        },
+        "max_single_strategy_pnl_share_le_0_40": {
+          "pass": false,
+          "threshold": 0.4,
+          "value": 1.0
+        }
+      },
+      "issues": [],
+      "notes": [
+        "No off-diagonal correlation pairs (single hypothesis id); max_pairwise_corr treated as 0.0"
+      ],
+      "summary_snapshot": {
+        "max_drawdown": -0.039288190238686016,
+        "net_return": 0.024452546671050523,
+        "trade_count": 582,
+        "win_rate": 0.49312714776632305
+      }
+    },
+    "P03": {
+      "artifact": "results/paper/20260219T155310Z_P03_combined_180d.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "metadata_consistency_ok": true,
+        "metrics_integrity_ok": true,
+        "portfolio_construction_block_ok": true,
+        "schema_completeness_ok": true
+      },
+      "decision": "BLOCKED_HEAT",
+      "heat_checks": {
+        "max_pairwise_corr_le_0_75": {
+          "pass": true,
+          "threshold": 0.75,
+          "value": 0.0
+        },
+        "max_single_family_share_le_0_60": {
+          "pass": false,
+          "threshold": 0.6,
+          "value": 0.6895523105345096
+        },
+        "max_single_strategy_pnl_share_le_0_40": {
+          "pass": false,
+          "threshold": 0.4,
+          "value": 1.0
+        }
+      },
+      "issues": [],
+      "notes": [
+        "No off-diagonal correlation pairs (single hypothesis id); max_pairwise_corr treated as 0.0"
+      ],
+      "summary_snapshot": {
+        "max_drawdown": -0.03491245191654857,
+        "net_return": -0.029290172045479672,
+        "trade_count": 240,
+        "win_rate": 0.49583333333333335
+      }
+    },
+    "P04": {
+      "artifact": "results/paper/20260219T155811Z_P04_combined_180d.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "metadata_consistency_ok": true,
+        "metrics_integrity_ok": true,
+        "portfolio_construction_block_ok": true,
+        "schema_completeness_ok": true
+      },
+      "decision": "BLOCKED_HEAT",
+      "heat_checks": {
+        "max_pairwise_corr_le_0_75": {
+          "pass": true,
+          "threshold": 0.75,
+          "value": 0.0
+        },
+        "max_single_family_share_le_0_60": {
+          "pass": false,
+          "threshold": 0.6,
+          "value": 1.4168515454315211
+        },
+        "max_single_strategy_pnl_share_le_0_40": {
+          "pass": false,
+          "threshold": 0.4,
+          "value": 1.0
+        }
+      },
+      "issues": [],
+      "notes": [
+        "No off-diagonal correlation pairs (single hypothesis id); max_pairwise_corr treated as 0.0"
+      ],
+      "summary_snapshot": {
+        "max_drawdown": -0.03963121472257247,
+        "net_return": 0.02479611376896234,
+        "trade_count": 580,
+        "win_rate": 0.49482758620689654
+      }
+    }
+  },
+  "ranking_best_to_worst": [
+    {
+      "decision": "BLOCKED_HEAT",
+      "id": "P04",
+      "max_drawdown": -0.03963121472257247,
+      "net_return": 0.02479611376896234,
+      "rank": 1,
+      "reason": "heat gate fail: max_single_strategy_pnl_share_le_0_40, max_single_family_share_le_0_60"
+    },
+    {
+      "decision": "BLOCKED_HEAT",
+      "id": "P02",
+      "max_drawdown": -0.039288190238686016,
+      "net_return": 0.024452546671050523,
+      "rank": 2,
+      "reason": "heat gate fail: max_single_strategy_pnl_share_le_0_40, max_single_family_share_le_0_60"
+    },
+    {
+      "decision": "BLOCKED_HEAT",
+      "id": "P01",
+      "max_drawdown": -0.03941315991822181,
+      "net_return": 0.023843861559540068,
+      "rank": 3,
+      "reason": "heat gate fail: max_single_strategy_pnl_share_le_0_40, max_single_family_share_le_0_60"
+    },
+    {
+      "decision": "BLOCKED_HEAT",
+      "id": "P03",
+      "max_drawdown": -0.03491245191654857,
+      "net_return": -0.029290172045479672,
+      "rank": 4,
+      "reason": "heat gate fail: max_single_strategy_pnl_share_le_0_40, max_single_family_share_le_0_60"
+    }
+  ],
+  "related_error_traceability": [
+    "results/errors/20260219T070218Z_paper_portfolio.json",
+    "results/errors/20260219T065159Z_paper_portfolio.json",
+    "results/errors/20260219T063519Z_paper_portfolio.json",
+    "results/errors/20260219T062837Z_paper_portfolio.json"
+  ],
+  "role": "Guardian",
+  "scope_artifacts": [
+    "results/paper/20260219T154337Z_P01_combined_180d.json",
+    "results/paper/20260219T154801Z_P02_combined_180d.json",
+    "results/paper/20260219T155310Z_P03_combined_180d.json",
+    "results/paper/20260219T155811Z_P04_combined_180d.json"
+  ],
+  "scope_label": "Portfolio-construction Phase A (P01-P04, combined 180d, bps8)",
+  "spec_reference": "docs/paper_portfolio_runner_spec.md",
+  "timestamp_utc": "2026-02-19T16:07:16+00:00"
+}

@@ -1,0 +1,65 @@
+{
+  "config": {
+    "bootstrap_iters": 3000,
+    "cooldown_bars": 0,
+    "daily_loss_stop_pct": 0.03,
+    "dsn_source": "RC_DB_DSN",
+    "max_asset_exposure": 1.0,
+    "max_gross_exposure": 1.0,
+    "max_strategy_weight": 0.35,
+    "report_csv_prefix": "",
+    "seed": 42,
+    "timeframe": "5m"
+  },
+  "cost_mode": "bps8",
+  "dataset": {
+    "bar_count": 2,
+    "db_last_modified": {
+      "BTC-USD": "2026-01-01T00:05:00+00:00",
+      "ETH-USD": "2026-01-01T00:05:00+00:00"
+    },
+    "db_path": {
+      "BTC-USD": "postgres:rc.candles",
+      "ETH-USD": "postgres:rc.candles"
+    },
+    "end_ts": "2026-01-01T00:05:00+00:00",
+    "start_ts": "2026-01-01T00:00:00+00:00"
+  },
+  "hypothesis_ids": [
+    "H76"
+  ],
+  "metrics": {
+    "aggregate": {
+      "hypothesis_count": 1,
+      "mean_expectancy": 0.0016999999999999997,
+      "mean_max_drawdown": -0.005799999999999916,
+      "mean_net_return": 0.0033999999999999994,
+      "mean_win_rate": 0.5,
+      "trade_count": 2,
+      "turnover": 2.0
+    },
+    "per_hypothesis": {
+      "H76": {
+        "asset": "BTC-USD",
+        "expectancy": 0.0016999999999999997,
+        "hypothesis_id": "H76",
+        "max_drawdown": -0.005799999999999916,
+        "monthly_stability": {
+          "2026-01": {
+            "mean_return": 0.0016999999999999997,
+            "net_return": 0.0033999999999999994,
+            "trades": 2,
+            "win_rate": 0.5
+          }
+        },
+        "net_return": 0.0033999999999999994,
+        "trade_count": 2,
+        "turnover": 2.0,
+        "win_rate": 0.5
+      }
+    }
+  },
+  "mode": "standalone",
+  "timestamp_utc": "2026-02-19T06:32:06+00:00",
+  "window_days": 180
+}

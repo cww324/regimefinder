@@ -1,0 +1,30 @@
+{
+  "checks": {
+    "dataset_fingerprint_ok": false,
+    "failure_traceability_ok": true,
+    "metadata_consistency_ok": true,
+    "metrics_integrity_ok": true,
+    "schema_completeness_ok": true
+  },
+  "gate_decision": "BLOCKED",
+  "issue_count": 2,
+  "issues": [
+    {
+      "code": "dataset_db_path_invalid",
+      "message": "dataset.db_path must be non-empty string",
+      "path": "$.dataset.db_path"
+    },
+    {
+      "code": "dataset_db_last_modified_invalid",
+      "message": "dataset.db_last_modified must be non-empty string",
+      "path": "$.dataset.db_last_modified"
+    }
+  ],
+  "role": "Guardian",
+  "scope": {
+    "related_failure_record": "results/errors/20260219T070218Z_paper_portfolio.json",
+    "success_artifact": "results/paper/20260219T070226Z_combined_180d.json"
+  },
+  "spec_reference": "docs/paper_portfolio_runner_spec.md",
+  "timestamp_utc": "2026-02-19T07:10:47+00:00"
+}

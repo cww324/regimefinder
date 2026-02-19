@@ -1,0 +1,196 @@
+{
+  "checks": {
+    "dataset_fingerprint_all_ok": true,
+    "logic_hash_integrity_all_ok": false,
+    "required_gates_all_ok": true,
+    "schema_completeness_all_ok": true,
+    "summary_consistency_ok": true,
+    "summary_rebuild_deterministic": true
+  },
+  "derived_classifications": {
+    "H101": {
+      "artifact": "results/runs/20260219T162932Z_H101.json",
+      "cost_mode_final_status": {
+        "bps10": "FAIL",
+        "bps8": "FAIL",
+        "gross": "FAIL"
+      },
+      "final_status": "FAIL"
+    },
+    "H102": {
+      "artifact": "results/runs/20260219T163832Z_H102.json",
+      "cost_mode_final_status": {
+        "bps10": "INCONCLUSIVE",
+        "bps8": "INCONCLUSIVE",
+        "gross": "INCONCLUSIVE"
+      },
+      "final_status": "INCONCLUSIVE"
+    },
+    "H103": {
+      "artifact": "results/runs/20260219T164703Z_H103.json",
+      "cost_mode_final_status": {
+        "bps10": "FAIL",
+        "bps8": "FAIL",
+        "gross": "FAIL"
+      },
+      "final_status": "FAIL"
+    },
+    "H104": {
+      "artifact": "results/runs/20260219T165534Z_H104.json",
+      "cost_mode_final_status": {
+        "bps10": "FAIL",
+        "bps8": "FAIL",
+        "gross": "FAIL"
+      },
+      "final_status": "FAIL"
+    },
+    "H105": {
+      "artifact": "results/runs/20260219T170402Z_H105.json",
+      "cost_mode_final_status": {
+        "bps10": "FAIL",
+        "bps8": "FAIL",
+        "gross": "FAIL"
+      },
+      "final_status": "FAIL"
+    }
+  },
+  "failure_count": 5,
+  "failures": [
+    {
+      "code": "artifact_logic_hash_missing",
+      "detail": "H101 artifact logic_hash missing",
+      "hypothesis_id": "H101"
+    },
+    {
+      "code": "artifact_logic_hash_missing",
+      "detail": "H102 artifact logic_hash missing",
+      "hypothesis_id": "H102"
+    },
+    {
+      "code": "artifact_logic_hash_missing",
+      "detail": "H103 artifact logic_hash missing",
+      "hypothesis_id": "H103"
+    },
+    {
+      "code": "artifact_logic_hash_missing",
+      "detail": "H104 artifact logic_hash missing",
+      "hypothesis_id": "H104"
+    },
+    {
+      "code": "artifact_logic_hash_missing",
+      "detail": "H105 artifact logic_hash missing",
+      "hypothesis_id": "H105"
+    }
+  ],
+  "gate_decision": "BLOCKED",
+  "per_hypothesis": {
+    "H101": {
+      "artifact": "results/runs/20260219T162932Z_H101.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "logic_hash_integrity_ok": false,
+        "required_gates_ok": true,
+        "schema_completeness_ok": true
+      },
+      "failure_count": 1,
+      "failures": [
+        {
+          "code": "artifact_logic_hash_missing",
+          "detail": "H101 artifact logic_hash missing"
+        }
+      ],
+      "logic_hash_artifact": null,
+      "logic_hash_expected": "6e1ae8b27ab3447e5071ee5c42f3bac423378d3416122cf3539aae4d8eb95b24"
+    },
+    "H102": {
+      "artifact": "results/runs/20260219T163832Z_H102.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "logic_hash_integrity_ok": false,
+        "required_gates_ok": true,
+        "schema_completeness_ok": true
+      },
+      "failure_count": 1,
+      "failures": [
+        {
+          "code": "artifact_logic_hash_missing",
+          "detail": "H102 artifact logic_hash missing"
+        }
+      ],
+      "logic_hash_artifact": null,
+      "logic_hash_expected": "a89f73a0227b0b45606c70dbdf6c769daceb6c5d446fb85c01dba91377fe91b0"
+    },
+    "H103": {
+      "artifact": "results/runs/20260219T164703Z_H103.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "logic_hash_integrity_ok": false,
+        "required_gates_ok": true,
+        "schema_completeness_ok": true
+      },
+      "failure_count": 1,
+      "failures": [
+        {
+          "code": "artifact_logic_hash_missing",
+          "detail": "H103 artifact logic_hash missing"
+        }
+      ],
+      "logic_hash_artifact": null,
+      "logic_hash_expected": "e9ae2605460071d4552c3312730e7190bf5fd4e49b31e5d5994a6e35848657b2"
+    },
+    "H104": {
+      "artifact": "results/runs/20260219T165534Z_H104.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "logic_hash_integrity_ok": false,
+        "required_gates_ok": true,
+        "schema_completeness_ok": true
+      },
+      "failure_count": 1,
+      "failures": [
+        {
+          "code": "artifact_logic_hash_missing",
+          "detail": "H104 artifact logic_hash missing"
+        }
+      ],
+      "logic_hash_artifact": null,
+      "logic_hash_expected": "702b061c7f8a0da22a74512e3df502a6371e70d2dfdd5cf335b7eaff71de5155"
+    },
+    "H105": {
+      "artifact": "results/runs/20260219T170402Z_H105.json",
+      "checks": {
+        "dataset_fingerprint_ok": true,
+        "logic_hash_integrity_ok": false,
+        "required_gates_ok": true,
+        "schema_completeness_ok": true
+      },
+      "failure_count": 1,
+      "failures": [
+        {
+          "code": "artifact_logic_hash_missing",
+          "detail": "H105 artifact logic_hash missing"
+        }
+      ],
+      "logic_hash_artifact": null,
+      "logic_hash_expected": "843ed3546de9b23b6835dcfe1f04842bac6846baeba71af23963add2209b9be7"
+    }
+  },
+  "role": "Guardian",
+  "scope_artifacts": [
+    "results/runs/20260219T162932Z_H101.json",
+    "results/runs/20260219T163832Z_H102.json",
+    "results/runs/20260219T164703Z_H103.json",
+    "results/runs/20260219T165534Z_H104.json",
+    "results/runs/20260219T170402Z_H105.json"
+  ],
+  "scope_label": "Standard Batch Audit - H101-H105 (queue batch 1/2)",
+  "summary_rebuild": {
+    "deterministic": true,
+    "method": "python3 scripts/build_summary.py run twice",
+    "sha256_run1": "5edd966a7c387b87f678bc36ff5c3ea2978f8a0aeb953c9923ad0e98afab1c81",
+    "sha256_run2": "5edd966a7c387b87f678bc36ff5c3ea2978f8a0aeb953c9923ad0e98afab1c81",
+    "stdout_run1": "summary_path=results/summary.json\nhypothesis_count=79",
+    "stdout_run2": "summary_path=results/summary.json\nhypothesis_count=79"
+  },
+  "timestamp_utc": "2026-02-19T18:26:26+00:00"
+}

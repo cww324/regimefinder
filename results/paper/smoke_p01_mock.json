@@ -1,0 +1,126 @@
+{
+  "config": {
+    "bootstrap_iters": 3000,
+    "cooldown_bars": 0,
+    "daily_loss_stop_pct": 0.03,
+    "dsn_source": "RC_DB_DSN",
+    "max_asset_exposure": 1.0,
+    "max_gross_exposure": 1.0,
+    "max_strategy_weight": 0.35,
+    "report_csv_prefix": "",
+    "seed": 42,
+    "timeframe": "5m"
+  },
+  "cost_mode": "bps8",
+  "dataset": {
+    "bar_count": 2,
+    "db_last_modified": {
+      "BTC-USD": "2026-01-01T00:05:00+00:00",
+      "ETH-USD": "2026-01-01T00:05:00+00:00"
+    },
+    "db_path": {
+      "BTC-USD": "postgres:rc.candles",
+      "ETH-USD": "postgres:rc.candles"
+    },
+    "end_ts": "2026-01-01T00:05:00+00:00",
+    "start_ts": "2026-01-01T00:00:00+00:00"
+  },
+  "hypothesis_ids": [
+    "P01"
+  ],
+  "metrics": {
+    "aggregate": {
+      "hypothesis_count": 1,
+      "mean_expectancy": 0.0017,
+      "mean_max_drawdown": -0.0018000000000000238,
+      "mean_net_return": 0.0034,
+      "mean_win_rate": 0.5,
+      "trade_count": 2,
+      "turnover": 2.0
+    },
+    "heat_audit": {
+      "active_strategy_count_distribution": {
+        "4": 2
+      },
+      "effective_strategy_weights_summary": {
+        "H77": {
+          "mean_abs_weight": 0.25,
+          "mean_weight": 0.25,
+          "runs": 1
+        }
+      },
+      "family_contribution_summary": {
+        "cross_asset_regime": 0.005
+      },
+      "policy_config_snapshot": {
+        "P01": {
+          "candidate_universe": [
+            "H76",
+            "H77",
+            "H79",
+            "H81",
+            "H78",
+            "H82"
+          ],
+          "policy_id": "P01"
+        }
+      }
+    },
+    "per_hypothesis": {
+      "P01": {
+        "asset": "BTC-USD",
+        "expectancy": 0.0017,
+        "hypothesis_id": "P01",
+        "max_drawdown": -0.0018000000000000238,
+        "monthly_stability": {
+          "2026-01": {
+            "mean_return": 0.0017,
+            "net_return": 0.0034,
+            "trades": 2,
+            "win_rate": 0.5
+          }
+        },
+        "net_return": 0.0034,
+        "policy_details": {
+          "active_strategy_count_distribution": {
+            "4": 2
+          },
+          "effective_strategy_weights_summary": {
+            "H77": {
+              "mean_abs_weight": 0.25,
+              "mean_weight": 0.25,
+              "observations": 2
+            }
+          },
+          "family_contribution_summary": {
+            "cross_asset_regime": 0.005
+          },
+          "policy_config_snapshot": {
+            "candidate_universe": [
+              "H76",
+              "H77",
+              "H79",
+              "H81",
+              "H78",
+              "H82"
+            ],
+            "policy_id": "P01"
+          },
+          "resolved_members": [
+            "H76",
+            "H77",
+            "H81",
+            "H78",
+            "H82"
+          ]
+        },
+        "trade_count": 2,
+        "turnover": 2.0,
+        "win_rate": 0.5
+      }
+    }
+  },
+  "mode": "standalone",
+  "timestamp_utc": "2026-02-19T00:00:00+00:00",
+  "window_days": 180
+}

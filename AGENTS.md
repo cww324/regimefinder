@@ -42,6 +42,7 @@ Every session must explicitly declare exactly one role:
 
 - Coordinator
 - Architect
+- Coder
 - Executor
 - Guardian
 - Capital_Committee
@@ -88,6 +89,16 @@ Sample-size defaults (governance-level):
 - `INCONCLUSIVE` if baseline trade count `n < 50`.
 - `INCONCLUSIVE` if `fold_count < 5`.
 
+INCONCLUSIVE handling policy (no silent loops):
+- `inconclusive_insufficient_sample` (`n < 50` and/or `fold_count < 5`):
+  - eligible for one re-queue after explicit data expansion (for example longer window/backfill).
+- `inconclusive_data_constraint` (coverage/fingerprint or infrastructure limitation):
+  - hold until constraint is fixed, then one rerun allowed with same ID/rules.
+- `inconclusive_weak_signal` (enough sample/folds but unstable edge):
+  - archive by default; further exploration requires a NEW hypothesis ID.
+- Any second INCONCLUSIVE with the same reason category must be archived unless
+  Coordinator records an explicit governance exception in `queue.yaml` notes.
+
 Nuance rule:
 - If a hypothesis uses a constrained window that cannot produce 7+ folds,
   Guardian must apply the fallback above (`fold_count >= 5`) and mark the decision
@@ -110,7 +121,7 @@ Keep Phase 3 organized and prevent drift in what runs next.
 Allowed:
 - Edit operational planning docs only (for example: checklists, notes)
 - Own and edit `queue.yaml` (queue ordering, next_index, paused, notes)
-- Assign the next batch (max 5) and track completion status
+- Assign the next batch (max 10) and track completion status
 
 Forbidden:
 - Editing `hypotheses.yaml`
@@ -146,6 +157,30 @@ Outputs:
 - YAML diff adding new IDs only (no edits to existing IDs)
 
 --------------------------------------------------
+ROLE: Coder (Implementation Engineer)
+--------------------------------------------------
+
+Purpose:
+Implement and maintain research tooling without changing hypothesis intent or governance outcomes.
+
+Allowed:
+- Edit code/scripts required for execution tooling (for example: `scripts/*.py`)
+- Add or update supporting tests for tooling behavior
+- Add/update implementation-facing docs tied to tooling usage
+- Fix bugs in runners and operational utilities used by Executor/Guardian
+
+Forbidden:
+- Editing `hypotheses.yaml` strategy rule definitions
+- Running backtests or paper test campaigns
+- Editing `queue.yaml`
+- Writing PASS/FAIL classifications, freezes, or promotions
+- Editing `results/summary.json`, `results/audit/*`, or derived findings status claims
+
+Outputs:
+- Code diffs for tooling implementation
+- Optional test diffs and implementation notes
+
+--------------------------------------------------
 ROLE: Executor (Backtest Operator)
 --------------------------------------------------
 
@@ -156,7 +191,7 @@ Allowed:
 - Run the batch runner (for example: `scripts/run_hypothesis_batch.py`)
 - Postgres safety preference: run `scripts/run_batch_pg.sh` (single-shell DSN + probe + batch)
 - Direct `make batch` is allowed when environment is already verified in the same shell
-- Run exactly the next batch of size `queue.yaml:batch_size` (default 5)
+- Run exactly the next batch of size `queue.yaml:batch_size` (default 10)
 - Produce append-only artifacts under `results/runs/`
 
 Forbidden:
@@ -296,7 +331,7 @@ Only TRADEABLE hypotheses may be frozen or promoted.
 The queue system is authoritative for execution order:
 
 - `queue.yaml` contains:
-  - batch_size (default 5)
+  - batch_size (default 10)
   - next_index
   - queue (list of IDs)
   - paused
@@ -318,6 +353,16 @@ Before and during batch execution:
 
 - Check disk free space
 - Stop immediately if free space < 1 GB
+- For Postgres-backed execution, run DSN preflight in the same shell immediately before batch execution:
+  - `export RC_DB_DSN='postgresql://rc_user:wemyss@localhost:5432/regime_crypto'`
+  - `.venv/bin/python - <<'PY'`
+  - `import os, psycopg`
+  - `with psycopg.connect(os.environ["RC_DB_DSN"]) as c:`
+  - `    with c.cursor() as cur:`
+  - `        cur.execute("select 1")`
+  - `        print(cur.fetchone())`
+  - `PY`
+  - Then run `scripts/run_batch_pg.sh` in that same shell without switching context.
 
 On any run failure:
 - Write `results/errors/<timestamp>_<hyp>.json`
@@ -339,6 +384,25 @@ Each run artifact MUST include:
 - db_last_modified (or equivalent)
 
 Guardian must flag any silent drift when comparing like-for-like reruns.
+
+---------------------------------------------------------------------
+
+# 11A) LOGIC HASH INTEGRITY REQUIREMENT
+
+Each TRADEABLE hypothesis definition in `hypotheses.yaml` must include a deterministic
+`logic_hash` derived from canonical rule fields.
+
+Artifact requirement:
+- each run artifact MUST include the executed `logic_hash`.
+
+Guardian integrity checks:
+- compare artifact `logic_hash` vs current `hypotheses.yaml` `logic_hash` for the same ID.
+- mismatch MUST be flagged as `logic_drift` integrity failure.
+- on `logic_drift`, Guardian must block classification/promotion decisions until:
+  - a NEW hypothesis ID is used, or
+  - an explicit migration record is logged with artifact references.
+
+No silent hypothesis drift is permitted.
 
 ---------------------------------------------------------------------
 
@@ -391,7 +455,7 @@ classification/freeze/promotion statements.
 Coordinator:
 - Role declared
 - Queue updated correctly
-- Batch assignment <= 5
+- Batch assignment <= 10
 - No strategy/code edits
 
 Architect:
@@ -399,6 +463,12 @@ Architect:
 - New IDs only
 - Full canonical YAML definitions
 - No result-driven edits
+
+Coder:
+- Role declared
+- Tooling/code changes only (no hypothesis rule edits)
+- No backtest/paper execution
+- No manual status/classification claims
 
 Executor:
 - Role declared
@@ -409,6 +479,7 @@ Executor:
 Guardian:
 - Role declared
 - Schema/fingerprint checks passed
+- Logic-hash integrity checks passed (or drift explicitly flagged/blocked)
 - Summary rebuilt deterministically
 - Findings derived with artifact references
 

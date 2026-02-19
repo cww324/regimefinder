@@ -1462,3 +1462,1351 @@ hypotheses:
         tuning: "forbidden"
     allowed_variants: []
     status: planned
+  - id: H86
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Session-overlap momentum transfer with ETH trend confirmation."
+    rationale: "Probe whether BTC edge concentrates during high-liquidity UTC overlap windows rather than full-day sampling."
+    WHY: "Test session/time-window robustness by restricting execution to fixed overlap hours and requiring ETH trend state confirmation."
+    RULES:
+      - "Only allow entries during UTC 12:00-20:00."
+      - "Require ETH 1h EMA20 slope sign to be non-zero and stable for the last 2 completed 1h bars."
+      - "Trade BTC in ETH slope-sign direction."
+      - "No entries outside window; hold fixed horizon for active trades."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      utc_window: "12:00-20:00"
+      eth_slope_stability_bars_1h: 2
+      trade_direction: "signed"
+    FAILURE_CONDITIONS:
+      - "Edge disappears once execution is not restricted to overlap window."
+      - "Signal degrades when ETH slope sign churn increases intraday."
+      - "Trade count becomes too low for stable fold support."
+    EXPECTED_FAILURE_MODE: "Over-concentration risk: a few session clusters drive outcomes while out-of-sample windows contribute noise."
+    entry_rules:
+      - "Restrict entries to UTC 12:00-20:00 only."
+      - "Require ETH 1h EMA20 slope sign to be unchanged for the last 2 completed 1h bars and non-zero."
+      - "Trade BTC in ETH slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+      - "UTC timestamp window filter"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        utc_window: "12:00-20:00"
+        eth_slope_stability_bars_1h: 2
+        trade_direction: signed
+    allowed_variants: []
+    status: planned
+  - id: H87
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Regime-transition event entry using spread_pct state changes."
+    rationale: "Isolate whether transition moments carry more directional information than steady-state regime occupancy."
+    WHY: "Test regime transition behavior directly by trading only on H19 spread_pct state changes."
+    RULES:
+      - "Detect transition events when spread_pct crosses regime boundaries (0.10 or 0.90)."
+      - "Allow entry only on the first eligible 5m bar after transition."
+      - "Require ETH 1h EMA20 slope sign agreement with transition direction filter."
+      - "Trade BTC in ETH slope-sign direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 6
+      regime_threshold_low: 0.10
+      regime_threshold_high: 0.90
+      transition_cooldown_bars: 12
+    FAILURE_CONDITIONS:
+      - "Transition events are too sparse for required fold/sample support."
+      - "Boundary-crossing noise causes false transitions with no follow-through."
+      - "Edge vanishes when transition timing lags by one bar."
+    EXPECTED_FAILURE_MODE: "Event-timing fragility: performance depends on precise crossing bars and decays under minor timestamp drift."
+    entry_rules:
+      - "Compute H19 spread_pct regime state using thresholds 0.10 and 0.90."
+      - "Trigger only when state changes versus prior bar (short-tail/neutral/long-tail transition)."
+      - "Apply 12-bar cooldown after each accepted transition entry."
+      - "Require ETH 1h EMA20 slope sign non-zero and trade BTC in that sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "H19 spread_pct regime state"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 6
+      fixed:
+        regime_threshold_low: 0.10
+        regime_threshold_high: 0.90
+        transition_only: true
+        transition_cooldown_bars: 12
+    allowed_variants: []
+    status: planned
+  - id: H88
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Mid-volatility execution window conditioned on realized-vol percentile."
+    rationale: "Evaluate whether moderate volatility regimes provide better execution quality than very low or shock-high volatility states."
+    WHY: "Test volatility-conditioned execution windows using existing derived vol percentile features."
+    RULES:
+      - "Compute BTC realized-vol percentile on rolling 20-day window."
+      - "Allow entries only when vol percentile is in [0.40, 0.80)."
+      - "Require ETH 1h EMA20 slope sign non-zero; trade BTC in that sign direction."
+      - "Suppress entries when vol percentile is outside allowed band."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      vol_percentile_min: 0.40
+      vol_percentile_max: 0.80
+      vol_lookback_days: 20
+    FAILURE_CONDITIONS:
+      - "Edge exists only in extreme-vol tails, not in mid band."
+      - "Vol percentile estimate is unstable around threshold boundaries."
+      - "Trade density drops below minimum confidence levels."
+    EXPECTED_FAILURE_MODE: "Band-selection misspecification: filtered sample is cleaner but too small, reducing robustness and fold consistency."
+    entry_rules:
+      - "Compute BTC realized-volatility percentile over rolling 20-day window."
+      - "Require 0.40 <= vol_percentile < 0.80."
+      - "Require ETH 1h EMA20 slope sign non-zero and trade BTC in that sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC realized-volatility percentile feature"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        vol_percentile_min: 0.40
+        vol_percentile_max: 0.80
+        vol_lookback_days: 20
+        trade_direction: signed
+    allowed_variants: []
+    status: planned
+  - id: H89
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Signed-slope magnitude symmetry gate with mirrored long/short triggers."
+    rationale: "Constrain asymmetry by enforcing identical absolute-threshold logic for both directions."
+    WHY: "Test symmetry/asymmetry robustness by forcing mirrored long and short entry thresholds on ETH signed slope."
+    RULES:
+      - "Compute ETH 1h EMA20 signed slope z-score (or standardized slope feature)."
+      - "Enter BTC long when signed_slope_z >= +1.0."
+      - "Enter BTC short when signed_slope_z <= -1.0."
+      - "No trade in center band (-1.0, +1.0)."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 6
+      signed_slope_z_long_min: 1.0
+      signed_slope_z_short_max: -1.0
+      center_no_trade_band: true
+    FAILURE_CONDITIONS:
+      - "Directional drift makes mirrored thresholds suboptimal."
+      - "One side dominates while the opposite side contributes persistent losses."
+      - "Standardization instability causes threshold jitter."
+    EXPECTED_FAILURE_MODE: "Symmetry penalty: balanced rule sacrifices direction-specific edge and converges toward near-zero net expectancy."
+    entry_rules:
+      - "Standardize ETH 1h EMA20 signed slope into z-score feature."
+      - "Trigger BTC long when signed_slope_z >= +1.0."
+      - "Trigger BTC short when signed_slope_z <= -1.0."
+      - "Do not trade when -1.0 < signed_slope_z < +1.0."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 signed slope standardized feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 6
+      fixed:
+        signed_slope_z_long_min: 1.0
+        signed_slope_z_short_max: -1.0
+        enforce_directional_symmetry: true
+    allowed_variants: []
+    status: planned
+  - id: H90
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "High-conviction sparse-entry composite with explicit density cap."
+    rationale: "Measure trade-density versus edge tradeoff by combining stricter agreement filters into lower-frequency signals."
+    WHY: "Test whether lower trade density from multi-filter consensus improves robustness after costs."
+    RULES:
+      - "Require BTC and ETH 1h EMA20 slope signs to agree and be non-zero."
+      - "Require ETH absolute 1h slope percentile >= 0.70."
+      - "Require BTC realized-vol percentile in [0.30, 0.70)."
+      - "Enforce minimum spacing of 18 bars between new entries."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 10
+      abs_eth_slope_percentile_min: 0.70
+      vol_percentile_min: 0.30
+      vol_percentile_max: 0.70
+      min_entry_spacing_bars: 18
+    FAILURE_CONDITIONS:
+      - "Trade count is too low to satisfy confidence gates."
+      - "Composite filter overfits to rare historical clusters."
+      - "Longer hold horizon increases variance and weakens edge retention."
+    EXPECTED_FAILURE_MODE: "Undertrading risk: higher per-trade expectancy cannot offset sparse opportunities and fold-level instability."
+    entry_rules:
+      - "Require BTC 1h EMA20 slope sign == ETH 1h EMA20 slope sign and both non-zero."
+      - "Require ETH absolute 1h EMA20 slope percentile >= 0.70."
+      - "Require BTC realized-volatility percentile: 0.30 <= vol_percentile < 0.70."
+      - "Require at least 18 bars since prior entry."
+      - "Trade BTC in shared slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC 1h EMA20 slope sign"
+      - "ETH 1h EMA20 slope sign and absolute percentile rank"
+      - "BTC realized-volatility percentile feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 10
+      fixed:
+        abs_eth_slope_percentile_min: 0.70
+        btc_vol_percentile_min: 0.30
+        btc_vol_percentile_max: 0.70
+        min_entry_spacing_bars: 18
+        consensus_gate: btc_eth_slope_sign_agreement
+    allowed_variants: []
+    status: planned
+  - id: H91
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Regime-transition impulse with transition-specific early exit."
+    rationale: "Isolate whether information lives in spread regime boundary crossings and whether shorter post-transition hold captures most signal."
+    WHY: "Test regime-transition entries/exits directly instead of steady-state occupancy."
+    RULES:
+      - "Compute spread_pct regime state with short-tail <0.10, neutral [0.10,0.90), long-tail >=0.90."
+      - "Entry triggers only on regime-state transition bars."
+      - "Trade BTC in ETH 1h EMA20 slope sign direction, only if sign is non-zero."
+      - "Exit early at 4 bars if transition type is tail->neutral; otherwise hold full horizon."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      transition_exit_horizon_bars: 4
+      regime_threshold_low: 0.10
+      regime_threshold_high: 0.90
+      transition_cooldown_bars: 10
+    FAILURE_CONDITIONS:
+      - "Transition bars are too sparse for stable fold support."
+      - "Boundary transitions are noisy and mean-reverting before horizon completion."
+      - "Early-exit branch removes too much upside after true transitions."
+    EXPECTED_FAILURE_MODE: "Event-fragility: outcomes depend on a small number of boundary events and degrade with minor timestamp/state jitter."
+    entry_rules:
+      - "Detect spread_pct state transitions across 0.10 and 0.90 boundaries."
+      - "Enter only on first eligible 5m bar at transition with ETH 1h slope sign non-zero."
+      - "Trade BTC in ETH slope-sign direction."
+      - "Enforce 10-bar cooldown between transition entries."
+    exit_rules:
+      - "If transition is tail->neutral, exit after 4 bars."
+      - "Otherwise, hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "H19 spread_pct regime state"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        regime_threshold_low: 0.10
+        regime_threshold_high: 0.90
+        transition_only: true
+        transition_cooldown_bars: 10
+        transition_exit_horizon_bars: 4
+    allowed_variants: []
+    status: planned
+  - id: H92
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Directional asymmetry test with long-side stricter confirmation than short-side."
+    rationale: "Measure whether edge is structurally asymmetric by applying intentionally different confirmation depth for long vs short entries."
+    WHY: "Test long/short asymmetry constraints using fixed, predeclared directional confirmation rules."
+    RULES:
+      - "Long entries require ETH 1h slope sign positive for 3 consecutive completed 1h bars."
+      - "Short entries require ETH 1h slope sign negative for 1 completed 1h bar."
+      - "Trade BTC in ETH sign direction once confirmation is met."
+      - "Use symmetric fixed-horizon exits for both sides."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 6
+      long_confirm_bars_1h: 3
+      short_confirm_bars_1h: 1
+      min_abs_slope_percentile: 0.50
+    FAILURE_CONDITIONS:
+      - "Asymmetric gating overfilters one side and creates severe class imbalance."
+      - "Directional market regime changes invert which side should be strict."
+      - "Confirmation lag causes late entries and reduced move capture."
+    EXPECTED_FAILURE_MODE: "Asymmetry overfit: one branch dominates PnL while the other degrades robustness and fold consistency."
+    entry_rules:
+      - "Compute ETH 1h EMA20 slope sign and absolute slope percentile."
+      - "Require abs slope percentile >= 0.50."
+      - "For long: require sign=positive for last 3 completed 1h bars."
+      - "For short: require sign=negative for last 1 completed 1h bar."
+      - "Trade BTC in confirmed sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+      - "ETH 1h EMA20 absolute slope percentile"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 6
+      fixed:
+        long_confirm_bars_1h: 3
+        short_confirm_bars_1h: 1
+        min_abs_slope_percentile: 0.50
+        asymmetry_mode: directional_confirmation
+    allowed_variants: []
+    status: planned
+  - id: H93
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Volatility-conditioned participation with dual-band entry and shock blackout."
+    rationale: "Test whether excluding very low-vol and shock-vol bars improves execution robustness while retaining sufficient participation."
+    WHY: "Test volatility-conditioned participation using only existing realized-vol percentile and shock-derived features."
+    RULES:
+      - "Allow entries only when BTC realized-vol percentile is in [0.25,0.75)."
+      - "Blackout entries for 6 bars after ETH absolute return exceeds 95th percentile shock threshold."
+      - "Within eligible bars, trade BTC in ETH 1h slope sign direction (non-zero only)."
+      - "Fixed horizon exits."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      btc_vol_percentile_min: 0.25
+      btc_vol_percentile_max: 0.75
+      eth_shock_percentile_threshold: 0.95
+      post_shock_blackout_bars: 6
+    FAILURE_CONDITIONS:
+      - "Blackout plus band filters collapse trade count below confidence thresholds."
+      - "Shock blackout removes highest-information continuation bars."
+      - "Vol percentile drift causes unstable participation rates across folds."
+    EXPECTED_FAILURE_MODE: "Over-filtering: cleaner but too sparse sample increases variance and reduces out-of-sample stability."
+    entry_rules:
+      - "Require BTC realized-vol percentile: 0.25 <= vol < 0.75."
+      - "If ETH abs 1-bar return percentile >= 0.95, block new entries for next 6 bars."
+      - "Require ETH 1h EMA20 slope sign non-zero and trade BTC in that sign."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC realized-volatility percentile feature"
+      - "ETH-USD 5m closes"
+      - "ETH 1-bar absolute return percentile"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        btc_vol_percentile_min: 0.25
+        btc_vol_percentile_max: 0.75
+        eth_shock_percentile_threshold: 0.95
+        post_shock_blackout_bars: 6
+    allowed_variants: []
+    status: planned
+  - id: H94
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Session-conditioned split with explicit weekend exclusion."
+    rationale: "Separate intraday session behavior from low-liquidity weekend structure using fixed UTC windows and calendar filter."
+    WHY: "Test time-window/session conditioning with a strict weekday-only participation rule."
+    RULES:
+      - "Permit entries only Monday-Friday UTC."
+      - "Permit entries only during UTC 07:00-11:00 and 13:00-17:00 windows."
+      - "Require BTC/ETH 1h slope signs to agree and be non-zero."
+      - "Trade BTC in shared sign direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 6
+      allowed_utc_windows:
+        - "07:00-11:00"
+        - "13:00-17:00"
+      weekdays_only: true
+      slope_sign_agreement_required: true
+    FAILURE_CONDITIONS:
+      - "Weekday/session restriction cuts sample size too aggressively."
+      - "Signal behavior differs materially between the two windows, reducing pooled stability."
+      - "Agreement gate lags turning points and misses effective entries."
+    EXPECTED_FAILURE_MODE: "Calendar-window concentration: hypothesis works only in narrow subperiods and fails to generalize across folds."
+    entry_rules:
+      - "Filter calendar to Monday-Friday UTC."
+      - "Filter timestamp to UTC windows 07:00-11:00 and 13:00-17:00."
+      - "Require BTC 1h slope sign == ETH 1h slope sign and both non-zero."
+      - "Trade BTC in shared sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "UTC timestamp/day-of-week"
+      - "BTC 1h EMA20 slope sign"
+      - "ETH 1h EMA20 slope sign"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 6
+      fixed:
+        weekdays_only: true
+        allowed_utc_windows: ["07:00-11:00", "13:00-17:00"]
+        slope_sign_agreement_required: true
+    allowed_variants: []
+    status: planned
+  - id: H95
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Trade-frequency governor with tiered conviction thresholds."
+    rationale: "Measure edge-quality tradeoff by explicitly controlling entry frequency via dynamic threshold tiers and spacing."
+    WHY: "Test trade-frequency control versus edge quality without using non-wired execution/microstructure fields."
+    RULES:
+      - "Compute ETH signed slope standardized feature."
+      - "Use two conviction tiers: high (|z|>=1.25) and medium (|z|>=0.90)."
+      - "Allow medium-tier entries only if no trade occurred in last 24 bars; high-tier can bypass cooldown."
+      - "Direction follows ETH signed slope sign."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 10
+      high_tier_abs_z_min: 1.25
+      medium_tier_abs_z_min: 0.90
+      medium_tier_cooldown_bars: 24
+      global_min_spacing_bars: 6
+    FAILURE_CONDITIONS:
+      - "Tier logic overcomplicates participation and introduces unstable regime dependence."
+      - "High-tier events are too rare to anchor performance."
+      - "Cooldown suppresses valid medium-tier continuation trades."
+    EXPECTED_FAILURE_MODE: "Control-friction tradeoff: reduced turnover improves per-trade quality but total opportunity set becomes too thin for robust edge."
+    entry_rules:
+      - "Standardize ETH 1h EMA20 signed slope into z-score."
+      - "If |z| >= 1.25, entry is allowed (subject to global spacing)."
+      - "If 0.90 <= |z| < 1.25, require no entry in prior 24 bars."
+      - "Always enforce minimum 6-bar spacing between entries."
+      - "Trade BTC in ETH slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 signed slope standardized feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 10
+      fixed:
+        high_tier_abs_z_min: 1.25
+        medium_tier_abs_z_min: 0.90
+        medium_tier_cooldown_bars: 24
+        global_min_spacing_bars: 6
+        tiered_frequency_governor: true
+    allowed_variants: []
+    status: planned
+  - id: H96
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Regime-boundary fade with transition-aware entry direction."
+    rationale: "Test whether spread regime crossings are overreactions that mean-revert versus continuing in ETH trend direction."
+    WHY: "Probe regime-transition behavior with explicit boundary-event logic and transition-type-dependent direction."
+    RULES:
+      - "Detect spread_pct transitions across 0.10 and 0.90 boundaries."
+      - "For neutral->tail transitions, trade BTC opposite ETH slope sign (fade)."
+      - "For tail->neutral transitions, trade BTC with ETH slope sign (normalize continuation)."
+      - "Require ETH 1h slope sign non-zero; apply cooldown after each event."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 6
+      regime_threshold_low: 0.10
+      regime_threshold_high: 0.90
+      transition_cooldown_bars: 14
+      direction_map_mode: transition_type_dependent
+    FAILURE_CONDITIONS:
+      - "Transition types are too sparse to sustain fold stability."
+      - "Fade mapping is wrong-signed during persistent trend phases."
+      - "Boundary noise creates false transitions and degraded signal quality."
+    EXPECTED_FAILURE_MODE: "Transition misclassification: small state jitter flips direction map and produces unstable out-of-sample behavior."
+    entry_rules:
+      - "Compute short-tail/neutral/long-tail states from spread_pct thresholds 0.10 and 0.90."
+      - "Trigger only on state transition bars."
+      - "If transition enters a tail state, trade opposite ETH slope sign."
+      - "If transition exits a tail state to neutral, trade with ETH slope sign."
+      - "Enforce 14-bar cooldown between accepted entries."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "H19 spread_pct regime state"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 6
+      fixed:
+        regime_threshold_low: 0.10
+        regime_threshold_high: 0.90
+        transition_cooldown_bars: 14
+        direction_map_mode: transition_type_dependent
+    allowed_variants: []
+    status: planned
+  - id: H97
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Regime-asymmetric long/short policy with side-specific participation."
+    rationale: "Test structural asymmetry by allowing longs in neutral/long-tail states while restricting shorts to short-tail stress states."
+    WHY: "Evaluate long/short asymmetry under explicit regime-conditioned side gating."
+    RULES:
+      - "Long entries allowed only when spread_pct >= 0.10 and ETH slope sign is positive."
+      - "Short entries allowed only when spread_pct < 0.10 and ETH slope sign is negative."
+      - "Require ETH absolute slope percentile >= 0.60 for both sides."
+      - "Use symmetric fixed-horizon exit."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      long_regime_min: 0.10
+      short_regime_max: 0.10
+      min_abs_slope_percentile: 0.60
+      min_spacing_bars: 8
+    FAILURE_CONDITIONS:
+      - "One side is under-sampled and destabilizes aggregate behavior."
+      - "Regime map drifts and invalidates side assignment policy."
+      - "Asymmetric gating misses major moves outside designated regimes."
+    EXPECTED_FAILURE_MODE: "Policy imbalance: side-specific filters create persistent directional bias that fails across varying market regimes."
+    entry_rules:
+      - "Compute spread_pct regime state each bar."
+      - "Long when spread_pct >= 0.10 and ETH slope sign > 0."
+      - "Short when spread_pct < 0.10 and ETH slope sign < 0."
+      - "Require ETH absolute slope percentile >= 0.60."
+      - "Require at least 8 bars since prior entry."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "H19 spread_pct regime state"
+      - "ETH 1h EMA20 slope sign and absolute slope percentile"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        long_regime_min: 0.10
+        short_regime_max: 0.10
+        min_abs_slope_percentile: 0.60
+        min_spacing_bars: 8
+        asymmetry_policy: regime_conditioned_sides
+    allowed_variants: []
+    status: planned
+  - id: H98
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Volatility-state switch between continuation and no-trade zones."
+    rationale: "Test whether mid/high vol supports directional transfer while low/shock extremes are better excluded."
+    WHY: "Evaluate volatility-conditioned participation with explicit state machine behavior instead of a single static band."
+    RULES:
+      - "Define low vol: percentile < 0.20, mid vol: [0.20,0.70), high vol: [0.70,0.90), shock: >=0.90."
+      - "Allow continuation entries only in mid/high states using ETH slope sign direction."
+      - "Block all entries in low and shock states."
+      - "Apply 4-bar re-enable delay after leaving shock state."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      vol_low_max: 0.20
+      vol_mid_max: 0.70
+      vol_high_max: 0.90
+      shock_reenable_delay_bars: 4
+    FAILURE_CONDITIONS:
+      - "State segmentation overcomplicates behavior and increases boundary churn."
+      - "High-vol continuation assumption fails in reversal-dominant periods."
+      - "Participation collapses due to prolonged shock/low-vol occupancy."
+    EXPECTED_FAILURE_MODE: "State-machine brittleness: minor percentile shifts flip eligibility and create unstable fold-level participation."
+    entry_rules:
+      - "Compute BTC realized-vol percentile state (low/mid/high/shock)."
+      - "Permit entries only in mid/high states."
+      - "Require ETH 1h slope sign non-zero; trade BTC in that sign direction."
+      - "After shock->non-shock transition, wait 4 bars before allowing entries."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "BTC realized-volatility percentile feature"
+      - "ETH-USD 5m closes"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        vol_low_max: 0.20
+        vol_mid_max: 0.70
+        vol_high_max: 0.90
+        shock_reenable_delay_bars: 4
+        participation_mode: vol_state_machine
+    allowed_variants: []
+    status: planned
+  - id: H99
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Session handoff hypothesis across UTC market-open transitions."
+    rationale: "Test whether edge concentrates at session handoffs rather than broad daytime windows."
+    WHY: "Evaluate time-window conditioning on fixed session-transition intervals with strict temporal gating."
+    RULES:
+      - "Allow entries only in UTC handoff windows: 06:00-08:00 and 12:00-14:00."
+      - "Require ETH slope sign change within prior 3 5m bars."
+      - "Require BTC/ETH slope sign agreement at entry bar."
+      - "Trade BTC in shared sign direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 6
+      handoff_windows:
+        - "06:00-08:00"
+        - "12:00-14:00"
+      recent_flip_lookback_bars: 3
+      require_sign_agreement: true
+    FAILURE_CONDITIONS:
+      - "Handoff windows are too narrow to sustain sample-size requirements."
+      - "Recent flip condition triggers mostly noise around open transitions."
+      - "Combined window+agreement filter overconstrains participation."
+    EXPECTED_FAILURE_MODE: "Temporal concentration risk: hypothesis depends on specific handoff microregimes and fails outside those pockets."
+    entry_rules:
+      - "Filter time to UTC windows 06:00-08:00 and 12:00-14:00."
+      - "Require ETH 1h slope sign to have flipped at least once in prior 3 bars."
+      - "Require BTC 1h slope sign == ETH 1h slope sign and non-zero."
+      - "Trade BTC in shared sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "UTC timestamp window filter"
+      - "BTC 1h EMA20 slope sign"
+      - "ETH 1h EMA20 slope sign series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 6
+      fixed:
+        handoff_windows: ["06:00-08:00", "12:00-14:00"]
+        recent_flip_lookback_bars: 3
+        require_sign_agreement: true
+    allowed_variants: []
+    status: planned
+  - id: H100
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    description: "Quality-over-quantity quota model with daily entry budget."
+    rationale: "Test edge-quality tradeoff by hard-capping trade frequency while admitting only top-conviction slope signals."
+    WHY: "Measure whether explicit quota controls improve robustness compared with unconstrained signal throughput."
+    RULES:
+      - "Rank candidate entries by ETH absolute slope percentile each UTC day."
+      - "Allow at most 2 entries per day, taking highest-ranked eligible signals first."
+      - "Require BTC/ETH slope sign agreement and non-zero sign."
+      - "Require BTC realized-vol percentile in [0.30,0.85) to avoid dull/shock tails."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 10
+      daily_entry_quota: 2
+      min_abs_slope_percentile: 0.75
+      btc_vol_percentile_min: 0.30
+      btc_vol_percentile_max: 0.85
+    FAILURE_CONDITIONS:
+      - "Quota rejects too many valid opportunities in trend-persistent periods."
+      - "Ranking by absolute slope percentile overweights transient spikes."
+      - "Daily batching introduces path dependence and unstable fold behavior."
+    EXPECTED_FAILURE_MODE: "Quota path dependency: day-level selection order dominates outcomes and reduces consistency across walkforward folds."
+    entry_rules:
+      - "Generate candidates when BTC/ETH 1h slope signs agree and are non-zero."
+      - "Require ETH absolute slope percentile >= 0.75."
+      - "Require BTC realized-vol percentile: 0.30 <= vol < 0.85."
+      - "Within each UTC day, keep top 2 candidates by ETH absolute slope percentile."
+      - "Trade BTC in shared slope-sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC realized-volatility percentile feature"
+      - "ETH 1h EMA20 slope sign and absolute slope percentile"
+      - "UTC day partition for quota accounting"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 10
+      fixed:
+        daily_entry_quota: 2
+        min_abs_slope_percentile: 0.75
+        btc_vol_percentile_min: 0.30
+        btc_vol_percentile_max: 0.85
+        selection_mode: daily_top_ranked
+    allowed_variants: []
+    status: planned
+  - id: P01
+    family: portfolio_construction
+    class: tradeable_hypothesis
+    logic_hash: "844d7cfc1215e95793d72ae09562b4f30ae5ffd8561d1b22e6c688336276577e"
+    description: "Deduplicated core equal-weight portfolio over paper-candidate signal set."
+    rationale: "Separate portfolio-layer dedup test from standalone signal hypotheses by removing one near-duplicate member and preserving fixed-weight aggregation."
+    WHY: "Test whether reducing internal redundancy (H77/H79 pair) improves portfolio coherence without introducing adaptive weighting."
+    RULES:
+      - "Candidate base set is fixed: H76,H77,H79,H81,H78,H82."
+      - "Dedup rule is fixed and non-adaptive: keep H77, exclude H79."
+      - "Combine active strategy signals with equal weights across included members."
+      - "Apply existing portfolio risk caps and one-position-per-strategy constraints already used by paper framework."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      candidate_universe: ["H76", "H77", "H79", "H81", "H78", "H82"]
+      dedup_keep: "H77"
+      dedup_drop: "H79"
+      weighting_mode: "equal_weight_active"
+      max_active_strategies: 5
+    FAILURE_CONDITIONS:
+      - "Dropped member contained unique conditional coverage despite apparent duplication."
+      - "Equal-weight aggregation overconcentrates during correlated bursts."
+      - "Reduced member count lowers diversification without improving coherence."
+    EXPECTED_FAILURE_MODE: "False dedup assumption: removed strategy contributes distinct edge in specific regimes, producing net degradation."
+    entry_rules:
+      - "Read member strategy directional intents from fixed included set: H76,H77,H81,H78,H82."
+      - "Normalize each active member to unit notional vote and average equally."
+      - "Open/adjust portfolio exposure in averaged signal direction subject to existing caps."
+    exit_rules:
+      - "Exit when combined active signal crosses zero or no member remains active."
+      - "Apply standard portfolio risk-stop behavior from existing execution framework."
+    required_inputs:
+      - "Strategy signal states for H76,H77,H79,H81,H78,H82"
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "Existing portfolio cap/exposure controls"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        candidate_universe: ["H76", "H77", "H79", "H81", "H78", "H82"]
+        dedup_keep: "H77"
+        dedup_drop: "H79"
+        weighting_mode: equal_weight_active
+        cap_policy: existing_portfolio_caps
+    allowed_variants: []
+    status: planned
+  - id: P02
+    family: portfolio_construction
+    class: tradeable_hypothesis
+    logic_hash: "5535157cdade86e64f5b941703ae72115ee9d0484fd7379be9fe3031135d37c7"
+    description: "Risk-adjusted rank-weight blend across fixed candidate universe."
+    rationale: "Test whether deterministic rank-weighting over recent quality metrics improves allocation discipline versus static equal weights."
+    WHY: "Evaluate a portfolio-construction layer that allocates by recent risk-adjusted quality while keeping strategy definitions frozen."
+    RULES:
+      - "Candidate base set is fixed: H76,H77,H79,H81,H78,H82."
+      - "Compute per-strategy score over trailing 30 calendar days: score_i = mean(5m strategy returns) / stdev(5m strategy returns)."
+      - "Clip negative scores to 0, then normalize by L1 sum to obtain active weights."
+      - "If all scores are <=0, fall back to equal-weight across currently active members."
+    PARAMETERS:
+      lookback_days: 180
+      rank_window_days: 30
+      score_formula: "mean_over_std"
+      score_clip_floor: 0.0
+      normalization: "L1_on_positive_scores"
+      fallback_weighting: "equal_weight_active"
+    FAILURE_CONDITIONS:
+      - "Ranking window too short leads to unstable weight turnover."
+      - "Risk-adjusted score overreacts to volatility compression artifacts."
+      - "Weight concentration breaches practical diversification intent."
+    EXPECTED_FAILURE_MODE: "Estimator noise: recent-window score instability causes excessive allocation churn and inconsistent portfolio behavior."
+    entry_rules:
+      - "Generate member intents from fixed universe strategies."
+      - "Rank members by trailing 30-day risk-adjusted score."
+      - "Allocate weights by positive-score normalization; apply to active intents only."
+      - "Apply fallback equal weighting when all scores are non-positive."
+    exit_rules:
+      - "Exit or resize as member intents/weights update each rebalance step."
+      - "Flatten when no members are active."
+    required_inputs:
+      - "Strategy signal states and return streams for H76,H77,H79,H81,H78,H82"
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "Existing portfolio cap/exposure controls"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        candidate_universe: ["H76", "H77", "H79", "H81", "H78", "H82"]
+        rank_window_days: 30
+        score_formula: mean_over_std
+        score_clip_floor: 0.0
+        normalization: L1_on_positive_scores
+        fallback_weighting: equal_weight_active
+    allowed_variants: []
+    status: planned
+  - id: P03
+    family: portfolio_construction
+    class: tradeable_hypothesis
+    logic_hash: "820e748c47ca7e73c9d8e1e9080cdbdef63533c52f58397149da73c01e57f3aa"
+    description: "Consensus-strength gated portfolio activation."
+    rationale: "Test whether requiring stronger cross-strategy directional agreement reduces noisy exposure periods."
+    WHY: "Evaluate a deterministic consensus gate as a portfolio-level filter above fixed standalone signals."
+    RULES:
+      - "Candidate base set is fixed: H76,H77,H79,H81,H78,H82."
+      - "Consensus metric: C = abs(sum(sign_i * w_i)) / sum(active_w_i), with sign_i in {-1,+1} and equal base weights."
+      - "Open/maintain exposure only when C >= 0.67 and at least 3 members are active."
+      - "Direction is sign(sum(sign_i * w_i)); otherwise remain flat."
+    PARAMETERS:
+      lookback_days: 180
+      consensus_threshold: 0.67
+      min_active_members: 3
+      base_weighting: "equal_weight"
+      rebalance_interval_bars: 1
+    FAILURE_CONDITIONS:
+      - "Gate suppresses too many trades and underutilizes valid weak-consensus edges."
+      - "Consensus spikes occur late after much of move already occurred."
+      - "Correlated false agreement produces concentrated wrong-way exposure."
+    EXPECTED_FAILURE_MODE: "Over-gating: participation collapses in mixed regimes, leaving sparse trades and unstable fold support."
+    entry_rules:
+      - "Compute member directional signs from fixed universe each bar."
+      - "Compute consensus metric C using equal base weights across active members."
+      - "Enter only when C >= 0.67 and active member count >= 3."
+      - "Trade in consensus direction."
+    exit_rules:
+      - "Exit when C drops below 0.67 or active member count falls below 3."
+      - "Exit when consensus direction flips sign."
+    required_inputs:
+      - "Strategy signal states for H76,H77,H79,H81,H78,H82"
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "Existing portfolio cap/exposure controls"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        candidate_universe: ["H76", "H77", "H79", "H81", "H78", "H82"]
+        consensus_metric: abs_signed_weighted_sum_over_active_weight
+        consensus_threshold: 0.67
+        min_active_members: 3
+        base_weighting: equal_weight
+    allowed_variants: []
+    status: planned
+  - id: P04
+    family: portfolio_construction
+    class: tradeable_hypothesis
+    logic_hash: "f7906b66cfdb5bb1b44c141bb8d33a2157e4e92ffbee80501391bf6f09f66afc"
+    description: "Session-aware blend using H81/H82 specialists plus core signals."
+    rationale: "Test explicit time-window specialization by routing session windows to specialist strategies while preserving a deterministic core fallback."
+    WHY: "Evaluate whether session-aware blending improves construction robustness without altering standalone signal definitions."
+    RULES:
+      - "Core set is fixed: H76,H77,H79,H78."
+      - "Session specialist mapping: UTC 08:00-16:00 -> H81 specialist; UTC 16:00-24:00 -> H82 specialist."
+      - "During mapped session, blend core equal-weight + session specialist with 60/40 core/specialist split."
+      - "Fallback behavior: outside mapped windows or if specialist inactive, use core equal-weight only."
+    PARAMETERS:
+      lookback_days: 180
+      session_map:
+        "08:00-16:00": "H81"
+        "16:00-24:00": "H82"
+      core_set: ["H76", "H77", "H79", "H78"]
+      core_weight_share: 0.60
+      specialist_weight_share: 0.40
+      fallback_mode: "core_only_equal_weight"
+    FAILURE_CONDITIONS:
+      - "Session specialists underperform outside their assumed windows with abrupt handoff effects."
+      - "Core/specialist blend introduces discontinuities at session boundaries."
+      - "Fallback triggers too frequently, reducing intended specialization benefit."
+    EXPECTED_FAILURE_MODE: "Boundary-friction: session handoffs and specialist inactivity create unstable exposure transitions."
+    entry_rules:
+      - "Compute core aggregate signal from H76,H77,H79,H78 with equal active weights."
+      - "If current UTC time in 08:00-16:00 and H81 active, combine core and H81 via 60/40 weights."
+      - "If current UTC time in 16:00-24:00 and H82 active, combine core and H82 via 60/40 weights."
+      - "Otherwise use fallback core-only aggregate."
+    exit_rules:
+      - "Resize/flip when blended aggregate direction changes."
+      - "Flatten when neither core nor mapped specialist provides active signal."
+    required_inputs:
+      - "Strategy signal states for H76,H77,H79,H81,H78,H82"
+      - "UTC timestamp session mapping"
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "Existing portfolio cap/exposure controls"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        candidate_universe: ["H76", "H77", "H79", "H81", "H78", "H82"]
+        core_set: ["H76", "H77", "H79", "H78"]
+        session_map:
+          "08:00-16:00": H81
+          "16:00-24:00": H82
+        core_weight_share: 0.60
+        specialist_weight_share: 0.40
+        fallback_mode: core_only_equal_weight
+    allowed_variants: []
+    status: planned
+  - id: H101
+    family: volatility_state
+    class: tradeable_hypothesis
+    logic_hash: "6e1ae8b27ab3447e5071ee5c42f3bac423378d3416122cf3539aae4d8eb95b24"
+    description: "ATR expansion with realized-volatility containment continuation."
+    rationale: "Test directional continuation when local range expands but realized volatility remains below shock state."
+    WHY: "Use ATR14 and RV48 jointly to detect controlled expansion regimes distinct from slope-flip logic."
+    RULES:
+      - "Require ATR14 percentile in [0.65, 0.90)."
+      - "Require RV48 percentile in [0.40, 0.80)."
+      - "Require BTC 5m close above vwap48 for long, below vwap48 for short."
+      - "Trade in the sign of close-vs-vwap48 displacement."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      atr14_pct_min: 0.65
+      atr14_pct_max: 0.90
+      rv48_pct_min: 0.40
+      rv48_pct_max: 0.80
+      direction_source: close_vs_vwap48_sign
+    FAILURE_CONDITIONS:
+      - "ATR expansion signals late-stage exhaustion instead of continuation."
+      - "RV containment band excludes too many opportunities."
+      - "VWAP displacement direction is unstable in chop."
+    EXPECTED_FAILURE_MODE: "Volatility-state aliasing causes entries during transient range bursts with poor follow-through."
+    entry_rules:
+      - "Compute rolling percentiles for atr14 and rv48."
+      - "Allow entries only when 0.65 <= atr14_pct < 0.90 and 0.40 <= rv48_pct < 0.80."
+      - "If close > vwap48 enter long; if close < vwap48 enter short."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "atr14 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        atr14_pct_min: 0.65
+        atr14_pct_max: 0.90
+        rv48_pct_min: 0.40
+        rv48_pct_max: 0.80
+        direction_source: close_vs_vwap48_sign
+    allowed_variants: []
+    status: planned
+  - id: H102
+    family: volatility_state
+    class: tradeable_hypothesis
+    logic_hash: "a89f73a0227b0b45606c70dbdf6c769daceb6c5d446fb85c01dba91377fe91b0"
+    description: "Low-volatility compression breakout from vwap48 band."
+    rationale: "Test breakout behavior when ATR and RV jointly indicate compressed state."
+    WHY: "Orthogonal compression-breakout hypothesis based on atr14/rv48 thresholds and vwap48 band escape."
+    RULES:
+      - "Require ATR14 percentile < 0.30 and RV48 percentile < 0.35."
+      - "Define vwap48 distance band using absolute z-normalized distance over 20-day window."
+      - "Trigger only when |dist_to_vwap48_z| crosses above 1.2 from below."
+      - "Trade in breakout direction sign(dist_to_vwap48)."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      atr14_pct_max: 0.30
+      rv48_pct_max: 0.35
+      vwap_distance_z_breakout: 1.2
+      distance_norm_window_days: 20
+    FAILURE_CONDITIONS:
+      - "Compression persists and breakouts fail quickly."
+      - "Distance normalization is unstable across volatility regimes."
+      - "Breakout threshold overfilters and reduces trade density."
+    EXPECTED_FAILURE_MODE: "False breakout clustering during low-liquidity ranges creates repeated whipsaw entries."
+    entry_rules:
+      - "Require atr14_pct < 0.30 and rv48_pct < 0.35."
+      - "Compute standardized vwap48 distance z score."
+      - "Enter when abs(z) crosses from <=1.2 to >1.2, in z sign direction."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "atr14 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+      - "vwap distance standardized series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        atr14_pct_max: 0.30
+        rv48_pct_max: 0.35
+        vwap_distance_z_breakout: 1.2
+        distance_norm_window_days: 20
+    allowed_variants: []
+    status: planned
+  - id: H103
+    family: volatility_state
+    class: tradeable_hypothesis
+    logic_hash: "e9ae2605460071d4552c3312730e7190bf5fd4e49b31e5d5994a6e35848657b2"
+    description: "Shock-reversion after high RV48 with ATR deceleration."
+    rationale: "Test post-shock reversal when realized volatility remains elevated but range expansion decelerates."
+    WHY: "Use rv48 shock state with atr14 slope deceleration to capture exhaustion-style reversals."
+    RULES:
+      - "Require RV48 percentile >= 0.90."
+      - "Require ATR14 first difference < 0 for last 3 bars."
+      - "Require close-vwap48 distance sign unchanged for last 2 bars."
+      - "Trade opposite the current close-vwap48 distance sign."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      rv48_pct_min: 0.90
+      atr14_decline_bars: 3
+      distance_sign_stability_bars: 2
+      direction_mode: opposite_vwap_distance_sign
+    FAILURE_CONDITIONS:
+      - "Shock regimes trend longer than expected."
+      - "ATR deceleration is too noisy as exhaustion proxy."
+      - "Opposite-sign entries catch continuation legs."
+    EXPECTED_FAILURE_MODE: "Persistent high-volatility trends overwhelm reversal premise and generate serial stop-like losses."
+    entry_rules:
+      - "Require rv48_pct >= 0.90."
+      - "Require atr14[t]-atr14[t-1] < 0 for 3 consecutive bars."
+      - "Require sign(close-vwap48) stable for last 2 bars."
+      - "Enter opposite sign(close-vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "atr14 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        rv48_pct_min: 0.90
+        atr14_decline_bars: 3
+        distance_sign_stability_bars: 2
+        direction_mode: opposite_vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H104
+    family: volatility_state
+    class: tradeable_hypothesis
+    logic_hash: "702b061c7f8a0da22a74512e3df502a6371e70d2dfdd5cf335b7eaff71de5155"
+    description: "Balanced-volatility carry with ATR/RV ratio filter."
+    rationale: "Test whether a stable ATR14-to-RV48 ratio identifies more persistent short-horizon directional carry."
+    WHY: "Introduce volatility-ratio regime logic orthogonal to pure slope-flip entries."
+    RULES:
+      - "Compute ratio r = atr14 / rv48 (scaled to comparable units)."
+      - "Require ratio percentile in [0.45, 0.70)."
+      - "Require absolute close-vwap48 distance percentile in [0.50, 0.85)."
+      - "Trade in sign(close-vwap48)."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      atr_rv_ratio_pct_min: 0.45
+      atr_rv_ratio_pct_max: 0.70
+      abs_vwap_dist_pct_min: 0.50
+      abs_vwap_dist_pct_max: 0.85
+    FAILURE_CONDITIONS:
+      - "Ratio filter is not stable across changing volatility baselines."
+      - "Distance filter may capture overextended moves near reversal."
+      - "Scaled ratio construction may be implementation-sensitive."
+    EXPECTED_FAILURE_MODE: "Regime drift in ratio distribution causes degraded portability and inconsistent entry quality."
+    entry_rules:
+      - "Compute scaled atr14/rv48 ratio percentile."
+      - "Require 0.45 <= ratio_pct < 0.70."
+      - "Require 0.50 <= abs_dist_vwap48_pct < 0.85."
+      - "Enter in sign(close-vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "atr14 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+      - "scaled atr14/rv48 ratio feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        atr_rv_ratio_pct_min: 0.45
+        atr_rv_ratio_pct_max: 0.70
+        abs_vwap_dist_pct_min: 0.50
+        abs_vwap_dist_pct_max: 0.85
+    allowed_variants: []
+    status: planned
+  - id: H105
+    family: efficiency_mean_reversion
+    class: tradeable_hypothesis
+    logic_hash: "843ed3546de9b23b6835dcfe1f04842bac6846baeba71af23963add2209b9be7"
+    description: "Low-efficiency VWAP pullback mean-reversion."
+    rationale: "Test reversion to vwap48 during low directional efficiency states."
+    WHY: "Use er20 and vwap48 distance directly for mean-reversion logic, not trend sign transfer."
+    RULES:
+      - "Require er20 <= 0.25."
+      - "Require |dist_to_vwap48_z| >= 1.5."
+      - "Trade opposite sign(dist_to_vwap48)."
+      - "Suppress entries if rv48 percentile >= 0.85."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      er20_max: 0.25
+      abs_vwap_dist_z_min: 1.5
+      rv48_pct_max_for_entry: 0.85
+    FAILURE_CONDITIONS:
+      - "Low-er20 states can still exhibit directional drift."
+      - "VWAP distance extremes may signal breakouts, not reversion."
+      - "RV suppression may remove the most profitable reversion events."
+    EXPECTED_FAILURE_MODE: "Distance-based reversals become trend-traps when market transitions from low to high efficiency."
+    entry_rules:
+      - "Require er20 <= 0.25."
+      - "Require abs(standardized close-vwap48 distance) >= 1.5."
+      - "Require rv48_pct < 0.85."
+      - "Enter opposite sign(close-vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "er20 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+      - "vwap distance standardized series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        er20_max: 0.25
+        abs_vwap_dist_z_min: 1.5
+        rv48_pct_max_for_entry: 0.85
+        direction_mode: opposite_vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H106
+    family: efficiency_mean_reversion
+    class: tradeable_hypothesis
+    logic_hash: "b01ef75d8a81ede0d69c932378494de6e6a76e8ecb8d3e333f3b061462541498"
+    description: "High-efficiency VWAP continuation with distance cap."
+    rationale: "Test continuation when er20 indicates directional persistence but entry avoids extreme overextension."
+    WHY: "Complement H105 by testing efficiency-conditioned continuation using er20 + bounded vwap48 displacement."
+    RULES:
+      - "Require er20 >= 0.60."
+      - "Require |dist_to_vwap48_z| in [0.6, 1.8)."
+      - "Require atr14 percentile in [0.35, 0.85)."
+      - "Trade in sign(dist_to_vwap48)."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      er20_min: 0.60
+      abs_vwap_dist_z_min: 0.6
+      abs_vwap_dist_z_max: 1.8
+      atr14_pct_min: 0.35
+      atr14_pct_max: 0.85
+    FAILURE_CONDITIONS:
+      - "High efficiency may lag and occur near trend exhaustion."
+      - "Distance cap may still allow overextended entries."
+      - "ATR band may remove valid quiet-trend continuation."
+    EXPECTED_FAILURE_MODE: "Late continuation entries after efficiency spikes create poor reward-to-risk under fixed horizon."
+    entry_rules:
+      - "Require er20 >= 0.60."
+      - "Require 0.6 <= abs(standardized close-vwap48 distance) < 1.8."
+      - "Require 0.35 <= atr14_pct < 0.85."
+      - "Enter in sign(close-vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "er20 feature"
+      - "atr14 feature"
+      - "vwap48 feature"
+      - "vwap distance standardized series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        er20_min: 0.60
+        abs_vwap_dist_z_min: 0.6
+        abs_vwap_dist_z_max: 1.8
+        atr14_pct_min: 0.35
+        atr14_pct_max: 0.85
+        direction_mode: vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H107
+    family: efficiency_mean_reversion
+    class: tradeable_hypothesis
+    logic_hash: "0581f2833120d195bcef25f6b0a6214551d1313a15d87794b8c47516fb2597b8"
+    description: "ER regime-switch trigger between reversion and continuation."
+    rationale: "Test deterministic state-machine switching around er20 midpoint with vwap distance confirmation."
+    WHY: "Introduce explicit ER-driven mode switching to reduce one-regime dependency."
+    RULES:
+      - "If er20 < 0.40, use mean-reversion direction (opposite dist_to_vwap48 sign)."
+      - "If er20 >= 0.40, use continuation direction (same dist_to_vwap48 sign)."
+      - "Require abs(dist_to_vwap48_z) >= 0.9 in both modes."
+      - "Block entries when rv48 percentile >= 0.92."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      er20_switch_threshold: 0.40
+      abs_vwap_dist_z_min: 0.9
+      rv48_pct_max: 0.92
+      mode_switch: er20_state_machine
+    FAILURE_CONDITIONS:
+      - "Switch threshold causes excessive mode-flipping around boundary."
+      - "Single threshold may not generalize across volatility regimes."
+      - "Distance requirement may not differentiate high-noise states."
+    EXPECTED_FAILURE_MODE: "Boundary churn near er20 threshold generates contradictory entries and elevated turnover noise."
+    entry_rules:
+      - "Require abs(standardized close-vwap48 distance) >= 0.9 and rv48_pct < 0.92."
+      - "If er20 < 0.40 enter opposite sign(close-vwap48)."
+      - "If er20 >= 0.40 enter same sign(close-vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "er20 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+      - "vwap distance standardized series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        er20_switch_threshold: 0.40
+        abs_vwap_dist_z_min: 0.9
+        rv48_pct_max: 0.92
+        mode_switch: er20_state_machine
+    allowed_variants: []
+    status: planned
+  - id: H108
+    family: cross_asset_divergence
+    class: tradeable_hypothesis
+    logic_hash: "ef4f1006b7876d1fb11990db54c7c33cfa7edfdf143877b3e8fc9cacbb4ef143"
+    description: "BTC/ETH efficiency divergence convergence trade."
+    rationale: "Test whether large ER20 gaps between BTC and ETH revert via BTC adjustment."
+    WHY: "Use cross-asset disagreement on efficiency state rather than slope-sign transfer."
+    RULES:
+      - "Compute delta_er = er20_btc - er20_eth."
+      - "Require |delta_er| percentile >= 0.85."
+      - "If delta_er > 0 enter BTC short; if delta_er < 0 enter BTC long."
+      - "Require BTC |dist_to_vwap48_z| >= 0.7 and rv48 percentile < 0.90."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      abs_delta_er_pct_min: 0.85
+      btc_abs_vwap_dist_z_min: 0.7
+      btc_rv48_pct_max: 0.90
+      direction_mode: opposite_delta_er_sign
+    FAILURE_CONDITIONS:
+      - "ER divergence can persist structurally rather than mean-revert."
+      - "BTC may not be the adjustment leg in divergence episodes."
+      - "Distance filter may not isolate true dislocations."
+    EXPECTED_FAILURE_MODE: "Persistent cross-asset decoupling invalidates convergence assumption and causes repeated contrarian losses."
+    entry_rules:
+      - "Compute delta_er = er20(BTC) - er20(ETH) and its rolling percentile."
+      - "Require abs(delta_er)_pct >= 0.85."
+      - "Require abs(BTC standardized close-vwap48 distance) >= 0.7 and BTC rv48_pct < 0.90."
+      - "Enter opposite sign(delta_er): short if positive, long if negative."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "er20 feature for BTC and ETH"
+      - "rv48 feature for BTC"
+      - "vwap48 feature for BTC"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        abs_delta_er_pct_min: 0.85
+        btc_abs_vwap_dist_z_min: 0.7
+        btc_rv48_pct_max: 0.90
+        direction_mode: opposite_delta_er_sign
+    allowed_variants: []
+    status: planned
+  - id: H109
+    family: cross_asset_divergence
+    class: tradeable_hypothesis
+    logic_hash: "6f1bd1e15cb60bc98ae6b5defea53ceaba2db3c208d966147bc9250eae10a5b5"
+    description: "ATR-state disagreement with ETH-leading continuation map."
+    rationale: "Test BTC direction when ETH enters higher ATR state while BTC remains in lower ATR state."
+    WHY: "Cross-asset volatility-regime disagreement hypothesis using ATR14 state asymmetry."
+    RULES:
+      - "Define high ATR state as atr14 percentile >= 0.70 and low ATR state as < 0.50."
+      - "Trigger when ETH is high-ATR and BTC is low-ATR."
+      - "Require ETH close-vwap48 sign non-zero and BTC rv48 percentile in [0.30,0.85)."
+      - "Trade BTC in ETH close-vwap48 sign direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      atr_high_pct_min: 0.70
+      atr_low_pct_max: 0.50
+      btc_rv48_pct_min: 0.30
+      btc_rv48_pct_max: 0.85
+    FAILURE_CONDITIONS:
+      - "ETH ATR lead may not transfer to BTC directionally."
+      - "State mismatch can occur during noisy cross-asset episodes."
+      - "RV band may exclude valid transmission periods."
+    EXPECTED_FAILURE_MODE: "Regime-lead assumption breaks when ETH and BTC respond to different catalysts."
+    entry_rules:
+      - "Require atr14_pct(ETH) >= 0.70 and atr14_pct(BTC) < 0.50."
+      - "Require 0.30 <= rv48_pct(BTC) < 0.85."
+      - "Enter BTC in sign(close(ETH)-vwap48(ETH))."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "atr14 feature for BTC and ETH"
+      - "rv48 feature for BTC"
+      - "vwap48 feature for ETH"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        atr_high_pct_min: 0.70
+        atr_low_pct_max: 0.50
+        btc_rv48_pct_min: 0.30
+        btc_rv48_pct_max: 0.85
+        direction_source: eth_close_vs_vwap48_sign
+    allowed_variants: []
+    status: planned
+  - id: H110
+    family: cross_asset_divergence
+    class: tradeable_hypothesis
+    logic_hash: "a9898c4340aa73058177a2760aae9334060d381c4d8809ae08c6b6416fd9884d"
+    description: "VWAP dislocation disagreement with BTC snapback direction."
+    rationale: "Test whether opposite BTC/ETH vwap48 displacement signs indicate temporary dislocation resolved via BTC snapback."
+    WHY: "Cross-asset disagreement family using vwap48 dislocation polarity rather than same-direction transfer."
+    RULES:
+      - "Require sign(close-vwap48) for BTC and ETH to be opposite."
+      - "Require both |dist_to_vwap48_z| >= 1.0."
+      - "Require er20_btc <= 0.50 and er20_eth <= 0.50."
+      - "Trade BTC opposite its own close-vwap48 sign."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      abs_vwap_dist_z_min: 1.0
+      er20_btc_max: 0.50
+      er20_eth_max: 0.50
+      direction_mode: btc_snapback
+    FAILURE_CONDITIONS:
+      - "Opposite-sign dislocations can persist during broad market bifurcation."
+      - "Low-ER gating may still include unstable micro-trends."
+      - "Snapback assumption fails in momentum spillover states."
+    EXPECTED_FAILURE_MODE: "Dislocation persistence extends beyond fixed horizon, turning snapback entries into trend fade losses."
+    entry_rules:
+      - "Require opposite signs between BTC and ETH close-vwap48 distances."
+      - "Require abs(BTC zdist) >= 1.0 and abs(ETH zdist) >= 1.0."
+      - "Require er20(BTC) <= 0.50 and er20(ETH) <= 0.50."
+      - "Enter BTC opposite sign(close(BTC)-vwap48(BTC))."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "er20 feature for BTC and ETH"
+      - "vwap48 feature for BTC and ETH"
+      - "vwap distance standardized series for BTC and ETH"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        abs_vwap_dist_z_min: 1.0
+        er20_btc_max: 0.50
+        er20_eth_max: 0.50
+        direction_mode: btc_snapback
+    allowed_variants: []
+    status: planned

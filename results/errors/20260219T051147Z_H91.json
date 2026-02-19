@@ -1,0 +1,23 @@
+{
+  "context": {
+    "batch_ids": [
+      "H91",
+      "H92",
+      "H93",
+      "H94",
+      "H95",
+      "H96",
+      "H97",
+      "H98",
+      "H99",
+      "H100"
+    ],
+    "completed": [],
+    "next_index": 0,
+    "targeted_mode": false
+  },
+  "error": "Runner failed for H91 mode=gross rc=1 stdout= stderr=\", line 660, in main\n    events = build_events(\n             ^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 426, in build_events\n    signal = build_signal(x, hypothesis_id=hypothesis_id, family=family)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 421, in build_signal\n    raise ValueError(f\"Unsupported hypothesis/family route: {hypothesis_id} ({family})\")\nValueError: Unsupported hypothesis/family route: H91 (cross_asset_regime)\n",
+  "hypothesis_id": "H91",
+  "timestamp_utc": "2026-02-19T05:11:47+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 729, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 618, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H91 mode=gross rc=1 stdout= stderr=\", line 660, in main\n    events = build_events(\n             ^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 426, in build_events\n    signal = build_signal(x, hypothesis_id=hypothesis_id, family=family)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 421, in build_signal\n    raise ValueError(f\"Unsupported hypothesis/family route: {hypothesis_id} ({family})\")\nValueError: Unsupported hypothesis/family route: H91 (cross_asset_regime)\n\n"
+}

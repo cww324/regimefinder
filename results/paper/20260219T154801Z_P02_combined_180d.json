@@ -1,0 +1,178 @@
+{
+  "config": {
+    "bootstrap_iters": 3000,
+    "cooldown_bars": 0,
+    "daily_loss_stop_pct": 0.03,
+    "dsn_source": "RC_DB_DSN",
+    "max_asset_exposure": 1.0,
+    "max_gross_exposure": 1.0,
+    "max_strategy_weight": 0.35,
+    "report_csv_prefix": "",
+    "seed": 42,
+    "timeframe": "5m"
+  },
+  "cost_mode": "bps8",
+  "dataset": {
+    "bar_count": 51616,
+    "db_last_modified": {
+      "BTC-USD": "2026-02-19T03:00:00+00:00",
+      "ETH-USD": "2026-02-19T03:00:00+00:00"
+    },
+    "db_path": {
+      "BTC-USD": "postgres:rc.candles",
+      "ETH-USD": "postgres:rc.candles"
+    },
+    "end_ts": "2026-02-19T03:00:00+00:00",
+    "start_ts": "2025-08-23T15:55:00+00:00"
+  },
+  "hypothesis_ids": [
+    "P02"
+  ],
+  "metrics": {
+    "concentration": {
+      "max_gross_exposure": 0.35,
+      "mean_abs_asset_exposure": {
+        "BTC-USD": 0.3500000000000001
+      },
+      "mean_gross_exposure": 0.3500000000000001,
+      "strategy_pnl_share": {
+        "P02": 1.0
+      },
+      "strategy_trade_counts": {
+        "P02": 582
+      }
+    },
+    "cross_strategy_correlation": {
+      "P02": {
+        "P02": 1.0
+      }
+    },
+    "heat_audit": {
+      "active_strategy_count_distribution": {
+        "1": 1,
+        "2": 342,
+        "3": 162,
+        "4": 25,
+        "5": 52
+      },
+      "effective_strategy_weights_summary": {
+        "H76": {
+          "mean_abs_weight": 0.3689329263051527,
+          "mean_weight": 0.3689329263051527,
+          "runs": 1
+        },
+        "H77": {
+          "mean_abs_weight": 0.42755707108189284,
+          "mean_weight": 0.42755707108189284,
+          "runs": 1
+        },
+        "H78": {
+          "mean_abs_weight": 0.3336249817639059,
+          "mean_weight": 0.3336249817639059,
+          "runs": 1
+        },
+        "H79": {
+          "mean_abs_weight": 0.42755707108189284,
+          "mean_weight": 0.42755707108189284,
+          "runs": 1
+        },
+        "H81": {
+          "mean_abs_weight": 0.32699692478826675,
+          "mean_weight": 0.32699692478826675,
+          "runs": 1
+        },
+        "H82": {
+          "mean_abs_weight": 0.30897475315523015,
+          "mean_weight": 0.30897475315523015,
+          "runs": 1
+        }
+      },
+      "family_contribution_summary": {
+        "cross_asset_regime": 1.4275716056205658
+      },
+      "policy_config_snapshot": {
+        "P02": {
+          "candidate_universe": [
+            "H76",
+            "H77",
+            "H79",
+            "H81",
+            "H78",
+            "H82"
+          ],
+          "consensus_threshold": 0.0,
+          "core_set": [],
+          "core_weight_share": 0.6,
+          "dedup_drop": "",
+          "dedup_keep": "",
+          "exclude_members": [],
+          "fallback_mode": "core_only_equal_weight",
+          "fallback_weighting": "equal_weight_active",
+          "include_members": [],
+          "min_active_members": 1,
+          "policy_id": "P02",
+          "rank_window_days": 30,
+          "score_clip_floor": 0.0,
+          "session_map": {},
+          "specialist_weight_share": 0.4,
+          "weighting_mode": "rank_weight"
+        }
+      }
+    },
+    "summary": {
+      "expectancy": 4.201468500180502e-05,
+      "max_drawdown": -0.039288190238686016,
+      "monthly_stability": {
+        "2025-08": {
+          "mean_return": -0.00012424712723219406,
+          "net_return": -0.0036031666897336275,
+          "trades": 29,
+          "win_rate": 0.5862068965517241
+        },
+        "2025-09": {
+          "mean_return": 1.7757794923867653e-05,
+          "net_return": 0.0019000840568538387,
+          "trades": 107,
+          "win_rate": 0.48598130841121495
+        },
+        "2025-10": {
+          "mean_return": 4.018448311215342e-05,
+          "net_return": 0.0036969724463181146,
+          "trades": 92,
+          "win_rate": 0.5
+        },
+        "2025-11": {
+          "mean_return": 0.0002610766423485399,
+          "net_return": 0.02715197080424815,
+          "trades": 104,
+          "win_rate": 0.5769230769230769
+        },
+        "2025-12": {
+          "mean_return": -9.494193070630293e-05,
+          "net_return": -0.00939925113992399,
+          "trades": 99,
+          "win_rate": 0.40404040404040403
+        },
+        "2026-01": {
+          "mean_return": -0.00014164171403560118,
+          "net_return": -0.012747754263204106,
+          "trades": 90,
+          "win_rate": 0.43333333333333335
+        },
+        "2026-02": {
+          "mean_return": 0.00028612608945069093,
+          "net_return": 0.017453691456492147,
+          "trades": 61,
+          "win_rate": 0.5409836065573771
+        }
+      },
+      "net_return": 0.024452546671050523,
+      "trade_count": 582,
+      "turnover": 582.0,
+      "win_rate": 0.49312714776632305
+    }
+  },
+  "mode": "combined",
+  "timestamp_utc": "2026-02-19T15:53:10+00:00",
+  "window_days": 180
+}

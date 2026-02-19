@@ -1,0 +1,23 @@
+{
+  "context": {
+    "batch_ids": [
+      "H86",
+      "H87",
+      "H88",
+      "H89",
+      "H90"
+    ],
+    "completed": [
+      "H86",
+      "H87",
+      "H88",
+      "H89"
+    ],
+    "next_index": 0,
+    "targeted_mode": true
+  },
+  "error": "Runner failed for H90 mode=gross rc=1 stdout= stderr=Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 731, in <module>\n    main()\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 652, in main\n    raise ValueError(\"Standard runner expects horizon in {4,6,8}.\")\nValueError: Standard runner expects horizon in {4,6,8}.\n",
+  "hypothesis_id": "H90",
+  "timestamp_utc": "2026-02-19T04:48:20+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 729, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 618, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H90 mode=gross rc=1 stdout= stderr=Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 731, in <module>\n    main()\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 652, in main\n    raise ValueError(\"Standard runner expects horizon in {4,6,8}.\")\nValueError: Standard runner expects horizon in {4,6,8}.\n\n"
+}

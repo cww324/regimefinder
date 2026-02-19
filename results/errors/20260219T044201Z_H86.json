@@ -1,0 +1,18 @@
+{
+  "context": {
+    "batch_ids": [
+      "H86",
+      "H87",
+      "H88",
+      "H89",
+      "H90"
+    ],
+    "completed": [],
+    "next_index": 0,
+    "targeted_mode": false
+  },
+  "error": "Runner failed for H86 mode=gross rc=1 stdout= stderr=\", line 575, in main\n    events = build_events(\n             ^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 341, in build_events\n    signal = build_signal(x, hypothesis_id=hypothesis_id, family=family)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 336, in build_signal\n    raise ValueError(f\"Unsupported hypothesis/family route: {hypothesis_id} ({family})\")\nValueError: Unsupported hypothesis/family route: H86 (cross_asset_regime)\n",
+  "hypothesis_id": "H86",
+  "timestamp_utc": "2026-02-19T04:42:01+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 730, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 618, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H86 mode=gross rc=1 stdout= stderr=\", line 575, in main\n    events = build_events(\n             ^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 341, in build_events\n    signal = build_signal(x, hypothesis_id=hypothesis_id, family=family)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 336, in build_signal\n    raise ValueError(f\"Unsupported hypothesis/family route: {hypothesis_id} ({family})\")\nValueError: Unsupported hypothesis/family route: H86 (cross_asset_regime)\n\n"
+}

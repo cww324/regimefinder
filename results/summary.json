@@ -1,4 +1,622 @@
 {
+  "H100": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0011755268826797581,
+            "ci_low": -0.0011882537256268253,
+            "mean": -2.5752673905303557e-05,
+            "n": 113,
+            "p_mean_gt_0": 0.47533333333333333
+          },
+          "walkforward": {
+            "aggregate_mean": 0.000389487206735872,
+            "ci_high": 0.002160893191905524,
+            "ci_low": -0.0015179509097607575,
+            "fold_count": 6,
+            "n": 63,
+            "p_mean_gt_0": 0.6603333333333333,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 3
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      },
+      "bps8": {
+        "baseline_status": "BORDERLINE",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0013755268826797585,
+            "ci_low": -0.0009882537256268248,
+            "mean": 0.00017424732609469672,
+            "n": 113,
+            "p_mean_gt_0": 0.619
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0005894872067358724,
+            "ci_high": 0.002360893191905525,
+            "ci_low": -0.0013179509097607566,
+            "fold_count": 6,
+            "n": 63,
+            "p_mean_gt_0": 0.7333333333333333,
+            "positive_fold_pct": 66.66666666666667,
+            "positive_folds": 4
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      },
+      "gross": {
+        "baseline_status": "BORDERLINE",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.002175526882679759,
+            "ci_low": -0.00018825372562682467,
+            "mean": 0.0009742473260946968,
+            "n": 113,
+            "p_mean_gt_0": 0.9486666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0013894872067358724,
+            "ci_high": 0.0031608931919055246,
+            "ci_low": -0.000517950909760757,
+            "fold_count": 6,
+            "n": 63,
+            "p_mean_gt_0": 0.922,
+            "positive_fold_pct": 66.66666666666667,
+            "positive_folds": 4
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51733,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T06:06:57+00:00",
+        "ETH-USD": "2026-02-19T06:06:57+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T06:10:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H100",
+    "latest_artifact": "20260219T060657Z_H100.json",
+    "timestamp_utc": "2026-02-19T06:06:57+00:00"
+  },
+  "H101": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0008002908838431677,
+            "ci_low": -0.0013607561048655404,
+            "mean": -0.0010776494761422207,
+            "n": 1044,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0010540908429707899,
+            "ci_high": -0.0005877469879084135,
+            "ci_low": -0.0014749394456150908,
+            "fold_count": 6,
+            "n": 547,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0006007266084918876,
+            "ci_low": -0.0011612181076865859,
+            "mean": -0.0008780850902207016,
+            "n": 1044,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0008540908429707895,
+            "ci_high": -0.0003877469879084132,
+            "ci_low": -0.0012749394456150905,
+            "fold_count": 6,
+            "n": 547,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00019927339150811252,
+            "ci_low": -0.00036121810768658595,
+            "mean": -7.808509022070169e-05,
+            "n": 1044,
+            "p_mean_gt_0": 0.289
+          },
+          "walkforward": {
+            "aggregate_mean": -5.409084297078939e-05,
+            "ci_high": 0.0004122530120915869,
+            "ci_low": -0.0004749394456150905,
+            "fold_count": 6,
+            "n": 547,
+            "p_mean_gt_0": 0.3943333333333333,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 3
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      }
+    },
+    "dataset": {
+      "bar_count": 51609,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T16:29:32+00:00",
+        "ETH-USD": "2026-02-19T16:29:32+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T16:30:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H101",
+    "latest_artifact": "20260219T162932Z_H101.json",
+    "timestamp_utc": "2026-02-19T16:29:32+00:00"
+  },
+  "H102": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0002698972296367444,
+            "ci_low": -0.002218770459580133,
+            "mean": -0.001061391860683446,
+            "n": 21,
+            "p_mean_gt_0": 0.05533333333333333
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0019510898276495622,
+            "ci_high": -0.00026377776464562723,
+            "ci_low": -0.003655098952344309,
+            "fold_count": 4,
+            "n": 8,
+            "p_mean_gt_0": 0.012333333333333333,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "baseline_n_lt_50",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "bps8": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0004698972296367444,
+            "ci_low": -0.0020187704595801335,
+            "mean": -0.0008613918606834457,
+            "n": 21,
+            "p_mean_gt_0": 0.09466666666666666
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0017510898276495623,
+            "ci_high": -6.377776464562714e-05,
+            "ci_low": -0.0034550989523443095,
+            "fold_count": 4,
+            "n": 8,
+            "p_mean_gt_0": 0.02,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "baseline_n_lt_50",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "gross": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0012698972296367446,
+            "ci_low": -0.0012187704595801334,
+            "mean": -6.139186068344573e-05,
+            "n": 21,
+            "p_mean_gt_0": 0.447
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0009510898276495622,
+            "ci_high": 0.0007362222353543728,
+            "ci_low": -0.002655098952344309,
+            "fold_count": 4,
+            "n": 8,
+            "p_mean_gt_0": 0.13966666666666666,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "baseline_n_lt_50",
+        "wf_status": "INCONCLUSIVE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51607,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T16:38:32+00:00",
+        "ETH-USD": "2026-02-19T16:38:32+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T16:40:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "INCONCLUSIVE",
+    "hypothesis_id": "H102",
+    "latest_artifact": "20260219T163832Z_H102.json",
+    "timestamp_utc": "2026-02-19T16:38:32+00:00"
+  },
+  "H103": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0008621966777072081,
+            "ci_low": -0.0020381629815357516,
+            "mean": -0.0014390884942431766,
+            "n": 417,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0015590699953543796,
+            "ci_high": -0.000662085498379951,
+            "ci_low": -0.0025177469835550663,
+            "fold_count": 5,
+            "n": 148,
+            "p_mean_gt_0": 0.0013333333333333333,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.000662196677707208,
+            "ci_low": -0.0018381629815357513,
+            "mean": -0.0012390884942431763,
+            "n": 417,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.001359069995354379,
+            "ci_high": -0.0004620854983799507,
+            "ci_low": -0.002317746983555066,
+            "fold_count": 5,
+            "n": 148,
+            "p_mean_gt_0": 0.002,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0001378033222927922,
+            "ci_low": -0.0010381629815357511,
+            "mean": -0.00043908849424317603,
+            "n": 417,
+            "p_mean_gt_0": 0.07333333333333333
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0005590699953543791,
+            "ci_high": 0.00033791450162004935,
+            "ci_low": -0.0015177469835550657,
+            "fold_count": 5,
+            "n": 148,
+            "p_mean_gt_0": 0.11633333333333333,
+            "positive_fold_pct": 20.0,
+            "positive_folds": 1
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      }
+    },
+    "dataset": {
+      "bar_count": 51605,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T16:47:03+00:00",
+        "ETH-USD": "2026-02-19T16:47:03+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T16:50:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H103",
+    "latest_artifact": "20260219T164703Z_H103.json",
+    "timestamp_utc": "2026-02-19T16:47:03+00:00"
+  },
+  "H104": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0009161289604762224,
+            "ci_low": -0.0013595223020239277,
+            "mean": -0.0011339617554080158,
+            "n": 1274,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0009870841640156848,
+            "ci_high": -0.0006536987994019505,
+            "ci_low": -0.0013099052336978017,
+            "fold_count": 6,
+            "n": 684,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0007161289604762223,
+            "ci_low": -0.0011595223020239276,
+            "mean": -0.0009339617554080158,
+            "n": 1274,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0007870841640156843,
+            "ci_high": -0.0004536987994019503,
+            "ci_low": -0.0011099052336978014,
+            "fold_count": 6,
+            "n": 684,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 16.666666666666668,
+            "positive_folds": 1
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 8.387103952377779e-05,
+            "ci_low": -0.0003595223020239277,
+            "mean": -0.00013396175540801575,
+            "n": 1274,
+            "p_mean_gt_0": 0.11466666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 1.2915835984315682e-05,
+            "ci_high": 0.00034630120059804976,
+            "ci_low": -0.0003099052336978013,
+            "fold_count": 6,
+            "n": 684,
+            "p_mean_gt_0": 0.5273333333333333,
+            "positive_fold_pct": 33.333333333333336,
+            "positive_folds": 2
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      }
+    },
+    "dataset": {
+      "bar_count": 51603,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T16:55:34+00:00",
+        "ETH-USD": "2026-02-19T16:55:34+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T17:00:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H104",
+    "latest_artifact": "20260219T165534Z_H104.json",
+    "timestamp_utc": "2026-02-19T16:55:34+00:00"
+  },
+  "H105": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -6.716973132206659e-05,
+            "ci_low": -0.001615243554906105,
+            "mean": -0.000837780171683846,
+            "n": 117,
+            "p_mean_gt_0": 0.018
+          },
+          "walkforward": {
+            "aggregate_mean": -0.001036204912758486,
+            "ci_high": 0.00010732395783787576,
+            "ci_low": -0.002165953512909943,
+            "fold_count": 6,
+            "n": 67,
+            "p_mean_gt_0": 0.037333333333333336,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 3
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00013283026867793365,
+            "ci_low": -0.0014152435549061042,
+            "mean": -0.0006377801716838454,
+            "n": 117,
+            "p_mean_gt_0": 0.05366666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0008362049127584858,
+            "ci_high": 0.0003073239578378756,
+            "ci_low": -0.0019659535129099427,
+            "fold_count": 6,
+            "n": 67,
+            "p_mean_gt_0": 0.071,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 3
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "BORDERLINE",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0009328302686779337,
+            "ci_low": -0.0006152435549061042,
+            "mean": 0.0001622198283161545,
+            "n": 117,
+            "p_mean_gt_0": 0.6646666666666666
+          },
+          "walkforward": {
+            "aggregate_mean": -3.620491275848559e-05,
+            "ci_high": 0.0011073239578378758,
+            "ci_low": -0.0011659535129099423,
+            "fold_count": 6,
+            "n": 67,
+            "p_mean_gt_0": 0.4563333333333333,
+            "positive_fold_pct": 66.66666666666667,
+            "positive_folds": 4
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      }
+    },
+    "dataset": {
+      "bar_count": 51602,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T17:04:01+00:00",
+        "ETH-USD": "2026-02-19T17:04:02+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T17:05:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H105",
+    "latest_artifact": "20260219T170402Z_H105.json",
+    "timestamp_utc": "2026-02-19T17:04:02+00:00"
+  },
   "H15": {
     "cost_modes": {
       "bps10": {
@@ -4819,18 +5437,18 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0018203317247741566,
-            "ci_low": 0.0010070726656811943,
-            "mean": 0.0013949277557862136,
-            "n": 328,
+            "ci_high": 0.0017919138329939893,
+            "ci_low": 0.0009707798446110005,
+            "mean": 0.0013641702416551905,
+            "n": 332,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
-            "aggregate_mean": 0.0016884041800744878,
-            "ci_high": 0.0022843749654908063,
-            "ci_low": 0.0011139994037828325,
+            "aggregate_mean": 0.001679500337907123,
+            "ci_high": 0.002291486734898865,
+            "ci_low": 0.001092022396859535,
             "fold_count": 7,
-            "n": 179,
+            "n": 180,
             "p_mean_gt_0": 1.0,
             "positive_fold_pct": 100.0,
             "positive_folds": 7
@@ -4844,18 +5462,18 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002020331724774157,
-            "ci_low": 0.0012070726656811944,
-            "mean": 0.0015949277557862135,
-            "n": 328,
+            "ci_high": 0.00199191383299399,
+            "ci_low": 0.0011707798446110008,
+            "mean": 0.0015641702416551904,
+            "n": 332,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
-            "aggregate_mean": 0.001888404180074488,
-            "ci_high": 0.0024843749654908064,
-            "ci_low": 0.0013139994037828328,
+            "aggregate_mean": 0.0018795003379071232,
+            "ci_high": 0.002491486734898865,
+            "ci_low": 0.0012920223968595353,
             "fold_count": 7,
-            "n": 179,
+            "n": 180,
             "p_mean_gt_0": 1.0,
             "positive_fold_pct": 100.0,
             "positive_folds": 7
@@ -4869,18 +5487,18 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002820331724774157,
-            "ci_low": 0.0020070726656811946,
-            "mean": 0.002394927755786214,
-            "n": 328,
+            "ci_high": 0.00279191383299399,
+            "ci_low": 0.0019707798446110007,
+            "mean": 0.0023641702416551907,
+            "n": 332,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
-            "aggregate_mean": 0.002688404180074488,
-            "ci_high": 0.0032843749654908063,
-            "ci_low": 0.002113999403782833,
+            "aggregate_mean": 0.0026795003379071233,
+            "ci_high": 0.0032914867348988654,
+            "ci_low": 0.002092022396859535,
             "fold_count": 7,
-            "n": 179,
+            "n": 180,
             "p_mean_gt_0": 1.0,
             "positive_fold_pct": 100.0,
             "positive_folds": 7
@@ -4891,23 +5509,29 @@
       }
     },
     "dataset": {
-      "bar_count": null,
-      "db_last_modified": null,
-      "db_path": null,
-      "end_ts": null,
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:01+00:00",
+        "ETH-USD": "2026-02-19T04:57:01+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
       "primary_symbols": [
         "BTC-USD"
       ],
       "secondary_symbols": [
         "ETH-USD"
       ],
-      "start_ts": null,
+      "start_ts": "2025-08-23T05:00:00+00:00",
       "timeframe": "5m"
     },
     "final_status": "PASS",
     "hypothesis_id": "H76",
-    "latest_artifact": "20260218T211324Z_H76.json",
-    "timestamp_utc": "2026-02-18T21:13:24+00:00"
+    "latest_artifact": "20260219T045701Z_H76.json",
+    "timestamp_utc": "2026-02-19T04:57:01+00:00"
   },
   "H77": {
     "cost_modes": {
@@ -4916,10 +5540,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002593071476449847,
-            "ci_low": 0.0012936038350879978,
-            "mean": 0.0019329845860695397,
-            "n": 324,
+            "ci_high": 0.002660332682820907,
+            "ci_low": 0.0013434588143066868,
+            "mean": 0.001980342254941309,
+            "n": 326,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -4941,10 +5565,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0027930714764498477,
-            "ci_low": 0.0014936038350879986,
-            "mean": 0.00213298458606954,
-            "n": 324,
+            "ci_high": 0.0028603326828209076,
+            "ci_low": 0.0015434588143066878,
+            "mean": 0.0021803422549413094,
+            "n": 326,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -4966,10 +5590,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0035930714764498477,
-            "ci_low": 0.0022936038350879983,
-            "mean": 0.00293298458606954,
-            "n": 324,
+            "ci_high": 0.003660332682820908,
+            "ci_low": 0.0023434588143066877,
+            "mean": 0.0029803422549413094,
+            "n": 326,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -4988,23 +5612,29 @@
       }
     },
     "dataset": {
-      "bar_count": null,
-      "db_last_modified": null,
-      "db_path": null,
-      "end_ts": null,
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:12+00:00",
+        "ETH-USD": "2026-02-19T04:57:12+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
       "primary_symbols": [
         "BTC-USD"
       ],
       "secondary_symbols": [
         "ETH-USD"
       ],
-      "start_ts": null,
+      "start_ts": "2025-08-23T05:00:00+00:00",
       "timeframe": "5m"
     },
     "final_status": "PASS",
     "hypothesis_id": "H77",
-    "latest_artifact": "20260218T211328Z_H77.json",
-    "timestamp_utc": "2026-02-18T21:13:28+00:00"
+    "latest_artifact": "20260219T045712Z_H77.json",
+    "timestamp_utc": "2026-02-19T04:57:12+00:00"
   },
   "H78": {
     "cost_modes": {
@@ -5013,21 +5643,21 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.001674908351589559,
-            "ci_low": 0.0007941547125172735,
-            "mean": 0.0012201780443425719,
-            "n": 328,
+            "ci_high": 0.0016419508635893356,
+            "ci_low": 0.0007818341357738236,
+            "mean": 0.0012029470323260101,
+            "n": 332,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
-            "aggregate_mean": 0.0015240476861219385,
-            "ci_high": 0.002168765916702471,
-            "ci_low": 0.0009096619062236713,
+            "aggregate_mean": 0.0015180231293158597,
+            "ci_high": 0.002187196527545082,
+            "ci_low": 0.000874527364876151,
             "fold_count": 7,
-            "n": 179,
+            "n": 180,
             "p_mean_gt_0": 1.0,
-            "positive_fold_pct": 100.0,
-            "positive_folds": 7
+            "positive_fold_pct": 85.71428571428571,
+            "positive_folds": 6
           }
         },
         "reason": "wf_ci_above_zero_and_fold_support_ge_60_with_ge7_folds",
@@ -5038,18 +5668,18 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0018749083515895593,
-            "ci_low": 0.0009941547125172738,
-            "mean": 0.0014201780443425722,
-            "n": 328,
+            "ci_high": 0.0018419508635893359,
+            "ci_low": 0.0009818341357738238,
+            "mean": 0.0014029470323260102,
+            "n": 332,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
-            "aggregate_mean": 0.0017240476861219388,
-            "ci_high": 0.0023687659167024714,
-            "ci_low": 0.0011096619062236717,
+            "aggregate_mean": 0.0017180231293158598,
+            "ci_high": 0.0023871965275450826,
+            "ci_low": 0.001074527364876152,
             "fold_count": 7,
-            "n": 179,
+            "n": 180,
             "p_mean_gt_0": 1.0,
             "positive_fold_pct": 100.0,
             "positive_folds": 7
@@ -5063,18 +5693,18 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002674908351589559,
-            "ci_low": 0.001794154712517274,
-            "mean": 0.0022201780443425723,
-            "n": 328,
+            "ci_high": 0.0026419508635893356,
+            "ci_low": 0.0017818341357738238,
+            "mean": 0.00220294703232601,
+            "n": 332,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
-            "aggregate_mean": 0.0025240476861219385,
-            "ci_high": 0.0031687659167024713,
-            "ci_low": 0.0019096619062236716,
+            "aggregate_mean": 0.00251802312931586,
+            "ci_high": 0.0031871965275450825,
+            "ci_low": 0.0018745273648761516,
             "fold_count": 7,
-            "n": 179,
+            "n": 180,
             "p_mean_gt_0": 1.0,
             "positive_fold_pct": 100.0,
             "positive_folds": 7
@@ -5085,23 +5715,29 @@
       }
     },
     "dataset": {
-      "bar_count": null,
-      "db_last_modified": null,
-      "db_path": null,
-      "end_ts": null,
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:50+00:00",
+        "ETH-USD": "2026-02-19T04:57:50+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
       "primary_symbols": [
         "BTC-USD"
       ],
       "secondary_symbols": [
         "ETH-USD"
       ],
-      "start_ts": null,
+      "start_ts": "2025-08-23T05:00:00+00:00",
       "timeframe": "5m"
     },
     "final_status": "PASS",
     "hypothesis_id": "H78",
-    "latest_artifact": "20260218T211332Z_H78.json",
-    "timestamp_utc": "2026-02-18T21:13:32+00:00"
+    "latest_artifact": "20260219T045750Z_H78.json",
+    "timestamp_utc": "2026-02-19T04:57:50+00:00"
   },
   "H79": {
     "cost_modes": {
@@ -5110,10 +5746,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002593071476449847,
-            "ci_low": 0.0012936038350879978,
-            "mean": 0.0019329845860695397,
-            "n": 324,
+            "ci_high": 0.002660332682820907,
+            "ci_low": 0.0013434588143066868,
+            "mean": 0.001980342254941309,
+            "n": 326,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -5135,10 +5771,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0027930714764498477,
-            "ci_low": 0.0014936038350879986,
-            "mean": 0.00213298458606954,
-            "n": 324,
+            "ci_high": 0.0028603326828209076,
+            "ci_low": 0.0015434588143066878,
+            "mean": 0.0021803422549413094,
+            "n": 326,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -5160,10 +5796,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0035930714764498477,
-            "ci_low": 0.0022936038350879983,
-            "mean": 0.00293298458606954,
-            "n": 324,
+            "ci_high": 0.003660332682820908,
+            "ci_low": 0.0023434588143066877,
+            "mean": 0.0029803422549413094,
+            "n": 326,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -5182,23 +5818,29 @@
       }
     },
     "dataset": {
-      "bar_count": null,
-      "db_last_modified": null,
-      "db_path": null,
-      "end_ts": null,
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:25+00:00",
+        "ETH-USD": "2026-02-19T04:57:25+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
       "primary_symbols": [
         "BTC-USD"
       ],
       "secondary_symbols": [
         "ETH-USD"
       ],
-      "start_ts": null,
+      "start_ts": "2025-08-23T05:00:00+00:00",
       "timeframe": "5m"
     },
     "final_status": "PASS",
     "hypothesis_id": "H79",
-    "latest_artifact": "20260218T211336Z_H79.json",
-    "timestamp_utc": "2026-02-18T21:13:36+00:00"
+    "latest_artifact": "20260219T045725Z_H79.json",
+    "timestamp_utc": "2026-02-19T04:57:25+00:00"
   },
   "H80": {
     "cost_modes": {
@@ -5304,10 +5946,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0025267719309127207,
-            "ci_low": 0.000925827306017915,
-            "mean": 0.0016863729313158604,
-            "n": 106,
+            "ci_high": 0.00252169798128914,
+            "ci_low": 0.0009139093427097006,
+            "mean": 0.001690929199379353,
+            "n": 107,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -5329,10 +5971,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002726771930912721,
-            "ci_low": 0.0011258273060179155,
-            "mean": 0.0018863729313158602,
-            "n": 106,
+            "ci_high": 0.00272169798128914,
+            "ci_low": 0.001113909342709701,
+            "mean": 0.001890929199379353,
+            "n": 107,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -5354,10 +5996,10 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0035267719309127216,
-            "ci_low": 0.0019258273060179152,
-            "mean": 0.0026863729313158606,
-            "n": 106,
+            "ci_high": 0.003521697981289141,
+            "ci_low": 0.001913909342709701,
+            "mean": 0.002690929199379353,
+            "n": 107,
             "p_mean_gt_0": 1.0
           },
           "walkforward": {
@@ -5376,23 +6018,29 @@
       }
     },
     "dataset": {
-      "bar_count": null,
-      "db_last_modified": null,
-      "db_path": null,
-      "end_ts": null,
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:57:37+00:00",
+        "ETH-USD": "2026-02-19T04:57:37+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
       "primary_symbols": [
         "BTC-USD"
       ],
       "secondary_symbols": [
         "ETH-USD"
       ],
-      "start_ts": null,
+      "start_ts": "2025-08-23T05:00:00+00:00",
       "timeframe": "5m"
     },
     "final_status": "PASS",
     "hypothesis_id": "H81",
-    "latest_artifact": "20260218T211344Z_H81.json",
-    "timestamp_utc": "2026-02-18T21:13:44+00:00"
+    "latest_artifact": "20260219T045737Z_H81.json",
+    "timestamp_utc": "2026-02-19T04:57:37+00:00"
   },
   "H82": {
     "cost_modes": {
@@ -5401,9 +6049,9 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.002478374437898766,
-            "ci_low": 0.0007071919742240656,
-            "mean": 0.0015532942687264111,
+            "ci_high": 0.0024745702999885376,
+            "ci_low": 0.0006957078095193209,
+            "mean": 0.0015466244173434514,
             "n": 110,
             "p_mean_gt_0": 1.0
           },
@@ -5426,9 +6074,9 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.0026783744378987657,
-            "ci_low": 0.0009071919742240661,
-            "mean": 0.001753294268726412,
+            "ci_high": 0.002674570299988537,
+            "ci_low": 0.0008957078095193211,
+            "mean": 0.0017466244173434523,
             "n": 110,
             "p_mean_gt_0": 1.0
           },
@@ -5451,9 +6099,9 @@
         "final_status": "PASS",
         "metrics": {
           "baseline": {
-            "ci_high": 0.003478374437898767,
-            "ci_low": 0.0017071919742240658,
-            "mean": 0.0025532942687264116,
+            "ci_high": 0.0034745702999885385,
+            "ci_low": 0.0016957078095193212,
+            "mean": 0.0025466244173434523,
             "n": 110,
             "p_mean_gt_0": 1.0
           },
@@ -5473,23 +6121,29 @@
       }
     },
     "dataset": {
-      "bar_count": null,
-      "db_last_modified": null,
-      "db_path": null,
-      "end_ts": null,
+      "bar_count": 51747,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:58:02+00:00",
+        "ETH-USD": "2026-02-19T04:58:02+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
       "primary_symbols": [
         "BTC-USD"
       ],
       "secondary_symbols": [
         "ETH-USD"
       ],
-      "start_ts": null,
+      "start_ts": "2025-08-23T05:00:00+00:00",
       "timeframe": "5m"
     },
     "final_status": "PASS",
     "hypothesis_id": "H82",
-    "latest_artifact": "20260218T211347Z_H82.json",
-    "timestamp_utc": "2026-02-18T21:13:47+00:00"
+    "latest_artifact": "20260219T045802Z_H82.json",
+    "timestamp_utc": "2026-02-19T04:58:02+00:00"
   },
   "H83": {
     "cost_modes": {
@@ -5781,5 +6435,1447 @@
     "hypothesis_id": "H85",
     "latest_artifact": "20260218T211400Z_H85.json",
     "timestamp_utc": "2026-02-18T21:14:00+00:00"
+  },
+  "H86": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0004428124122342055,
+            "ci_low": -0.0008695974138773724,
+            "mean": -0.0006610239723876683,
+            "n": 2030,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0006751056666214464,
+            "ci_high": -0.0003868930346919216,
+            "ci_low": -0.0009620157810425771,
+            "fold_count": 7,
+            "n": 1179,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 28.571428571428573,
+            "positive_folds": 2
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.00024281241223420515,
+            "ci_low": -0.0006695974138773721,
+            "mean": -0.0004610239723876679,
+            "n": 2030,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.00047510566662144595,
+            "ci_high": -0.00018689303469192136,
+            "ci_low": -0.0007620157810425764,
+            "fold_count": 7,
+            "n": 1179,
+            "p_mean_gt_0": 0.001,
+            "positive_fold_pct": 28.571428571428573,
+            "positive_folds": 2
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "PASS",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.000557187587765795,
+            "ci_low": 0.000130402586122628,
+            "mean": 0.00033897602761233213,
+            "n": 2030,
+            "p_mean_gt_0": 0.9996666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 0.000324894333378554,
+            "ci_high": 0.0006131069653080787,
+            "ci_low": 3.798421895742351e-05,
+            "fold_count": 7,
+            "n": 1179,
+            "p_mean_gt_0": 0.9873333333333333,
+            "positive_fold_pct": 71.42857142857143,
+            "positive_folds": 5
+          }
+        },
+        "reason": "wf_ci_above_zero_and_fold_support_ge_60_with_ge7_folds",
+        "wf_status": "PASS"
+      }
+    },
+    "dataset": {
+      "bar_count": 51748,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:50:29+00:00",
+        "ETH-USD": "2026-02-19T04:50:29+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T04:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H86",
+    "latest_artifact": "20260219T045029Z_H86.json",
+    "timestamp_utc": "2026-02-19T04:50:29+00:00"
+  },
+  "H87": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0004630181995495296,
+            "ci_low": -0.0009451514464861363,
+            "mean": -0.000250210007586936,
+            "n": 275,
+            "p_mean_gt_0": 0.232
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0009312864757648725,
+            "ci_high": 0.00029570498210846735,
+            "ci_low": -0.0021192864549489615,
+            "fold_count": 2,
+            "n": 118,
+            "p_mean_gt_0": 0.07866666666666666,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "bps8": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00066301819954953,
+            "ci_low": -0.0007451514464861359,
+            "mean": -5.021000758693574e-05,
+            "n": 275,
+            "p_mean_gt_0": 0.43233333333333335
+          },
+          "walkforward": {
+            "aggregate_mean": -0.000731286475764872,
+            "ci_high": 0.0004957049821084678,
+            "ci_low": -0.0019192864549489607,
+            "fold_count": 2,
+            "n": 118,
+            "p_mean_gt_0": 0.136,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "gross": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0014630181995495303,
+            "ci_low": 5.484855351386421e-05,
+            "mean": 0.0007497899924130643,
+            "n": 275,
+            "p_mean_gt_0": 0.9826666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 6.871352423512791e-05,
+            "ci_high": 0.001295704982108468,
+            "ci_low": -0.0011192864549489608,
+            "fold_count": 2,
+            "n": 118,
+            "p_mean_gt_0": 0.5636666666666666,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 1
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51748,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:50:43+00:00",
+        "ETH-USD": "2026-02-19T04:50:43+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T04:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "INCONCLUSIVE",
+    "hypothesis_id": "H87",
+    "latest_artifact": "20260219T045043Z_H87.json",
+    "timestamp_utc": "2026-02-19T04:50:43+00:00"
+  },
+  "H88": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0006754043352053319,
+            "ci_low": -0.0008955130212692595,
+            "mean": -0.0007831830472073647,
+            "n": 4750,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0007947704367460933,
+            "ci_high": -0.0006441337693395675,
+            "ci_low": -0.0009507419699687461,
+            "fold_count": 6,
+            "n": 2662,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0004754043352053317,
+            "ci_low": -0.0006955130212692592,
+            "mean": -0.0005831830472073645,
+            "n": 4750,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0005947704367460931,
+            "ci_high": -0.0004441337693395673,
+            "ci_low": -0.0007507419699687459,
+            "fold_count": 6,
+            "n": 2662,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0003245956647946684,
+            "ci_low": 0.00010448697873074089,
+            "mean": 0.00021681695279263558,
+            "n": 4750,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.00020522956325390694,
+            "ci_high": 0.00035586623066043274,
+            "ci_low": 4.925803003125405e-05,
+            "fold_count": 6,
+            "n": 2662,
+            "p_mean_gt_0": 0.995,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 6
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51748,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:50:56+00:00",
+        "ETH-USD": "2026-02-19T04:50:56+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T04:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H88",
+    "latest_artifact": "20260219T045056Z_H88.json",
+    "timestamp_utc": "2026-02-19T04:50:56+00:00"
+  },
+  "H89": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0004102238204789824,
+            "ci_low": -0.0007803383659253035,
+            "mean": -0.0005933349575882711,
+            "n": 2030,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0005751251023420856,
+            "ci_high": -0.00030613463335817223,
+            "ci_low": -0.000863671425969777,
+            "fold_count": 6,
+            "n": 1148,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.00021022382047898217,
+            "ci_low": -0.0005803383659253031,
+            "mean": -0.0003933349575882708,
+            "n": 2030,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0003751251023420853,
+            "ci_high": -0.00010613463335817204,
+            "ci_low": -0.0006636714259697768,
+            "fold_count": 6,
+            "n": 1148,
+            "p_mean_gt_0": 0.0026666666666666666,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0005897761795210179,
+            "ci_low": 0.00021966163407469692,
+            "mean": 0.0004066650424117293,
+            "n": 2030,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0004248748976579148,
+            "ci_high": 0.0006938653666418281,
+            "ci_low": 0.00013632857403022327,
+            "fold_count": 6,
+            "n": 1148,
+            "p_mean_gt_0": 0.9976666666666667,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 6
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51748,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:51:08+00:00",
+        "ETH-USD": "2026-02-19T04:51:08+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T04:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H89",
+    "latest_artifact": "20260219T045108Z_H89.json",
+    "timestamp_utc": "2026-02-19T04:51:08+00:00"
+  },
+  "H90": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00013101332828299343,
+            "ci_low": -0.0006391302706208542,
+            "mean": -0.00025005384265198766,
+            "n": 723,
+            "p_mean_gt_0": 0.10066666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": -0.00013733909244530534,
+            "ci_high": 0.00044756361935079103,
+            "ci_low": -0.0006909810775045271,
+            "fold_count": 6,
+            "n": 411,
+            "p_mean_gt_0": 0.321,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 3
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0003310133282829938,
+            "ci_low": -0.00043913027062085383,
+            "mean": -5.005384265198739e-05,
+            "n": 723,
+            "p_mean_gt_0": 0.396
+          },
+          "walkforward": {
+            "aggregate_mean": 6.266090755469483e-05,
+            "ci_high": 0.0006475636193507916,
+            "ci_low": -0.0004909810775045267,
+            "fold_count": 6,
+            "n": 411,
+            "p_mean_gt_0": 0.5903333333333334,
+            "positive_fold_pct": 66.66666666666667,
+            "positive_folds": 4
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0011310133282829938,
+            "ci_low": 0.0003608697293791462,
+            "mean": 0.0007499461573480127,
+            "n": 723,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.000862660907554695,
+            "ci_high": 0.0014475636193507916,
+            "ci_low": 0.00030901892249547344,
+            "fold_count": 6,
+            "n": 411,
+            "p_mean_gt_0": 0.9986666666666667,
+            "positive_fold_pct": 83.33333333333333,
+            "positive_folds": 5
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51748,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T04:51:20+00:00",
+        "ETH-USD": "2026-02-19T04:51:20+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T04:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H90",
+    "latest_artifact": "20260219T045120Z_H90.json",
+    "timestamp_utc": "2026-02-19T04:51:20+00:00"
+  },
+  "H91": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0007087868215762592,
+            "ci_low": -0.0006690462797646851,
+            "mean": 2.3686064470601973e-05,
+            "n": 275,
+            "p_mean_gt_0": 0.5226666666666666
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0008192700996166997,
+            "ci_high": 0.0003683470211498302,
+            "ci_low": -0.00196965406301296,
+            "fold_count": 2,
+            "n": 118,
+            "p_mean_gt_0": 0.1,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "bps8": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0009087868215762595,
+            "ci_low": -0.00046904627976468465,
+            "mean": 0.00022368606447060226,
+            "n": 275,
+            "p_mean_gt_0": 0.7286666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0006192700996166992,
+            "ci_high": 0.0005683470211498307,
+            "ci_low": -0.0017696540630129586,
+            "fold_count": 2,
+            "n": 118,
+            "p_mean_gt_0": 0.174,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "gross": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0017087868215762596,
+            "ci_low": 0.00033095372023531544,
+            "mean": 0.0010236860644706025,
+            "n": 275,
+            "p_mean_gt_0": 0.997
+          },
+          "walkforward": {
+            "aggregate_mean": 0.00018072990038330087,
+            "ci_high": 0.0013683470211498308,
+            "ci_low": -0.0009696540630129588,
+            "fold_count": 2,
+            "n": 118,
+            "p_mean_gt_0": 0.6486666666666666,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 2
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51740,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:32:32+00:00",
+        "ETH-USD": "2026-02-19T05:32:32+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:35:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "INCONCLUSIVE",
+    "hypothesis_id": "H91",
+    "latest_artifact": "20260219T053232Z_H91.json",
+    "timestamp_utc": "2026-02-19T05:32:32+00:00"
+  },
+  "H92": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0005140788132973462,
+            "ci_low": -0.0007692772553593711,
+            "mean": -0.0006428735572962726,
+            "n": 3812,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0006242274951473467,
+            "ci_high": -0.0004424802580204512,
+            "ci_low": -0.0008101322404189101,
+            "fold_count": 6,
+            "n": 2182,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.000314078813297346,
+            "ci_low": -0.0005692772553593708,
+            "mean": -0.0004428735572962724,
+            "n": 3812,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0004242274951473465,
+            "ci_high": -0.00024248025802045103,
+            "ci_low": -0.0006101322404189098,
+            "fold_count": 6,
+            "n": 2182,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0004859211867026541,
+            "ci_low": 0.00023072274464062923,
+            "mean": 0.0003571264427037277,
+            "n": 3812,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0003757725048526535,
+            "ci_high": 0.0005575197419795491,
+            "ci_low": 0.00018986775958109022,
+            "fold_count": 6,
+            "n": 2182,
+            "p_mean_gt_0": 1.0,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 6
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51739,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:35:45+00:00",
+        "ETH-USD": "2026-02-19T05:35:45+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:40:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H92",
+    "latest_artifact": "20260219T053545Z_H92.json",
+    "timestamp_utc": "2026-02-19T05:35:45+00:00"
+  },
+  "H93": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0007363603883341819,
+            "ci_low": -0.0009405376786410017,
+            "mean": -0.0008396900057811109,
+            "n": 4221,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0008493759992606309,
+            "ci_high": -0.0007056044357392905,
+            "ci_low": -0.0009877581536912054,
+            "fold_count": 6,
+            "n": 2360,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0005363603883341817,
+            "ci_low": -0.0007405376786410013,
+            "mean": -0.0006396900057811106,
+            "n": 4221,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0006493759992606309,
+            "ci_high": -0.0005056044357392903,
+            "ci_low": -0.0007877581536912053,
+            "fold_count": 6,
+            "n": 2360,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00026363961166581834,
+            "ci_low": 5.946232135899864e-05,
+            "mean": 0.0001603099942188895,
+            "n": 4221,
+            "p_mean_gt_0": 0.998
+          },
+          "walkforward": {
+            "aggregate_mean": 0.00015062400073936912,
+            "ci_high": 0.00029439556426070964,
+            "ci_low": 1.2241846308794766e-05,
+            "fold_count": 6,
+            "n": 2360,
+            "p_mean_gt_0": 0.984,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 6
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51739,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:39:07+00:00",
+        "ETH-USD": "2026-02-19T05:39:07+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:40:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H93",
+    "latest_artifact": "20260219T053907Z_H93.json",
+    "timestamp_utc": "2026-02-19T05:39:07+00:00"
+  },
+  "H94": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.00029750342761903075,
+            "ci_low": -0.0007104259390471997,
+            "mean": -0.0005081949988989108,
+            "n": 1750,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.00047069793417132364,
+            "ci_high": -0.00021706351926592746,
+            "ci_low": -0.0007266774703628587,
+            "fold_count": 7,
+            "n": 1042,
+            "p_mean_gt_0": 0.0006666666666666666,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -9.750342761903045e-05,
+            "ci_low": -0.0005104259390471993,
+            "mean": -0.0003081949988989105,
+            "n": 1750,
+            "p_mean_gt_0": 0.0026666666666666666
+          },
+          "walkforward": {
+            "aggregate_mean": -0.00027069793417132344,
+            "ci_high": -1.7063519265927236e-05,
+            "ci_low": -0.0005266774703628585,
+            "fold_count": 7,
+            "n": 1042,
+            "p_mean_gt_0": 0.019666666666666666,
+            "positive_fold_pct": 14.285714285714286,
+            "positive_folds": 1
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "PASS",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0007024965723809696,
+            "ci_low": 0.00028957406095280066,
+            "mean": 0.0004918050011010896,
+            "n": 1750,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0005293020658286767,
+            "ci_high": 0.0007829364807340729,
+            "ci_low": 0.0002733225296371416,
+            "fold_count": 7,
+            "n": 1042,
+            "p_mean_gt_0": 1.0,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 7
+          }
+        },
+        "reason": "wf_ci_above_zero_and_fold_support_ge_60_with_ge7_folds",
+        "wf_status": "PASS"
+      }
+    },
+    "dataset": {
+      "bar_count": 51738,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:42:56+00:00",
+        "ETH-USD": "2026-02-19T05:42:57+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:45:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H94",
+    "latest_artifact": "20260219T054257Z_H94.json",
+    "timestamp_utc": "2026-02-19T05:42:57+00:00"
+  },
+  "H95": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "BORDERLINE",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00044810119648077247,
+            "ci_low": -0.00025427268444603457,
+            "mean": 9.073468314440392e-05,
+            "n": 955,
+            "p_mean_gt_0": 0.6936666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 0.00032457637097916316,
+            "ci_high": 0.0008778378037108054,
+            "ci_low": -0.00019402033931904488,
+            "fold_count": 6,
+            "n": 543,
+            "p_mean_gt_0": 0.8786666666666667,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 3
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      },
+      "bps8": {
+        "baseline_status": "BORDERLINE",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0006481011964807727,
+            "ci_low": -5.427268444603428e-05,
+            "mean": 0.00029073468314440423,
+            "n": 955,
+            "p_mean_gt_0": 0.9526666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0005245763709791635,
+            "ci_high": 0.001077837803710806,
+            "ci_low": 5.979660680955504e-06,
+            "fold_count": 6,
+            "n": 543,
+            "p_mean_gt_0": 0.976,
+            "positive_fold_pct": 83.33333333333333,
+            "positive_folds": 5
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      },
+      "gross": {
+        "baseline_status": "PASS",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0014481011964807727,
+            "ci_low": 0.0007457273155539659,
+            "mean": 0.0010907346831444042,
+            "n": 955,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0013245763709791635,
+            "ci_high": 0.0018778378037108058,
+            "ci_low": 0.0008059796606809555,
+            "fold_count": 6,
+            "n": 543,
+            "p_mean_gt_0": 1.0,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 6
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51737,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:46:50+00:00",
+        "ETH-USD": "2026-02-19T05:46:50+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:50:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "BORDERLINE",
+    "hypothesis_id": "H95",
+    "latest_artifact": "20260219T054650Z_H95.json",
+    "timestamp_utc": "2026-02-19T05:46:50+00:00"
+  },
+  "H96": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0014294359906366573,
+            "ci_low": -0.0029848501949639415,
+            "mean": -0.002196856274481489,
+            "n": 217,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0012530321615087203,
+            "ci_high": 0.00013885613941424087,
+            "ci_low": -0.0026290024701920195,
+            "fold_count": 2,
+            "n": 90,
+            "p_mean_gt_0": 0.03866666666666667,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "bps8": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0012294359906366568,
+            "ci_low": -0.002784850194963941,
+            "mean": -0.0019968562744814887,
+            "n": 217,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.00105303216150872,
+            "ci_high": 0.00033885613941424096,
+            "ci_low": -0.002429002470192019,
+            "fold_count": 2,
+            "n": 90,
+            "p_mean_gt_0": 0.06666666666666667,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "gross": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0004294359906366569,
+            "ci_low": -0.0019848501949639406,
+            "mean": -0.0011968562744814884,
+            "n": 217,
+            "p_mean_gt_0": 0.0016666666666666668
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0002530321615087199,
+            "ci_high": 0.001138856139414241,
+            "ci_low": -0.0016290024701920186,
+            "fold_count": 2,
+            "n": 90,
+            "p_mean_gt_0": 0.3616666666666667,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 1
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51736,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:50:32+00:00",
+        "ETH-USD": "2026-02-19T05:50:32+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "INCONCLUSIVE",
+    "hypothesis_id": "H96",
+    "latest_artifact": "20260219T055032Z_H96.json",
+    "timestamp_utc": "2026-02-19T05:50:32+00:00"
+  },
+  "H97": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00011172206882487562,
+            "ci_low": -0.0006000733108680574,
+            "mean": -0.00025192562521681903,
+            "n": 828,
+            "p_mean_gt_0": 0.08033333333333334
+          },
+          "walkforward": {
+            "aggregate_mean": 2.9041913601399853e-05,
+            "ci_high": 0.0007691171350360376,
+            "ci_low": -0.00064365241553363,
+            "fold_count": 2,
+            "n": 282,
+            "p_mean_gt_0": 0.538,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 1
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "bps8": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0003117220688248761,
+            "ci_low": -0.0004000733108680572,
+            "mean": -5.19256252168188e-05,
+            "n": 828,
+            "p_mean_gt_0": 0.38533333333333336
+          },
+          "walkforward": {
+            "aggregate_mean": 0.00022904191360140016,
+            "ci_high": 0.0009691171350360379,
+            "ci_low": -0.0004436524155336299,
+            "fold_count": 2,
+            "n": 282,
+            "p_mean_gt_0": 0.7473333333333333,
+            "positive_fold_pct": 50.0,
+            "positive_folds": 1
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "gross": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.001111722068824876,
+            "ci_low": 0.0003999266891319429,
+            "mean": 0.0007480743747831813,
+            "n": 828,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0010290419136014003,
+            "ci_high": 0.001769117135036038,
+            "ci_low": 0.0003563475844663704,
+            "fold_count": 2,
+            "n": 282,
+            "p_mean_gt_0": 0.9986666666666667,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 2
+          }
+        },
+        "reason": "fold_count_lt_5",
+        "wf_status": "INCONCLUSIVE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51736,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:54:59+00:00",
+        "ETH-USD": "2026-02-19T05:54:59+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T05:55:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "INCONCLUSIVE",
+    "hypothesis_id": "H97",
+    "latest_artifact": "20260219T055459Z_H97.json",
+    "timestamp_utc": "2026-02-19T05:54:59+00:00"
+  },
+  "H98": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0008199425908072442,
+            "ci_low": -0.0010189792210981582,
+            "mean": -0.0009202971241405769,
+            "n": 4305,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0009446513256866086,
+            "ci_high": -0.0008029183942250026,
+            "ci_low": -0.0010831407739791603,
+            "fold_count": 6,
+            "n": 2404,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "bps8": {
+        "baseline_status": "FAIL",
+        "final_status": "FAIL",
+        "metrics": {
+          "baseline": {
+            "ci_high": -0.0006199425908072439,
+            "ci_low": -0.000818979221098158,
+            "mean": -0.0007202971241405766,
+            "n": 4305,
+            "p_mean_gt_0": 0.0
+          },
+          "walkforward": {
+            "aggregate_mean": -0.0007446513256866085,
+            "ci_high": -0.0006029183942250024,
+            "ci_low": -0.0008831407739791601,
+            "fold_count": 6,
+            "n": 2404,
+            "p_mean_gt_0": 0.0,
+            "positive_fold_pct": 0.0,
+            "positive_folds": 0
+          }
+        },
+        "reason": "non_positive_wf_or_fold_support_lt_50",
+        "wf_status": "FAIL"
+      },
+      "gross": {
+        "baseline_status": "BORDERLINE",
+        "final_status": "BORDERLINE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.00018005740919275608,
+            "ci_low": -1.8979221098157912e-05,
+            "mean": 7.970287585942347e-05,
+            "n": 4305,
+            "p_mean_gt_0": 0.9396666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 5.5348674313391535e-05,
+            "ci_high": 0.0001970816057749976,
+            "ci_low": -8.314077397916005e-05,
+            "fold_count": 6,
+            "n": 2404,
+            "p_mean_gt_0": 0.7833333333333333,
+            "positive_fold_pct": 83.33333333333333,
+            "positive_folds": 5
+          }
+        },
+        "reason": "positive_wf_with_weak_ci_or_fold_support",
+        "wf_status": "BORDERLINE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51735,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T05:58:36+00:00",
+        "ETH-USD": "2026-02-19T05:58:36+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T06:00:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "FAIL",
+    "hypothesis_id": "H98",
+    "latest_artifact": "20260219T055836Z_H98.json",
+    "timestamp_utc": "2026-02-19T05:58:36+00:00"
+  },
+  "H99": {
+    "cost_modes": {
+      "bps10": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0021114888021340154,
+            "ci_low": 0.00027900271606379,
+            "mean": 0.0011848083284472296,
+            "n": 30,
+            "p_mean_gt_0": 0.996
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0010495814130417839,
+            "ci_high": 0.002249987165242698,
+            "ci_low": -8.869341597374795e-05,
+            "fold_count": 7,
+            "n": 19,
+            "p_mean_gt_0": 0.963,
+            "positive_fold_pct": 85.71428571428571,
+            "positive_folds": 6
+          }
+        },
+        "reason": "baseline_n_lt_50",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "bps8": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.002311488802134015,
+            "ci_low": 0.0004790027160637901,
+            "mean": 0.0013848083284472297,
+            "n": 30,
+            "p_mean_gt_0": 0.9986666666666667
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0012495814130417842,
+            "ci_high": 0.002449987165242698,
+            "ci_low": 0.00011130658402625209,
+            "fold_count": 7,
+            "n": 19,
+            "p_mean_gt_0": 0.9866666666666667,
+            "positive_fold_pct": 85.71428571428571,
+            "positive_folds": 6
+          }
+        },
+        "reason": "baseline_n_lt_50",
+        "wf_status": "INCONCLUSIVE"
+      },
+      "gross": {
+        "baseline_status": "INCONCLUSIVE",
+        "final_status": "INCONCLUSIVE",
+        "metrics": {
+          "baseline": {
+            "ci_high": 0.0031114888021340154,
+            "ci_low": 0.00127900271606379,
+            "mean": 0.00218480832844723,
+            "n": 30,
+            "p_mean_gt_0": 1.0
+          },
+          "walkforward": {
+            "aggregate_mean": 0.0020495814130417843,
+            "ci_high": 0.003249987165242698,
+            "ci_low": 0.000911306584026252,
+            "fold_count": 7,
+            "n": 19,
+            "p_mean_gt_0": 1.0,
+            "positive_fold_pct": 100.0,
+            "positive_folds": 7
+          }
+        },
+        "reason": "baseline_n_lt_50",
+        "wf_status": "INCONCLUSIVE"
+      }
+    },
+    "dataset": {
+      "bar_count": 51734,
+      "db_last_modified": {
+        "BTC-USD": "2026-02-19T06:02:20+00:00",
+        "ETH-USD": "2026-02-19T06:02:20+00:00"
+      },
+      "db_path": {
+        "BTC-USD": "postgres:rc.candles",
+        "ETH-USD": "postgres:rc.candles"
+      },
+      "end_ts": "2026-02-19T03:00:00+00:00",
+      "primary_symbols": [
+        "BTC-USD"
+      ],
+      "secondary_symbols": [
+        "ETH-USD"
+      ],
+      "start_ts": "2025-08-23T06:05:00+00:00",
+      "timeframe": "5m"
+    },
+    "final_status": "INCONCLUSIVE",
+    "hypothesis_id": "H99",
+    "latest_artifact": "20260219T060220Z_H99.json",
+    "timestamp_utc": "2026-02-19T06:02:20+00:00"
   }
 }

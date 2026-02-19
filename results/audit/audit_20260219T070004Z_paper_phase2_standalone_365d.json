@@ -1,0 +1,20 @@
+{
+  "checks": {
+    "dataset_fingerprint_ok": true,
+    "failure_traceability_ok": true,
+    "metrics_integrity_ok": true,
+    "phase2_metadata_ok": true,
+    "schema_completeness_ok": true
+  },
+  "gate_decision": "PASS_TO_PHASE3",
+  "issue_count": 0,
+  "issues": [],
+  "role": "Guardian",
+  "scope": {
+    "phase1_reference": "results/paper/20260219T063535Z_standalone_180d.json",
+    "related_failure_record": "results/errors/20260219T065159Z_paper_portfolio.json",
+    "success_artifact": "results/paper/20260219T065212Z_standalone_365d.json"
+  },
+  "spec_reference": "docs/paper_portfolio_runner_spec.md",
+  "timestamp_utc": "2026-02-19T07:00:04+00:00"
+}

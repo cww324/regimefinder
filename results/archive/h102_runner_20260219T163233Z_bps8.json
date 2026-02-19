@@ -1,0 +1,104 @@
+{
+  "baseline": {
+    "bps8": {
+      "mean": -0.0008613918606834457,
+      "mean_ci_high": 0.0004698972296367444,
+      "mean_ci_low": -0.0020187704595801335,
+      "n": 21,
+      "p_mean_gt_0": 0.09466666666666666,
+      "std": 0.0029216400119475637,
+      "win_rate": 0.3333333333333333
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0008,
+    "cost_mode": "bps8",
+    "days": 180,
+    "horizon": 8,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "diagnostics": {
+    "mae_proxy_median": -0.0010789876526102748,
+    "median_hold_return": -0.0012685279120042462,
+    "return_histogram_bins": [
+      "(-inf,-1%)",
+      "[-1%,-0.5%)",
+      "[-0.5%,-0.2%)",
+      "[-0.2%,0%)",
+      "[0%,0.2%)",
+      "[0.2%,0.5%)",
+      "[0.5%,1%)",
+      "[1%,inf)"
+    ],
+    "return_histogram_counts": [
+      0,
+      1,
+      7,
+      6,
+      4,
+      2,
+      1,
+      0
+    ],
+    "top10_pct_pnl_contribution": -0.7237090103379109,
+    "trades_per_day": 0.1572747367052399
+  },
+  "family": "volatility_state",
+  "hypothesis_id": "H102",
+  "timestamp_utc": "2026-02-19T16:35:32+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": -0.0017510898276495623,
+      "mean_ci_high": -6.377776464562714e-05,
+      "mean_ci_low": -0.0034550989523443095,
+      "n": 8,
+      "p_mean_gt_0": 0.02
+    },
+    "folds": [
+      {
+        "fold_id": 1,
+        "mean": -0.0018830542875494013,
+        "n": 5,
+        "test_end": "2025-11-27T00:00:00+00:00",
+        "test_start": "2025-11-12T00:00:00+00:00"
+      },
+      {
+        "fold_id": 2,
+        "mean": -0.0015311490611498307,
+        "n": 3,
+        "test_end": "2025-12-12T00:00:00+00:00",
+        "test_start": "2025-11-27T00:00:00+00:00"
+      },
+      {
+        "fold_id": 3,
+        "mean": 0.0,
+        "n": 0,
+        "test_end": "2025-12-27T00:00:00+00:00",
+        "test_start": "2025-12-12T00:00:00+00:00"
+      },
+      {
+        "fold_id": 4,
+        "mean": 0.0,
+        "n": 0,
+        "test_end": "2026-01-11T00:00:00+00:00",
+        "test_start": "2025-12-27T00:00:00+00:00"
+      }
+    ],
+    "positive_folds": {
+      "count": 0,
+      "pct": 0.0,
+      "total": 4
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

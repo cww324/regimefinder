@@ -1,17 +1,32 @@
-batch_size: 5
-next_index: 10
+batch_size: 10
+next_index: 0
 paused: false
 queue:
-- H15
-- H18
-- H19
-- H22
-- H23
-- H26
-- H27
-- H28
-- H29
-- H30
-notes: 'Blocked 2026-02-19: batch2 start failed on H26 with psycopg connectivity (results/errors/20260219T035417Z_H26.json).
-  Batch1 artifacts exist; rerun batch2 only in the same verified shell context with
-  explicit RC_DB_DSN export + immediate probe.'
+- H101
+- H102
+- H103
+- H104
+- H105
+- H106
+- H107
+- H108
+- H109
+- H110
+notes: 'Blocked 2026-02-19: Postgres preflight failed in Executor shell (psycopg OperationalError).
+  Restore DB reachability in same shell, then resume H91-H100 batch. Carry-forward
+  2026-02-19 (paper protocol): 365d standalone artifact results/paper/20260219T065212Z_standalone_365d.json
+  spans only 180d (dataset start_ts=2025-08-23T03:00:00+00:00, end_ts=2026-02-19T03:00:00+00:00).
+  Tomorrow sequence: (1) backfill+features to full 365d, (2) rerun standalone 365d
+  for H76,H77,H79,H81,H78,H82, (3) Guardian re-audit Phase 2 gate, (4) run combined
+  180d then Guardian audit, (5) run combined 365d then final Guardian audit. If standalone
+  remains strong but combined is weak, hand off to Architect for a NEW portfolio-combination
+  hypothesis ID (no edits to frozen standalone IDs). Phase 4 combined 365d deferred:
+  dataset currently spans ~180d (2025-08-23 to 2026-02-19). Coordinator update 2026-02-19:
+  queued H101-H110 as next standard 10-ID batch. Batch blocked at H101: Unsupported
+  family volatility_state (error artifact results/errors/20260219T160728Z_H101.json);
+  requires Coder runner family support before retry. Coordinator update 2026-02-19:
+  reset next_index to 0 for H101-H105 rerun after logic_hash artifact fix.
+  P01-P04 TODO before any live-paper consideration: (1) Coder fix family-share/heat normalization
+  in run_paper_portfolio output (shares bounded [0,1]), (2) rerun P portfolio evaluation in
+  meaningful multi-policy context (not single-ID only), (3) Guardian re-audit with heat gates,
+  (4) only promote if heat + robustness gates pass.'

@@ -6405,3 +6405,281 @@ Derived classifications from rebuilt summary (artifact-backed):
 Determinism check:
 - Rebuilt `results/summary.json` twice in-session.
 - SHA256: `9e2dc9f8844ead6230342ab1ca680d0e2b6296a63abec5e6545577d997f98436`.
+
+## H86-H90 Standard Batch Guardian Audit (2026-02-19)
+Run: 2026-02-19T04:58:12+00:00
+Role: Guardian
+
+Scope artifacts (latest standard batch):
+- `results/runs/20260219T045029Z_H86.json`
+- `results/runs/20260219T045043Z_H87.json`
+- `results/runs/20260219T045056Z_H88.json`
+- `results/runs/20260219T045108Z_H89.json`
+- `results/runs/20260219T045120Z_H90.json`
+
+Audit artifact:
+- `results/audit/audit_20260219T045812Z_h86_h90_standard_batch.json`
+
+Validation results:
+- Schema/completeness: `PASS` (no scoped schema failures).
+- Dataset fingerprint fields: `PASS` for all 5 artifacts (`primary_symbols`/`secondary_symbols`, timeframe, start/end ts, bar_count, db_path, db_last_modified present).
+- Scope fingerprint consistency: same window and coverage across scope (`start_ts=2025-08-23T04:55:00+00:00`, `end_ts=2026-02-19T03:00:00+00:00`, `bar_count=51748`, db=`postgres:rc.candles`).
+- Gate presence per mode (`gross`,`bps8`,`bps10`): `PASS` including WF split `60/15/15` and WF bootstrap CI + `P(mean>0)` fields.
+
+Derived classifications from rebuilt summary (artifact-backed):
+- `H86`: `FAIL` (artifact: `results/runs/20260219T045029Z_H86.json`)
+- `H87`: `INCONCLUSIVE` (artifact: `results/runs/20260219T045043Z_H87.json`)
+- `H88`: `FAIL` (artifact: `results/runs/20260219T045056Z_H88.json`)
+- `H89`: `FAIL` (artifact: `results/runs/20260219T045108Z_H89.json`)
+- `H90`: `FAIL` (artifact: `results/runs/20260219T045120Z_H90.json`)
+
+Deterministic summary rebuild:
+- Rebuilt `results/summary.json` twice from `results/runs/*.json` via `scripts/build_summary.py`.
+- SHA256 (both rebuilds): `877f7df0e889d96615938753019de96bcd802d9bac2a55a52763dfbd0f570c02`.
+
+## H76/H77/H79/H81/H78/H82 Re-Audit (2026-02-19)
+Run: 2026-02-19T05:00:56+00:00
+Role: Guardian
+
+Scope artifacts:
+- `results/runs/20260219T045701Z_H76.json`
+- `results/runs/20260219T045712Z_H77.json`
+- `results/runs/20260219T045725Z_H79.json`
+- `results/runs/20260219T045737Z_H81.json`
+- `results/runs/20260219T045750Z_H78.json`
+- `results/runs/20260219T045802Z_H82.json`
+
+Audit artifact:
+- `results/audit/audit_20260219T050056Z_h76_h77_h78_h79_h81_h82_rerun.json`
+
+Validation results:
+- Schema/completeness: `PASS`
+- Dataset fingerprint fields: `PASS`
+- Gate presence per mode (`gross`,`bps8`,`bps10`): `PASS` including WF split `60/15/15` and WF bootstrap CI + `P(mean>0)`.
+
+Derived classifications from rebuilt summary (artifact-backed):
+- `H76`: `PASS` (artifact: `results/runs/20260219T045701Z_H76.json`)
+- `H77`: `PASS` (artifact: `results/runs/20260219T045712Z_H77.json`)
+- `H79`: `PASS` (artifact: `results/runs/20260219T045725Z_H79.json`)
+- `H81`: `PASS` (artifact: `results/runs/20260219T045737Z_H81.json`)
+- `H78`: `PASS` (artifact: `results/runs/20260219T045750Z_H78.json`)
+- `H82`: `PASS` (artifact: `results/runs/20260219T045802Z_H82.json`)
+
+Deterministic summary rebuild:
+- Rebuilt `results/summary.json` twice from `results/runs/*.json`.
+- SHA256 (both rebuilds): `877f7df0e889d96615938753019de96bcd802d9bac2a55a52763dfbd0f570c02`.
+
+## H91-H100 Batch Guardian Audit (2026-02-19)
+Run: 2026-02-19T06:08:47+00:00
+Role: Guardian
+
+Scope artifacts:
+- `results/runs/20260219T053232Z_H91.json`
+- `results/runs/20260219T053545Z_H92.json`
+- `results/runs/20260219T053907Z_H93.json`
+- `results/runs/20260219T054257Z_H94.json`
+- `results/runs/20260219T054650Z_H95.json`
+- `results/runs/20260219T055032Z_H96.json`
+- `results/runs/20260219T055459Z_H97.json`
+- `results/runs/20260219T055836Z_H98.json`
+- `results/runs/20260219T060220Z_H99.json`
+- `results/runs/20260219T060657Z_H100.json`
+
+Audit artifact:
+- `results/audit/audit_20260219T060847Z_h91_h100_batch.json`
+
+Validation results:
+- Schema/completeness: `PASS`
+- Dataset fingerprint fields: `PASS`
+- Gate presence per mode (`gross`,`bps8`,`bps10`): `PASS` including WF split `60/15/15` and WF bootstrap CI + `P(mean>0)`.
+- Integrity issues: none in scoped artifacts.
+
+Derived classifications from rebuilt summary (artifact-backed):
+- `H91`: `INCONCLUSIVE` (artifact: `results/runs/20260219T053232Z_H91.json`)
+- `H92`: `FAIL` (artifact: `results/runs/20260219T053545Z_H92.json`)
+- `H93`: `FAIL` (artifact: `results/runs/20260219T053907Z_H93.json`)
+- `H94`: `FAIL` (artifact: `results/runs/20260219T054257Z_H94.json`)
+- `H95`: `BORDERLINE` (artifact: `results/runs/20260219T054650Z_H95.json`)
+- `H96`: `INCONCLUSIVE` (artifact: `results/runs/20260219T055032Z_H96.json`)
+- `H97`: `INCONCLUSIVE` (artifact: `results/runs/20260219T055459Z_H97.json`)
+- `H98`: `FAIL` (artifact: `results/runs/20260219T055836Z_H98.json`)
+- `H99`: `INCONCLUSIVE` (artifact: `results/runs/20260219T060220Z_H99.json`)
+- `H100`: `FAIL` (artifact: `results/runs/20260219T060657Z_H100.json`)
+
+Deterministic summary rebuild:
+- Rebuilt `results/summary.json` twice from `results/runs/*.json`.
+- SHA256 (both rebuilds): `803153a6372f22dfe5ac47b866b8312fa0c51f643962617c4c6ae88a263b8330`.
+
+## Phase 1 Paper Artifact Audit - Standalone 180d (2026-02-19)
+Run: 2026-02-19T06:50:36+00:00
+Role: Guardian
+
+Scope:
+- Success artifact: `results/paper/20260219T063535Z_standalone_180d.json`
+- Related failure traceability record: `results/errors/20260219T063519Z_paper_portfolio.json`
+- Spec reference: `docs/paper_portfolio_runner_spec.md`
+
+Audit output:
+- `results/audit/audit_20260219T065036Z_paper_phase1_standalone_180d.json`
+
+Audit checks:
+- Schema/completeness vs spec required fields (`timestamp_utc`, `mode`, `hypothesis_ids`, `window_days`, `cost_mode`, `metrics`, `dataset`, `config`): `PASS`
+- Dataset fingerprint presence/coherence (`start_ts`, `end_ts`, `bar_count`, `db_path`, `db_last_modified`): `PASS`
+- Phase 1 metadata consistency (`mode=standalone`, `window_days=180`, candidate set includes `H76,H77,H79,H81,H78,H82`): `PASS`
+- Metrics integrity/internal consistency (per-hypothesis + aggregate present; monthly stability present; no NaN/invalid numeric fields; aggregate count/turnover consistency checks): `PASS`
+- Traceability check of related failure record: `PASS`
+
+Gate decision (artifact-backed): `PASS_TO_PHASE2`.
+
+## Phase 2 Paper Artifact Audit - Standalone 365d (2026-02-19)
+Run: 2026-02-19T07:00:04+00:00
+Role: Guardian
+
+Scope:
+- Success artifact: `results/paper/20260219T065212Z_standalone_365d.json`
+- Related failure traceability record: `results/errors/20260219T065159Z_paper_portfolio.json`
+- Phase 1 reference artifact (survivor/candidate consistency): `results/paper/20260219T063535Z_standalone_180d.json`
+- Spec reference: `docs/paper_portfolio_runner_spec.md`
+
+Audit output:
+- `results/audit/audit_20260219T070004Z_paper_phase2_standalone_365d.json`
+
+Audit checks:
+- Schema/completeness vs spec required fields (`timestamp_utc`, `mode`, `hypothesis_ids`, `window_days`, `cost_mode`, `metrics`, `dataset`, `config`): `PASS`
+- Dataset fingerprint presence/coherence (`start_ts`, `end_ts`, `bar_count`, `db_path`, `db_last_modified`): `PASS`
+- Metadata consistency (`mode=standalone`, `window_days=365`, hypothesis set subset-consistent with Phase 1 candidate set): `PASS`
+- Metrics integrity/internal consistency:
+  - per-hypothesis metrics present: `PASS`
+  - aggregate metrics present: `PASS`
+  - monthly stability present per hypothesis: `PASS`
+  - numeric validity (no NaN/inf in audited numeric fields): `PASS`
+  - aggregate `trade_count`/`turnover` equals per-hypothesis sums: `PASS`
+- Traceability check of related failure record: `PASS`
+
+Gate decision (artifact-backed): `PASS_TO_PHASE3`.
+
+## Phase 3 Paper Artifact Audit - Combined 180d (2026-02-19)
+Run: 2026-02-19T07:11:55+00:00
+Role: Guardian
+
+Scope:
+- Success artifact: `results/paper/20260219T070226Z_combined_180d.json`
+- Related failure traceability record: `results/errors/20260219T070218Z_paper_portfolio.json`
+- Spec reference: `docs/paper_portfolio_runner_spec.md`
+
+Audit output:
+- `results/audit/audit_20260219T071155Z_paper_phase3_combined_180d.json`
+
+Audit checks:
+- Schema/completeness vs spec required fields (`timestamp_utc`, `mode`, `hypothesis_ids`, `window_days`, `cost_mode`, `metrics`, `dataset`, `config`): `PASS`
+- Dataset fingerprint presence/coherence (`start_ts`, `end_ts`, `bar_count`, `db_path`, `db_last_modified`): `PASS`
+- Metadata consistency (`mode=combined`, `window_days=180`, hypothesis IDs consistent with traceability context): `PASS`
+- Metrics integrity/internal consistency:
+  - `summary`, `concentration`, `cross_strategy_correlation` present: `PASS`
+  - numeric validity across audited metric fields (no NaN/inf): `PASS`
+  - exposure/concentration coherence (`mean_gross_exposure <= max_gross_exposure <= config cap`, per-asset exposure within cap, normalized strategy PnL shares): `PASS`
+  - cross-strategy correlation matrix coherence (square over hypothesis IDs, symmetric, diagonal=1, bounded in [-1,1]): `PASS`
+- Traceability check of related failure record (context match for mode/days/cost/hypothesis set; expected combined-180d output target): `PASS`
+
+Gate decision (artifact-backed): `PASS_TO_PHASE4`.
+
+## Portfolio-Construction Phase A Audit - P01 to P04 Combined 180d bps8 (2026-02-19)
+Run: 2026-02-19T16:07:16+00:00
+Role: Guardian
+
+Scope label:
+- Portfolio-construction Phase A (P01-P04, combined 180d, bps8)
+
+Scope artifacts:
+- `results/paper/20260219T154337Z_P01_combined_180d.json`
+- `results/paper/20260219T154801Z_P02_combined_180d.json`
+- `results/paper/20260219T155310Z_P03_combined_180d.json`
+- `results/paper/20260219T155811Z_P04_combined_180d.json`
+
+Related error traceability set (no new error artifact in this sequence):
+- `results/errors/20260219T070218Z_paper_portfolio.json`
+- `results/errors/20260219T065159Z_paper_portfolio.json`
+- `results/errors/20260219T063519Z_paper_portfolio.json`
+- `results/errors/20260219T062837Z_paper_portfolio.json`
+
+Spec reference:
+- `docs/paper_portfolio_runner_spec.md`
+
+Audit output:
+- `results/audit/audit_20260219T160716Z_portfolio_construction_p01_p04_combined_180d.json`
+
+Per-artifact audit checks (P01/P02/P03/P04):
+- Schema/completeness vs spec required fields: `PASS` for all 4
+- Dataset fingerprint presence/coherence (`start_ts`,`end_ts`,`bar_count`,`db_path`,`db_last_modified`): `PASS` for all 4
+- Metadata consistency (`mode=combined`,`window_days=180`,`cost_mode=bps8`): `PASS` for all 4
+- Metrics integrity (`summary`,`concentration`,`cross_strategy_correlation`; finite numerics; exposure/concentration coherence): `PASS` for all 4
+- Portfolio-construction block coherence (via `metrics.heat_audit`): `PASS` for all 4
+
+Heat gate checks:
+- `max_pairwise_correlation <= 0.75`: `PASS` for all 4 (single-ID artifacts; no off-diagonal pairs; treated as 0.0)
+- `max_single_strategy_pnl_share <= 0.40`: `FAIL` for all 4 (`1.0` each)
+- `max_single_family_share <= 0.60`: `FAIL` for all 4
+  - P01: `1.4134450895627633`
+  - P02: `1.4275716056205658`
+  - P03: `0.6895523105345096`
+  - P04: `1.4168515454315211`
+
+Per-ID gate decisions:
+- `P01`: `BLOCKED_HEAT` (artifact: `results/paper/20260219T154337Z_P01_combined_180d.json`)
+- `P02`: `BLOCKED_HEAT` (artifact: `results/paper/20260219T154801Z_P02_combined_180d.json`)
+- `P03`: `BLOCKED_HEAT` (artifact: `results/paper/20260219T155310Z_P03_combined_180d.json`)
+- `P04`: `BLOCKED_HEAT` (artifact: `results/paper/20260219T155811Z_P04_combined_180d.json`)
+
+Ranked shortlist (best to worst, score proxy = decision tier then net return):
+1. `P04` (`BLOCKED_HEAT`) - net_return `0.02479611376896234`; highest return of set but heat-gate blocked.
+2. `P02` (`BLOCKED_HEAT`) - net_return `0.024452546671050523`; heat-gate blocked.
+3. `P01` (`BLOCKED_HEAT`) - net_return `0.023843861559540068`; heat-gate blocked.
+4. `P03` (`BLOCKED_HEAT`) - net_return `-0.029290172045479672`; negative return and heat-gate blocked.
+
+Constraint confirmation:
+- Combined `365d` phase remains deferred until true 365d data coverage is available.
+
+## Standard Batch Audit - H101-H105 (queue batch 1/2) (2026-02-19)
+Run: 2026-02-19T18:26:26+00:00
+Role: Guardian
+
+Scope label:
+- Standard Batch Audit - H101-H105 (queue batch 1/2)
+
+Scope artifacts:
+- `results/runs/20260219T162932Z_H101.json`
+- `results/runs/20260219T163832Z_H102.json`
+- `results/runs/20260219T164703Z_H103.json`
+- `results/runs/20260219T165534Z_H104.json`
+- `results/runs/20260219T170402Z_H105.json`
+
+Audit output:
+- `results/audit/audit_20260219T182626Z_h101_h105_batch1.json`
+
+Validation results:
+- Schema/completeness across 5 artifacts: `PASS`
+- Dataset fingerprint presence/coherence: `PASS`
+- Required gates per mode (`gross`,`bps8`,`bps10`) including WF `60/15/15` split and bootstrap CI + `P(mean>0)`: `PASS`
+- Logic-hash integrity (artifact `logic_hash` vs `hypotheses.yaml`): `FAIL`
+  - `H101`: artifact `logic_hash` missing (`null`), expected `6e1ae8b27ab3447e5071ee5c42f3bac423378d3416122cf3539aae4d8eb95b24`
+  - `H102`: artifact `logic_hash` missing (`null`), expected `a89f73a0227b0b45606c70dbdf6c769daceb6c5d446fb85c01dba91377fe91b0`
+  - `H103`: artifact `logic_hash` missing (`null`), expected `e9ae2605460071d4552c3312730e7190bf5fd4e49b31e5d5994a6e35848657b2`
+  - `H104`: artifact `logic_hash` missing (`null`), expected `702b061c7f8a0da22a74512e3df502a6371e70d2dfdd5cf335b7eaff71de5155`
+  - `H105`: artifact `logic_hash` missing (`null`), expected `843ed3546de9b23b6835dcfe1f04842bac6846baeba71af23963add2209b9be7`
+
+Deterministic summary rebuild:
+- Rebuilt `results/summary.json` twice from `results/runs/*.json` via `python3 scripts/build_summary.py`.
+- SHA256 run1: `5edd966a7c387b87f678bc36ff5c3ea2978f8a0aeb953c9923ad0e98afab1c81`
+- SHA256 run2: `5edd966a7c387b87f678bc36ff5c3ea2978f8a0aeb953c9923ad0e98afab1c81`
+- Determinism check: `PASS`
+- Summary consistency for scoped IDs (latest artifact mapping): `PASS`
+
+Derived classifications from rebuilt summary (artifact-backed):
+- `H101`: `FAIL` (artifact: `results/runs/20260219T162932Z_H101.json`)
+- `H102`: `INCONCLUSIVE` (artifact: `results/runs/20260219T163832Z_H102.json`)
+- `H103`: `FAIL` (artifact: `results/runs/20260219T164703Z_H103.json`)
+- `H104`: `FAIL` (artifact: `results/runs/20260219T165534Z_H104.json`)
+- `H105`: `FAIL` (artifact: `results/runs/20260219T170402Z_H105.json`)
+
+Queue continuation gate decision:
+- `BLOCKED` (reason: logic-hash integrity failures on all scoped artifacts).

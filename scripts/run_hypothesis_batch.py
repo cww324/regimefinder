@@ -675,6 +675,7 @@ def run_one_hypothesis(
 
     artifact_payload = {
         "hypothesis_id": hypothesis_id,
+        "logic_hash": hypothesis_def.get("logic_hash"),
         "timestamp_utc": utc_now_iso(),
         "commands": commands,
         "dataset": dataset,
@@ -698,14 +699,13 @@ def main() -> None:
     ensure_disk_ok()
     queue = load_queue(QUEUE_PATH)
     rc_dsn = resolve_rc_dsn(args.dsn)
+    targeted_ids = [x.strip() for x in str(args.hypothesis_ids).split(",") if x.strip()]
+    targeted_mode = len(targeted_ids) > 0
 
-    if queue["paused"]:
+    if queue["paused"] and not targeted_mode:
         raise SystemExit("queue.yaml has paused: true; refusing to run batch.")
 
     dataset_defaults, gates, hyp_index = load_hypotheses(HYPOTHESES_PATH)
-
-    targeted_ids = [x.strip() for x in str(args.hypothesis_ids).split(",") if x.strip()]
-    targeted_mode = len(targeted_ids) > 0
 
     batch_size = int(queue["batch_size"])
     next_index = int(queue["next_index"])

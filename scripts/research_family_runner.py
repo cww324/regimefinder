@@ -16,6 +16,9 @@ SUPPORTED_FAMILIES = {
     "volatility_conditioning",
     "mean_reversion",
     "range_structure",
+    "volatility_state",
+    "efficiency_mean_reversion",
+    "cross_asset_divergence",
 }
 
 
@@ -77,6 +80,12 @@ def pct_rank_last(window: pd.Series) -> float:
     return float(s.rank(pct=True).iloc[-1])
 
 
+def require_columns(frame: pd.DataFrame, hypothesis_id: str, columns: list[str]) -> None:
+    missing = [c for c in columns if c not in frame.columns]
+    if missing:
+        raise ValueError(f"{hypothesis_id} missing required columns: {missing}")
+
+
 def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     if dsn:
         m = load_btc_eth_merged_last_days(dsn=dsn, days=days).copy()
@@ -124,6 +133,14 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     h1["eth_ema20_1h"] = h1["close_eth"].ewm(span=20, adjust=False).mean()
     h1["eth_slope_1h"] = h1["eth_ema20_1h"].diff(3)
     h1["eth_slope_sign_1h"] = np.sign(h1["eth_slope_1h"])
+    h1["eth_slope_stable_2_1h"] = h1["eth_slope_sign_1h"].ne(0) & h1["eth_slope_sign_1h"].eq(h1["eth_slope_sign_1h"].shift(1))
+    h1["eth_slope_abs_1h"] = h1["eth_slope_1h"].abs()
+    w20d_1h = 20 * 24
+    h1["eth_slope_abs_q70_1h"] = h1["eth_slope_abs_1h"].rolling(w20d_1h).quantile(0.70)
+    h1["eth_slope_abs_pct_1h"] = h1["eth_slope_abs_1h"].rolling(w20d_1h).apply(pct_rank_last, raw=False)
+    h1["eth_slope_mean_1h"] = h1["eth_slope_1h"].rolling(w20d_1h).mean()
+    h1["eth_slope_std_1h"] = h1["eth_slope_1h"].rolling(w20d_1h).std(ddof=0)
+    h1["eth_slope_z_1h"] = (h1["eth_slope_1h"] - h1["eth_slope_mean_1h"]) / h1["eth_slope_std_1h"].replace(0, np.nan)
     h1["eth_above_ema20_1h"] = h1["close_eth"] > h1["eth_ema20_1h"]
     h1["btc_ema20_1h"] = h1["close_btc"].ewm(span=20, adjust=False).mean()
     h1["btc_slope_1h"] = h1["btc_ema20_1h"].diff(3)
@@ -131,7 +148,20 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
 
     x = pd.merge_asof(
         m.sort_values("dt"),
-        h1[["dt", "spread_pct", "eth_slope_sign_1h", "btc_slope_sign_1h", "eth_above_ema20_1h"]].sort_values("dt"),
+        h1[
+            [
+                "dt",
+                "spread_pct",
+                "eth_slope_sign_1h",
+                "eth_slope_stable_2_1h",
+                "eth_slope_abs_1h",
+                "eth_slope_abs_q70_1h",
+                "eth_slope_abs_pct_1h",
+                "eth_slope_z_1h",
+                "btc_slope_sign_1h",
+                "eth_above_ema20_1h",
+            ]
+        ].sort_values("dt"),
         on="dt",
         direction="backward",
     )
@@ -139,6 +169,8 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["fwd_r"] = x["close_btc"].shift(-6) / x["close_btc"] - 1.0
     x["ret1_btc"] = x["close_btc"].pct_change()
     x["ret1_eth"] = x["close_eth"].pct_change()
+    x["ret1_abs_btc"] = x["ret1_btc"].abs()
+    x["ret1_abs_eth"] = x["ret1_eth"].abs()
     x["bar_dir_btc"] = np.sign(x["close_btc"] - x["open_btc"])
     x["bar_dir_eth"] = np.sign(x["close_eth"] - x["open_eth"])
 
@@ -160,8 +192,14 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     )
 
     w20d = 20 * 24 * 12
-    x["ret1_abs_btc_q90"] = x["ret1_btc"].abs().rolling(w20d).quantile(0.90)
-    x["ret1_abs_eth_q90"] = x["ret1_eth"].abs().rolling(w20d).quantile(0.90)
+    x["ret1_abs_btc_q30"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.30)
+    x["ret1_abs_btc_q40"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.40)
+    x["ret1_abs_btc_q70"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.70)
+    x["ret1_abs_btc_q80"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.80)
+    x["ret1_abs_btc_q90"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.90)
+    x["ret1_abs_eth_q90"] = x["ret1_abs_eth"].rolling(w20d).quantile(0.90)
+    x["ret1_abs_btc_pct"] = x["ret1_abs_btc"].rolling(w20d).apply(pct_rank_last, raw=False)
+    x["ret1_abs_eth_pct"] = x["ret1_abs_eth"].rolling(w20d).apply(pct_rank_last, raw=False)
     x["tr_btc_q90"] = x["tr_btc"].rolling(w20d).quantile(0.90)
     x["tr_btc_q10"] = x["tr_btc"].rolling(w20d).quantile(0.10)
     x["tr_btc_q25"] = x["tr_btc"].rolling(w20d).quantile(0.25)
@@ -179,6 +217,53 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["prior_high_12"] = prior_high_12
     x["prior_low_12"] = prior_low_12
 
+    # Deterministic feature set for newer families (H101+), computed locally
+    # from merged BTC/ETH OHLCV to avoid changing data-source contracts.
+    x["atr14_btc"] = x["tr_btc"].rolling(14).mean()
+    x["atr14_eth"] = x["tr_eth"].rolling(14).mean()
+    x["rv48_btc"] = x["ret1_btc"].rolling(48).std(ddof=0)
+    x["rv48_eth"] = x["ret1_eth"].rolling(48).std(ddof=0)
+
+    x["er20_btc"] = x["close_btc"].diff(20).abs() / x["close_btc"].diff().abs().rolling(20).sum().replace(0, np.nan)
+    x["er20_eth"] = x["close_eth"].diff(20).abs() / x["close_eth"].diff().abs().rolling(20).sum().replace(0, np.nan)
+
+    vwap48_num_btc = (x["close_btc"] * x["volume_btc"]).rolling(48).sum()
+    vwap48_den_btc = x["volume_btc"].rolling(48).sum().replace(0, np.nan)
+    x["vwap48_btc"] = vwap48_num_btc / vwap48_den_btc
+    vwap48_num_eth = (x["close_eth"] * x["volume_eth"]).rolling(48).sum()
+    vwap48_den_eth = x["volume_eth"].rolling(48).sum().replace(0, np.nan)
+    x["vwap48_eth"] = vwap48_num_eth / vwap48_den_eth
+
+    x["dist_to_vwap48_btc"] = x["close_btc"] - x["vwap48_btc"]
+    x["dist_to_vwap48_eth"] = x["close_eth"] - x["vwap48_eth"]
+    dist_std_btc = x["dist_to_vwap48_btc"].rolling(w20d).std(ddof=0).replace(0, np.nan)
+    dist_std_eth = x["dist_to_vwap48_eth"].rolling(w20d).std(ddof=0).replace(0, np.nan)
+    x["dist_to_vwap48_z_btc"] = x["dist_to_vwap48_btc"] / dist_std_btc
+    x["dist_to_vwap48_z_eth"] = x["dist_to_vwap48_eth"] / dist_std_eth
+
+    x["atr14_pct_btc"] = x["atr14_btc"].rolling(w20d).apply(pct_rank_last, raw=False)
+    x["atr14_pct_eth"] = x["atr14_eth"].rolling(w20d).apply(pct_rank_last, raw=False)
+    x["rv48_pct_btc"] = x["rv48_btc"].rolling(w20d).apply(pct_rank_last, raw=False)
+    x["rv48_pct_eth"] = x["rv48_eth"].rolling(w20d).apply(pct_rank_last, raw=False)
+
+    atr_rv_ratio = x["atr14_btc"] / x["rv48_btc"].replace(0, np.nan)
+    x["atr_rv_ratio_pct_btc"] = atr_rv_ratio.rolling(w20d).apply(pct_rank_last, raw=False)
+    x["abs_vwap_dist_pct_btc"] = x["dist_to_vwap48_btc"].abs().rolling(w20d).apply(pct_rank_last, raw=False)
+
+    x["delta_er"] = x["er20_btc"] - x["er20_eth"]
+    x["abs_delta_er_pct"] = x["delta_er"].abs().rolling(w20d).apply(pct_rank_last, raw=False)
+
+    # Backward-compatible aliases used by single-asset family rules.
+    x["atr14"] = x["atr14_btc"]
+    x["rv48"] = x["rv48_btc"]
+    x["er20"] = x["er20_btc"]
+    x["vwap48"] = x["vwap48_btc"]
+    x["atr14_pct"] = x["atr14_pct_btc"]
+    x["rv48_pct"] = x["rv48_pct_btc"]
+    x["dist_to_vwap48"] = x["dist_to_vwap48_btc"]
+    x["dist_to_vwap48_z"] = x["dist_to_vwap48_z_btc"]
+    x["abs_vwap_dist_pct"] = x["abs_vwap_dist_pct_btc"]
+
     return x
 
 
@@ -189,6 +274,178 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
         spread = x["spread_pct"]
         eth_sign = x["eth_slope_sign_1h"]
         btc_sign = x["btc_slope_sign_1h"]
+
+        if hypothesis_id == "H86":
+            require_columns(x, hypothesis_id, ["dt", "eth_slope_sign_1h", "eth_slope_stable_2_1h"])
+            in_window = x["dt"].dt.hour.ge(12) & x["dt"].dt.hour.lt(20)
+            stable = x["eth_slope_stable_2_1h"].fillna(False)
+            mask = in_window & stable & eth_sign.ne(0)
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H87":
+            require_columns(x, hypothesis_id, ["spread_pct", "eth_slope_sign_1h"])
+            regime = pd.Series(
+                np.where(spread.lt(0.10), -1, np.where(spread.ge(0.90), 1, 0)),
+                index=x.index,
+            )
+            transition = regime.ne(regime.shift(1)) & regime.shift(1).notna()
+            candidate = transition & eth_sign.ne(0)
+            idx = dedup_idx(candidate, gap=12)
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+        if hypothesis_id == "H88":
+            require_columns(x, hypothesis_id, ["ret1_abs_btc", "ret1_abs_btc_q40", "ret1_abs_btc_q80", "eth_slope_sign_1h"])
+            vol_mid = x["ret1_abs_btc"].ge(x["ret1_abs_btc_q40"]) & x["ret1_abs_btc"].lt(x["ret1_abs_btc_q80"])
+            mask = vol_mid & eth_sign.ne(0)
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H89":
+            require_columns(x, hypothesis_id, ["eth_slope_z_1h"])
+            z = x["eth_slope_z_1h"]
+            return pd.Series(np.where(z.ge(1.0), 1.0, np.where(z.le(-1.0), -1.0, 0.0)), index=x.index)
+        if hypothesis_id == "H90":
+            require_columns(
+                x,
+                hypothesis_id,
+                [
+                    "btc_slope_sign_1h",
+                    "eth_slope_sign_1h",
+                    "eth_slope_abs_1h",
+                    "eth_slope_abs_q70_1h",
+                    "ret1_abs_btc",
+                    "ret1_abs_btc_q30",
+                    "ret1_abs_btc_q70",
+                ],
+            )
+            agree = btc_sign.eq(eth_sign) & eth_sign.ne(0)
+            eth_abs_gate = x["eth_slope_abs_1h"].ge(x["eth_slope_abs_q70_1h"])
+            vol_mid = x["ret1_abs_btc"].ge(x["ret1_abs_btc_q30"]) & x["ret1_abs_btc"].lt(x["ret1_abs_btc_q70"])
+            candidate = agree & eth_abs_gate & vol_mid
+            idx = dedup_idx(candidate, gap=18)
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+        if hypothesis_id == "H91":
+            require_columns(x, hypothesis_id, ["spread_pct", "eth_slope_sign_1h"])
+            regime = pd.Series(
+                np.where(spread.lt(0.10), -1, np.where(spread.ge(0.90), 1, 0)),
+                index=x.index,
+            )
+            transition = regime.ne(regime.shift(1)) & regime.shift(1).notna()
+            candidate = transition & eth_sign.ne(0)
+            idx = dedup_idx(candidate, gap=10)
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+        if hypothesis_id == "H92":
+            require_columns(x, hypothesis_id, ["eth_slope_sign_1h", "eth_slope_abs_pct_1h"])
+            abs_gate = x["eth_slope_abs_pct_1h"].ge(0.50)
+            long_confirm = eth_sign.eq(1) & eth_sign.shift(1).eq(1) & eth_sign.shift(2).eq(1)
+            short_confirm = eth_sign.eq(-1)
+            return pd.Series(
+                np.where(abs_gate & long_confirm, 1.0, np.where(abs_gate & short_confirm, -1.0, 0.0)),
+                index=x.index,
+            )
+        if hypothesis_id == "H93":
+            require_columns(x, hypothesis_id, ["ret1_abs_btc_pct", "ret1_abs_eth_pct", "eth_slope_sign_1h"])
+            vol_gate = x["ret1_abs_btc_pct"].ge(0.25) & x["ret1_abs_btc_pct"].lt(0.75)
+            shock = x["ret1_abs_eth_pct"].ge(0.95)
+            post_shock_blackout = shock.shift(1).rolling(6, min_periods=1).max().fillna(0).gt(0)
+            eligible = vol_gate & (~shock) & (~post_shock_blackout) & eth_sign.ne(0)
+            return pd.Series(np.where(eligible, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H94":
+            require_columns(x, hypothesis_id, ["dt", "btc_slope_sign_1h", "eth_slope_sign_1h"])
+            hour = x["dt"].dt.hour
+            weekday = x["dt"].dt.dayofweek.le(4)
+            in_window = (hour.ge(7) & hour.lt(11)) | (hour.ge(13) & hour.lt(17))
+            agree = btc_sign.eq(eth_sign) & eth_sign.ne(0)
+            mask = weekday & in_window & agree
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H95":
+            require_columns(x, hypothesis_id, ["eth_slope_z_1h", "eth_slope_sign_1h"])
+            abs_z = x["eth_slope_z_1h"].abs()
+            high = abs_z.ge(1.25) & eth_sign.ne(0)
+            medium = abs_z.ge(0.90) & abs_z.lt(1.25) & eth_sign.ne(0)
+            cand = high | medium
+            cand_idx = np.flatnonzero(cand.fillna(False).to_numpy())
+            sig_arr = eth_sign.to_numpy(dtype=float)
+            high_arr = high.fillna(False).to_numpy()
+            med_arr = medium.fillna(False).to_numpy()
+            out = np.zeros(len(x), dtype=float)
+            last_entry = -10**9
+            for i in cand_idx:
+                i = int(i)
+                if i - last_entry < 6:
+                    continue
+                if high_arr[i] or (med_arr[i] and i - last_entry >= 24):
+                    out[i] = sig_arr[i]
+                    last_entry = i
+            return pd.Series(out, index=x.index)
+        if hypothesis_id == "H96":
+            require_columns(x, hypothesis_id, ["spread_pct", "eth_slope_sign_1h"])
+            regime = pd.Series(
+                np.where(spread.lt(0.10), -1, np.where(spread.ge(0.90), 1, 0)),
+                index=x.index,
+            )
+            prev = regime.shift(1)
+            transition = regime.ne(prev) & prev.notna()
+            enters_tail = transition & prev.eq(0) & regime.ne(0)
+            exits_tail_to_neutral = transition & prev.ne(0) & regime.eq(0)
+            candidate = (enters_tail | exits_tail_to_neutral) & eth_sign.ne(0)
+            direction = np.where(enters_tail, -eth_sign, np.where(exits_tail_to_neutral, eth_sign, 0.0))
+            idx = dedup_idx(candidate, gap=14)
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = np.asarray(direction, dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+        if hypothesis_id == "H97":
+            require_columns(x, hypothesis_id, ["spread_pct", "eth_slope_sign_1h", "eth_slope_abs_pct_1h"])
+            abs_gate = x["eth_slope_abs_pct_1h"].ge(0.60)
+            long_ok = spread.ge(0.10) & eth_sign.gt(0) & abs_gate
+            short_ok = spread.lt(0.10) & eth_sign.lt(0) & abs_gate
+            raw = np.where(long_ok, 1.0, np.where(short_ok, -1.0, 0.0))
+            candidate = pd.Series(raw, index=x.index).ne(0)
+            idx = dedup_idx(candidate, gap=8)
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = np.asarray(raw, dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+        if hypothesis_id == "H98":
+            require_columns(x, hypothesis_id, ["ret1_abs_btc_pct", "eth_slope_sign_1h"])
+            vol_pct = x["ret1_abs_btc_pct"]
+            shock = vol_pct.ge(0.90)
+            shock_exit = shock.shift(1).fillna(False) & (~shock)
+            delay = shock_exit.rolling(4, min_periods=1).max().fillna(0).gt(0)
+            eligible_vol = vol_pct.ge(0.20) & vol_pct.lt(0.90)
+            mask = eligible_vol & (~delay) & eth_sign.ne(0)
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H99":
+            require_columns(x, hypothesis_id, ["dt", "btc_slope_sign_1h", "eth_slope_sign_1h"])
+            hour = x["dt"].dt.hour
+            in_window = (hour.ge(6) & hour.lt(8)) | (hour.ge(12) & hour.lt(14))
+            flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            recent_flip = flip.shift(1).rolling(3, min_periods=1).max().fillna(0).gt(0)
+            agree = btc_sign.eq(eth_sign) & eth_sign.ne(0)
+            mask = in_window & recent_flip & agree
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H100":
+            require_columns(x, hypothesis_id, ["dt", "btc_slope_sign_1h", "eth_slope_sign_1h", "eth_slope_abs_pct_1h", "ret1_abs_btc_pct"])
+            agree = btc_sign.eq(eth_sign) & eth_sign.ne(0)
+            abs_gate = x["eth_slope_abs_pct_1h"].ge(0.75)
+            vol_gate = x["ret1_abs_btc_pct"].ge(0.30) & x["ret1_abs_btc_pct"].lt(0.85)
+            candidate = agree & abs_gate & vol_gate
+            day = x["dt"].dt.floor("D")
+            score = x["eth_slope_abs_pct_1h"].where(candidate)
+            rank = score.groupby(day).rank(method="first", ascending=False)
+            keep = candidate & rank.le(2)
+            return pd.Series(np.where(keep, eth_sign, 0.0), index=x.index)
 
         if hypothesis_id == "H19":
             # Frozen regime tails: long on short-tail, short on long-tail.
@@ -300,6 +557,94 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
             mask = x["vwap_z"].abs().ge(3.0)
             return pd.Series(np.where(mask, -np.sign(x["vwap_z"]), 0.0), index=x.index)
 
+    if family == "volatility_state":
+        if hypothesis_id == "H101":
+            require_columns(x, hypothesis_id, ["atr14_pct", "rv48_pct", "dist_to_vwap48"])
+            vol_ok = x["atr14_pct"].ge(0.65) & x["atr14_pct"].lt(0.90)
+            rv_ok = x["rv48_pct"].ge(0.40) & x["rv48_pct"].lt(0.80)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            mask = vol_ok & rv_ok & sign.ne(0)
+            return pd.Series(np.where(mask, sign, 0.0), index=x.index)
+        if hypothesis_id == "H102":
+            require_columns(x, hypothesis_id, ["atr14_pct", "rv48_pct", "dist_to_vwap48", "dist_to_vwap48_z"])
+            compressed = x["atr14_pct"].lt(0.30) & x["rv48_pct"].lt(0.35)
+            abs_z = x["dist_to_vwap48_z"].abs()
+            breakout = abs_z.gt(1.2) & abs_z.shift(1).le(1.2)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            mask = compressed & breakout & sign.ne(0)
+            return pd.Series(np.where(mask, sign, 0.0), index=x.index)
+        if hypothesis_id == "H103":
+            require_columns(x, hypothesis_id, ["rv48_pct", "atr14", "dist_to_vwap48"])
+            rv_shock = x["rv48_pct"].ge(0.90)
+            atr_decline = x["atr14"].diff().lt(0)
+            decline_3 = atr_decline & atr_decline.shift(1).fillna(False) & atr_decline.shift(2).fillna(False)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            stable_2 = sign.eq(sign.shift(1)) & sign.ne(0)
+            mask = rv_shock & decline_3 & stable_2
+            return pd.Series(np.where(mask, -sign, 0.0), index=x.index)
+        if hypothesis_id == "H104":
+            require_columns(x, hypothesis_id, ["atr_rv_ratio_pct_btc", "abs_vwap_dist_pct", "dist_to_vwap48"])
+            ratio_ok = x["atr_rv_ratio_pct_btc"].ge(0.45) & x["atr_rv_ratio_pct_btc"].lt(0.70)
+            dist_ok = x["abs_vwap_dist_pct"].ge(0.50) & x["abs_vwap_dist_pct"].lt(0.85)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            mask = ratio_ok & dist_ok & sign.ne(0)
+            return pd.Series(np.where(mask, sign, 0.0), index=x.index)
+
+    if family == "efficiency_mean_reversion":
+        if hypothesis_id == "H105":
+            require_columns(x, hypothesis_id, ["er20", "dist_to_vwap48", "dist_to_vwap48_z", "rv48_pct"])
+            low_eff = x["er20"].le(0.25)
+            dist_ok = x["dist_to_vwap48_z"].abs().ge(1.5)
+            rv_ok = x["rv48_pct"].lt(0.85)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            mask = low_eff & dist_ok & rv_ok & sign.ne(0)
+            return pd.Series(np.where(mask, -sign, 0.0), index=x.index)
+        if hypothesis_id == "H106":
+            require_columns(x, hypothesis_id, ["er20", "dist_to_vwap48", "dist_to_vwap48_z", "atr14_pct"])
+            high_eff = x["er20"].ge(0.60)
+            abs_z = x["dist_to_vwap48_z"].abs()
+            dist_ok = abs_z.ge(0.6) & abs_z.lt(1.8)
+            atr_ok = x["atr14_pct"].ge(0.35) & x["atr14_pct"].lt(0.85)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            mask = high_eff & dist_ok & atr_ok & sign.ne(0)
+            return pd.Series(np.where(mask, sign, 0.0), index=x.index)
+        if hypothesis_id == "H107":
+            require_columns(x, hypothesis_id, ["er20", "dist_to_vwap48", "dist_to_vwap48_z", "rv48_pct"])
+            abs_z_ok = x["dist_to_vwap48_z"].abs().ge(0.9)
+            rv_ok = x["rv48_pct"].lt(0.92)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            low_eff = x["er20"].lt(0.40)
+            direction = np.where(low_eff, -sign, sign)
+            mask = abs_z_ok & rv_ok & sign.ne(0)
+            return pd.Series(np.where(mask, direction, 0.0), index=x.index)
+
+    if family == "cross_asset_divergence":
+        if hypothesis_id == "H108":
+            require_columns(x, hypothesis_id, ["delta_er", "abs_delta_er_pct", "dist_to_vwap48_z_btc", "rv48_pct_btc"])
+            div_ok = x["abs_delta_er_pct"].ge(0.85)
+            btc_dist_ok = x["dist_to_vwap48_z_btc"].abs().ge(0.7)
+            btc_rv_ok = x["rv48_pct_btc"].lt(0.90)
+            delta_sign = pd.Series(np.sign(x["delta_er"]), index=x.index)
+            direction = np.where(delta_sign.gt(0), -1.0, np.where(delta_sign.lt(0), 1.0, 0.0))
+            mask = div_ok & btc_dist_ok & btc_rv_ok & delta_sign.ne(0)
+            return pd.Series(np.where(mask, direction, 0.0), index=x.index)
+        if hypothesis_id == "H109":
+            require_columns(x, hypothesis_id, ["atr14_pct_eth", "atr14_pct_btc", "rv48_pct_btc", "dist_to_vwap48_eth"])
+            atr_state = x["atr14_pct_eth"].ge(0.70) & x["atr14_pct_btc"].lt(0.50)
+            btc_rv_ok = x["rv48_pct_btc"].ge(0.30) & x["rv48_pct_btc"].lt(0.85)
+            eth_sign = pd.Series(np.sign(x["dist_to_vwap48_eth"]), index=x.index)
+            mask = atr_state & btc_rv_ok & eth_sign.ne(0)
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H110":
+            require_columns(x, hypothesis_id, ["dist_to_vwap48_btc", "dist_to_vwap48_eth", "dist_to_vwap48_z_btc", "dist_to_vwap48_z_eth", "er20_btc", "er20_eth"])
+            btc_sign = pd.Series(np.sign(x["dist_to_vwap48_btc"]), index=x.index)
+            eth_sign = pd.Series(np.sign(x["dist_to_vwap48_eth"]), index=x.index)
+            opposite = btc_sign.ne(0) & eth_sign.ne(0) & btc_sign.ne(eth_sign)
+            dist_ok = x["dist_to_vwap48_z_btc"].abs().ge(1.0) & x["dist_to_vwap48_z_eth"].abs().ge(1.0)
+            er_ok = x["er20_btc"].le(0.50) & x["er20_eth"].le(0.50)
+            mask = opposite & dist_ok & er_ok
+            return pd.Series(np.where(mask, -btc_sign, 0.0), index=x.index)
+
     if family == "range_structure":
         if hypothesis_id == "H28":
             close = x["close_btc"]
@@ -358,9 +703,23 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
     if hypothesis_id not in {"H61", "H76", "H77"}:
         entry_offset = 0
 
+    effective_horizon = pd.Series(int(horizon), index=x.index, dtype=int)
+    if hypothesis_id == "H91":
+        spread = x["spread_pct"]
+        regime = pd.Series(
+            np.where(spread.lt(0.10), -1, np.where(spread.ge(0.90), 1, 0)),
+            index=x.index,
+        )
+        prev = regime.shift(1)
+        is_tail_to_neutral = prev.ne(0) & regime.eq(0)
+        effective_horizon = pd.Series(np.where(is_tail_to_neutral, 4, int(horizon)), index=x.index, dtype=int)
+
     close_s = x[trade_close_col]
     x["entry_px"] = close_s.shift(-entry_offset)
-    x["exit_px"] = close_s.shift(-(entry_offset + horizon))
+    x["exit_px"] = np.nan
+    for h in sorted({int(v) for v in effective_horizon.dropna().unique().tolist()}):
+        mask_h = effective_horizon.eq(h)
+        x.loc[mask_h, "exit_px"] = close_s.shift(-(entry_offset + int(h))).loc[mask_h]
     x["fwd_r"] = x["exit_px"] / x["entry_px"] - 1.0
 
     idx = dedup_idx(x["entry"], horizon)
@@ -389,7 +748,7 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         if direction == 0:
             continue
         ent_i = i + entry_offset
-        ex_i = ent_i + horizon
+        ex_i = ent_i + int(effective_horizon.iloc[i])
         if ent_i < 0 or ex_i >= len(close_arr):
             continue
         ep = close_arr[ent_i]
@@ -563,8 +922,8 @@ def main() -> None:
     args = parse_args()
     if args.timeframe != "5m":
         raise ValueError("research_family_runner supports timeframe=5m only.")
-    if int(args.horizon) not in {4, 6, 8}:
-        raise ValueError("Standard runner expects horizon in {4,6,8}.")
+    if int(args.horizon) not in {4, 6, 8, 10}:
+        raise ValueError("Standard runner expects horizon in {4,6,8,10}.")
     if args.family not in SUPPORTED_FAMILIES:
         raise ValueError(f"Unsupported family: {args.family}")
 

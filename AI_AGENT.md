@@ -1,7 +1,7 @@
 # AI_AGENT.md (compact handoff)
 ## Regime Crypto Bot — Current Operating Brief
 
-Last Updated: 2026-02-19 UTC (Postgres rc migration executed in-session)
+Last Updated: 2026-02-19 UTC (H86-H100 batch + paper-candidate promotion cycle completed)
 
 ## 1) Mission
 - Run strict, no-tuning hypothesis research and validate only with fixed OOS protocols.
@@ -53,7 +53,7 @@ Note:
 - H35: stats-only decile maps logged (no trading logic)
 - H36: `PASS gross / BORDERLINE 8 / FAIL 10` (frozen)
 
-Next unused hypothesis ID after H85: H86 (available).
+Next unused hypothesis ID after H100: H101 (available).
 
 ## 5b) Phase 2 Results (Replication-Only Additions)
 - H37-H56: mostly `FAIL`; H39 is the primary `PASS`.
@@ -64,6 +64,16 @@ Next unused hypothesis ID after H85: H86 (available).
 - H78/H79: extra-cost stress remained positive through 15 bps.
 - UTC window replication: 00:00-08:00 is weaker; 08:00-24:00 is strongest.
 - Implementation note: generic family routing is active via `scripts/research_family_runner.py` with family dispatch in `scripts/run_hypothesis_batch.py`.
+
+## 5c) Latest Governance Outcomes (2026-02-19)
+- H86-H90 (standard batch): `H86 FAIL`, `H87 INCONCLUSIVE`, `H88 FAIL`, `H89 FAIL`, `H90 FAIL`.
+- H91-H100 (batch): `H91 INCONCLUSIVE`, `H92 FAIL`, `H93 FAIL`, `H94 FAIL`, `H95 BORDERLINE`, `H96 INCONCLUSIVE`, `H97 INCONCLUSIVE`, `H98 FAIL`, `H99 INCONCLUSIVE`, `H100 FAIL`.
+- Capital_Committee re-review completed after integrity reruns:
+  - `H76`, `H77`, `H79`, `H81`, `H78`, `H82` promoted to `paper_candidate`.
+- Paper protocol docs added for upcoming stage:
+  - `docs/paper_portfolio_protocol.md`
+  - `docs/paper_portfolio_executor_checklist.md`
+  - `docs/paper_portfolio_runner_spec.md`
 
 ## 6) Live Paper Runner Status
 - Script: `scripts/run_paper_h32_live.py`
@@ -79,12 +89,24 @@ Next unused hypothesis ID after H85: H86 (available).
 ## 7) Critical Commands
 - Preferred Postgres-safe batch execution (single-shell mode):
   - `scripts/run_batch_pg.sh`
+- Mandatory DB preflight (same shell, immediately before DB-dependent runs):
+  - `export RC_DB_DSN='postgresql://rc_user:wemyss@localhost:5432/regime_crypto'`
+  - `.venv/bin/python - <<'PY'`
+  - `import os, psycopg`
+  - `with psycopg.connect(os.environ["RC_DB_DSN"]) as c:`
+  - `    with c.cursor() as cur:`
+  - `        cur.execute("select 1")`
+  - `        print(cur.fetchone())`
+  - `PY`
 - Start live paper runner:
   - `PYTHONPATH=. .venv/bin/python scripts/run_paper_h32_live.py --ingest`
 - Verbose live monitoring:
   - `PYTHONPATH=. .venv/bin/python scripts/run_paper_h32_live.py --ingest --verbose --poll-seconds 30`
 - Replay verification:
   - `PYTHONPATH=. .venv/bin/python scripts/run_paper_h32_live.py --replay-mode --replay-days 30 --replay-tolerance-bars 1`
+- Paper portfolio stage references (use only when paper protocol is active):
+  - `docs/paper_portfolio_protocol.md`
+  - `docs/paper_portfolio_executor_checklist.md`
 
 ## 8) Logging Rules
 - For each new hypothesis run, append:
@@ -147,7 +169,7 @@ Next unused hypothesis ID after H85: H86 (available).
   - DSN configured in local `.env`:
     - `RC_DB_DSN="postgresql://rc_user:wemyss@localhost:5432/regime_crypto"`
   - Runtime requirement:
-    - Execute DSN precheck and `make batch` in the same shell/session.
+    - Execute DSN precheck and `scripts/run_batch_pg.sh` in the same shell/session.
 
 ## 12) First-Run Commands After DB Creation
 Status: completed once in this repo session. Re-run only if rebuilding DB.
@@ -168,4 +190,4 @@ Status: completed once in this repo session. Re-run only if rebuilding DB.
 7. Optional rc sanity check (Postgres scope):
    - `PYTHONPATH=. .venv/bin/python scripts/health_report.py --dsn "$RC_DB_DSN" --days 30`
 8. Batch runs against Postgres source:
-   - `make batch`
+   - `scripts/run_batch_pg.sh`

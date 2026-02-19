@@ -1,0 +1,12 @@
+{
+  "context": {
+    "cost_mode": "bps8",
+    "days": 180,
+    "hypothesis_ids": "H76,H77,H79,H81,H78,H82",
+    "mode": "standalone",
+    "output_json": "results/paper/20260219T063518Z_standalone_180d.json"
+  },
+  "error": "connection is bad: no error details available",
+  "timestamp_utc": "2026-02-19T06:35:19+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_paper_portfolio.py\", line 575, in main\n    payload = execute(args)\n              ^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_paper_portfolio.py\", line 500, in execute\n    runs = collect_hypothesis_runs(hypothesis_ids=hypothesis_ids, days=int(args.days), dsn=dsn)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_paper_portfolio.py\", line 476, in collect_hypothesis_runs\n    events = build_events(days=days, horizon=horizon, hypothesis_id=hyp_id, family=family, dsn=dsn)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 547, in build_events\n    x = load_frame(days=days, dsn=dsn)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 88, in load_frame\n    m = load_btc_eth_merged_last_days(dsn=dsn, days=days).copy()\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/app/db/market_data.py\", line 128, in load_btc_eth_merged_last_days\n    with rc.connect(dsn) as conn:\n         ^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/app/db/rc.py\", line 24, in connect\n    return psycopg.connect(dsn)\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/psycopg/connection.py\", line 122, in connect\n    raise last_ex.with_traceback(None)\npsycopg.OperationalError: connection is bad: no error details available\n"
+}

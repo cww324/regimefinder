@@ -1,0 +1,101 @@
+{
+  "config": {
+    "bootstrap_iters": 3000,
+    "cooldown_bars": 0,
+    "daily_loss_stop_pct": 0.03,
+    "dsn_source": "RC_DB_DSN",
+    "max_asset_exposure": 1.0,
+    "max_gross_exposure": 1.0,
+    "max_strategy_weight": 0.35,
+    "report_csv_prefix": "",
+    "seed": 42,
+    "timeframe": "5m"
+  },
+  "cost_mode": "bps8",
+  "dataset": {
+    "bar_count": 51728,
+    "db_last_modified": {
+      "BTC-USD": "2026-02-19T03:00:00+00:00",
+      "ETH-USD": "2026-02-19T03:00:00+00:00"
+    },
+    "db_path": {
+      "BTC-USD": "postgres:rc.candles",
+      "ETH-USD": "postgres:rc.candles"
+    },
+    "end_ts": "2026-02-19T03:00:00+00:00",
+    "start_ts": "2025-08-23T06:35:00+00:00"
+  },
+  "hypothesis_ids": [
+    "H76"
+  ],
+  "metrics": {
+    "aggregate": {
+      "hypothesis_count": 1,
+      "mean_expectancy": 0.0015641702416551904,
+      "mean_max_drawdown": -0.013667737959180859,
+      "mean_net_return": 0.5193045202295232,
+      "mean_win_rate": 0.6295180722891566,
+      "trade_count": 332,
+      "turnover": 332.0
+    },
+    "per_hypothesis": {
+      "H76": {
+        "asset": "BTC-USD",
+        "expectancy": 0.0015641702416551904,
+        "hypothesis_id": "H76",
+        "max_drawdown": -0.013667737959180859,
+        "monthly_stability": {
+          "2025-08": {
+            "mean_return": 0.0011388035843512788,
+            "net_return": 0.020498464518323017,
+            "trades": 18,
+            "win_rate": 0.6666666666666666
+          },
+          "2025-09": {
+            "mean_return": 0.0010048172906911667,
+            "net_return": 0.05928422015077884,
+            "trades": 59,
+            "win_rate": 0.5423728813559322
+          },
+          "2025-10": {
+            "mean_return": 0.0007453784915235818,
+            "net_return": 0.043977330999891324,
+            "trades": 59,
+            "win_rate": 0.6101694915254238
+          },
+          "2025-11": {
+            "mean_return": 0.002258945874235134,
+            "net_return": 0.1265009689571675,
+            "trades": 56,
+            "win_rate": 0.6428571428571429
+          },
+          "2025-12": {
+            "mean_return": 0.0022788467091551744,
+            "net_return": 0.11394233545775873,
+            "trades": 50,
+            "win_rate": 0.68
+          },
+          "2026-01": {
+            "mean_return": 0.0015455401755200913,
+            "net_return": 0.08964133018016529,
+            "trades": 58,
+            "win_rate": 0.6206896551724138
+          },
+          "2026-02": {
+            "mean_return": 0.002045620936419955,
+            "net_return": 0.06545986996543857,
+            "trades": 32,
+            "win_rate": 0.71875
+          }
+        },
+        "net_return": 0.5193045202295232,
+        "trade_count": 332,
+        "turnover": 332.0,
+        "win_rate": 0.6295180722891566
+      }
+    }
+  },
+  "mode": "standalone",
+  "timestamp_utc": "2026-02-19T06:32:40+00:00",
+  "window_days": 180
+}
