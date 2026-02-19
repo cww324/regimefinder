@@ -7,6 +7,7 @@ from rich.table import Table
 
 from app.config import get_settings
 from app.data.db import connect, init_db
+from app.db import rc
 from app.strategy.trend import trend_regime
 
 
@@ -19,6 +20,7 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Optional strategy_name filter (e.g., h2s_vol_expert_l0_h10).",
     )
+    parser.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema")
     return parser.parse_args()
 
 
@@ -48,35 +50,86 @@ def max_loss_streak(pnls):
     return max_streak
 
 
-def main(days: int, last_trades: int, strategy_name: str) -> None:
+def main(days: int, last_trades: int, strategy_name: str, dsn: str = "") -> None:
     settings = get_settings()
-    conn = connect(settings.db_path)
-    init_db(conn)
-
     cutoff_ts = int(datetime.now(timezone.utc).timestamp()) - (days * 86400)
-
-    if strategy_name:
-        trades = pd.read_sql_query(
-            """
-            SELECT * FROM paper_trades
-            WHERE exit_ts >= ? AND strategy_name = ?
-            ORDER BY exit_ts
-            """,
-            conn,
-            params=(cutoff_ts, strategy_name),
-        )
-    else:
-        trades = pd.read_sql_query(
-            """
-            SELECT * FROM paper_trades
-            WHERE exit_ts >= ?
-            ORDER BY exit_ts
-            """,
-            conn,
-            params=(cutoff_ts,),
-        )
-
     console = Console()
+
+    if dsn:
+        cutoff_dt = datetime.fromtimestamp(cutoff_ts, tz=timezone.utc)
+        where = "WHERE p.closed_at IS NOT NULL AND p.opened_at >= %s"
+        params: list[object] = [cutoff_dt]
+        if strategy_name:
+            where += " AND h.hypothesis_id = %s"
+            params.append(strategy_name)
+        with rc.connect(dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT
+                        p.position_id AS id,
+                        EXTRACT(EPOCH FROM p.opened_at)::bigint AS entry_ts,
+                        EXTRACT(EPOCH FROM p.closed_at)::bigint AS exit_ts,
+                        p.avg_entry_price AS entry_price,
+                        p.avg_exit_price AS exit_price,
+                        'closed' AS exit_reason,
+                        COALESCE(p.realized_pnl, 0) AS pnl,
+                        NULL::double precision AS pnl_pct,
+                        p.qty,
+                        p.max_adverse_excursion AS mae_r,
+                        p.max_favorable_excursion AS mfe_r,
+                        NULL::double precision AS er,
+                        NULL::double precision AS atr,
+                        h.hypothesis_id AS strategy_name
+                    FROM rc.paper_positions p
+                    JOIN rc.hypotheses h ON h.hypothesis_pk = p.hypothesis_pk
+                    {where}
+                    ORDER BY p.closed_at
+                    """,
+                    tuple(params),
+                )
+                rows = cur.fetchall()
+        cols = [
+            "id",
+            "entry_ts",
+            "exit_ts",
+            "entry_price",
+            "exit_price",
+            "exit_reason",
+            "pnl",
+            "pnl_pct",
+            "qty",
+            "mae_r",
+            "mfe_r",
+            "er",
+            "atr",
+            "strategy_name",
+        ]
+        trades = pd.DataFrame(rows, columns=cols)
+    else:
+        conn = connect(settings.db_path)
+        init_db(conn)
+        if strategy_name:
+            trades = pd.read_sql_query(
+                """
+                SELECT * FROM paper_trades
+                WHERE exit_ts >= ? AND strategy_name = ?
+                ORDER BY exit_ts
+                """,
+                conn,
+                params=(cutoff_ts, strategy_name),
+            )
+        else:
+            trades = pd.read_sql_query(
+                """
+                SELECT * FROM paper_trades
+                WHERE exit_ts >= ?
+                ORDER BY exit_ts
+                """,
+                conn,
+                params=(cutoff_ts,),
+            )
+
 
     if trades.empty:
         console.print("no trades found")
@@ -85,9 +138,11 @@ def main(days: int, last_trades: int, strategy_name: str) -> None:
     # Use stored sizing fields when available
     if "risk_usd" in trades.columns and trades["risk_usd"].notna().any():
         trades["r"] = trades["pnl"] / trades["risk_usd"].replace(0, pd.NA)
-    else:
+    elif "atr" in trades.columns and trades["atr"].notna().any():
         stop_dist = trades["atr"] * 1.2
         trades["r"] = trades["pnl"] / stop_dist.replace(0, pd.NA)
+    else:
+        trades["r"] = pd.NA
 
     wins = trades["pnl"] > 0
     losses = trades["pnl"] <= 0
@@ -154,27 +209,28 @@ def main(days: int, last_trades: int, strategy_name: str) -> None:
 
     # Regime performance table (using ER at entry)
     trades["entry_regime"] = trades["er"].apply(lambda x: trend_regime(float(x)))
-    by_regime = trades.groupby("entry_regime").apply(
-        lambda df: pd.Series(
-            {
-                "count": len(df),
-                "win_rate": (df["pnl"] > 0).mean(),
-                "avg_r": df["r"].mean(),
-            }
-        )
-    ).reset_index()
+    if "er" in trades.columns and trades["er"].notna().any():
+        by_regime = trades.groupby("entry_regime").apply(
+            lambda df: pd.Series(
+                {
+                    "count": len(df),
+                    "win_rate": (df["pnl"] > 0).mean(),
+                    "avg_r": df["r"].mean(),
+                }
+            )
+        ).reset_index()
 
-    t_regime = Table(title="Regime Performance")
-    for col in ["entry_regime", "count", "win_rate", "avg_r"]:
-        t_regime.add_column(col)
-    for _, row in by_regime.iterrows():
-        t_regime.add_row(
-            str(row["entry_regime"]),
-            str(int(row["count"])),
-            f"{row['win_rate']:.2%}",
-            f"{row['avg_r']:.3f}",
-        )
-    console.print(t_regime)
+        t_regime = Table(title="Regime Performance")
+        for col in ["entry_regime", "count", "win_rate", "avg_r"]:
+            t_regime.add_column(col)
+        for _, row in by_regime.iterrows():
+            t_regime.add_row(
+                str(row["entry_regime"]),
+                str(int(row["count"])),
+                f"{row['win_rate']:.2%}",
+                f"{row['avg_r']:.3f}" if pd.notna(row["avg_r"]) else "n/a",
+            )
+        console.print(t_regime)
 
     # Last trades table
     last = trades.sort_values("exit_ts").tail(last_trades)
@@ -217,8 +273,8 @@ def main(days: int, last_trades: int, strategy_name: str) -> None:
             f"{stop_dist_val:.2f}",
             f"{pos_size:.4f}",
             f"{cost_usd:.2f}",
-            f"{row['er']:.3f}",
-            f"{row['atr']:.2f}",
+            f"{row['er']:.3f}" if pd.notna(row.get("er")) else "n/a",
+            f"{row['atr']:.2f}" if pd.notna(row.get("atr")) else "n/a",
             str(row["exit_reason"]),
         )
         equity += float(row["pnl"])
@@ -252,4 +308,4 @@ def main(days: int, last_trades: int, strategy_name: str) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.days, args.last_trades, args.strategy_name)
+    main(args.days, args.last_trades, args.strategy_name, args.dsn)

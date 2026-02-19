@@ -6,6 +6,7 @@ import pandas as pd
 
 from app.config import get_settings
 from app.data.db import connect, init_db
+from app.db.market_data import load_symbol_candles_with_features_last_days
 
 
 HORIZONS = [5, 10, 20]
@@ -25,6 +26,7 @@ def parse_args() -> argparse.Namespace:
         help="Comma-separated timeframes (e.g., 5m,15m,1h).",
     )
     parser.add_argument("--save", action="store_true", help="Save outputs to logs/")
+    parser.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema")
     return parser.parse_args()
 
 
@@ -166,24 +168,30 @@ def _resample(df: pd.DataFrame, tf: str) -> pd.DataFrame:
     return agg[["ts", "open", "high", "low", "close", "volume"]]
 
 
-def main(days: int, timeframes: List[str], save: bool) -> None:
-    settings = get_settings()
-    conn = connect(settings.db_path)
-    init_db(conn)
+def main(days: int, timeframes: List[str], save: bool, dsn: str = "") -> None:
+    if dsn:
+        base = load_symbol_candles_with_features_last_days(
+            dsn=dsn, venue_code="coinbase", symbol_code="BTC-USD", timeframe_code="5m", days=days
+        )[["ts", "open", "high", "low", "close", "volume", "atr14", "er20", "rv48"]].copy()
+        conn = None
+    else:
+        settings = get_settings()
+        conn = connect(settings.db_path)
+        init_db(conn)
 
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    base = pd.read_sql_query(
-        """
-        SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
-               f.atr14, f.er20, f.rv48
-        FROM candles_5m c
-        JOIN features_5m f ON f.ts = c.ts
-        WHERE c.ts >= ?
-        ORDER BY c.ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+        cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
+        base = pd.read_sql_query(
+            """
+            SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
+                   f.atr14, f.er20, f.rv48
+            FROM candles_5m c
+            JOIN features_5m f ON f.ts = c.ts
+            WHERE c.ts >= ?
+            ORDER BY c.ts
+            """,
+            conn,
+            params=(cutoff_ts,),
+        )
 
     if base.empty:
         print("no data")
@@ -217,22 +225,23 @@ def main(days: int, timeframes: List[str], save: bool) -> None:
             with open("logs/summary.log", "a", encoding="utf-8") as f:
                 f.write(f"[{ts}] drift_study tf={tf} days={days} rows_er={len(er_table)} rows_br={len(br_table)}\n")
 
-    trades = pd.read_sql_query(
-        """
-        SELECT exit_reason, r_multiple
-        FROM paper_trades
-        WHERE exit_ts >= ?
-        ORDER BY exit_ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
-    print("Stop-exit R stats (given current fill model):")
-    print(stop_exit_r_stats(trades).to_string(index=False))
+    if conn is not None:
+        trades = pd.read_sql_query(
+            """
+            SELECT exit_reason, r_multiple
+            FROM paper_trades
+            WHERE exit_ts >= ?
+            ORDER BY exit_ts
+            """,
+            conn,
+            params=(cutoff_ts,),
+        )
+        print("Stop-exit R stats (given current fill model):")
+        print(stop_exit_r_stats(trades).to_string(index=False))
 
 
 if __name__ == "__main__":
     args = parse_args()
     tfs = [t.strip() for t in args.timeframes.split(",") if t.strip()]
     save = args.save
-    main(args.days, tfs, save)
+    main(args.days, tfs, save, args.dsn)

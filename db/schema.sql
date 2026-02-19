@@ -271,6 +271,32 @@ CREATE TABLE IF NOT EXISTS rc.paper_positions (
 
 CREATE INDEX IF NOT EXISTS idx_paper_positions_open ON rc.paper_positions (status, symbol_id, opened_at DESC);
 
+CREATE TABLE IF NOT EXISTS rc.paper_signal_snapshots (
+    snapshot_id               BIGSERIAL PRIMARY KEY,
+    position_id               BIGINT NOT NULL REFERENCES rc.paper_positions(position_id) ON DELETE CASCADE,
+    hypothesis_pk             BIGINT NOT NULL REFERENCES rc.hypotheses(hypothesis_pk),
+    symbol_id                 BIGINT NOT NULL REFERENCES rc.symbols(symbol_id),
+    timeframe_id              SMALLINT NOT NULL REFERENCES rc.timeframes(timeframe_id),
+    signal_ts                 TIMESTAMPTZ NOT NULL,
+    entry_ts                  TIMESTAMPTZ NOT NULL,
+    signal_open               NUMERIC(20, 10),
+    signal_high               NUMERIC(20, 10),
+    signal_low                NUMERIC(20, 10),
+    signal_close              NUMERIC(20, 10),
+    signal_volume             NUMERIC(30, 10),
+    atr14                     DOUBLE PRECISION,
+    er20                      DOUBLE PRECISION,
+    rv48                      DOUBLE PRECISION,
+    vwap48                    DOUBLE PRECISION,
+    regime                    TEXT,
+    metadata                  JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (position_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_paper_signal_snapshots_signal_ts ON rc.paper_signal_snapshots (signal_ts DESC);
+
 CREATE TABLE IF NOT EXISTS rc.paper_daily_summary (
     summary_id               BIGSERIAL PRIMARY KEY,
     trade_date               DATE NOT NULL,

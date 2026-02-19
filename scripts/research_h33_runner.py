@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from app.db.market_data import load_btc_eth_merged_last_days
+
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Deterministic non-live H33 research runner.")
@@ -18,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--bootstrap-iters", type=int, default=3000)
     p.add_argument("--output-json", type=str, required=True)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema data source.")
     return p.parse_args()
 
 
@@ -58,19 +61,23 @@ def cost_value(mode: str) -> float:
     raise ValueError(f"unsupported cost mode: {mode}")
 
 
-def build_h33_events(days: int, horizon: int) -> pd.DataFrame:
+def build_h33_events(days: int, horizon: int, dsn: str = "") -> pd.DataFrame:
     # H33 symmetry mirror of H32: same regime gate, opposite trade direction.
-    btc_con = sqlite3.connect("data/market.sqlite")
-    eth_con = sqlite3.connect("data/market_eth.sqlite")
+    if dsn:
+        m = load_btc_eth_merged_last_days(dsn=dsn, days=days).copy()
+        m = m[["ts", "close_btc", "close_eth"]].sort_values("ts").reset_index(drop=True)
+    else:
+        btc_con = sqlite3.connect("data/market.sqlite")
+        eth_con = sqlite3.connect("data/market_eth.sqlite")
 
-    btc = pd.read_sql_query("SELECT ts, close FROM candles_5m ORDER BY ts", btc_con)
-    eth = pd.read_sql_query("SELECT ts, close FROM candles_5m ORDER BY ts", eth_con)
+        btc = pd.read_sql_query("SELECT ts, close FROM candles_5m ORDER BY ts", btc_con)
+        eth = pd.read_sql_query("SELECT ts, close FROM candles_5m ORDER BY ts", eth_con)
 
-    cutoff = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
-    btc = btc[btc.ts >= cutoff].copy().reset_index(drop=True)
-    eth = eth[eth.ts >= cutoff].copy().reset_index(drop=True)
+        cutoff = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
+        btc = btc[btc.ts >= cutoff].copy().reset_index(drop=True)
+        eth = eth[eth.ts >= cutoff].copy().reset_index(drop=True)
 
-    m = btc.merge(eth, on="ts", how="inner", suffixes=("_btc", "_eth")).sort_values("ts").reset_index(drop=True)
+        m = btc.merge(eth, on="ts", how="inner", suffixes=("_btc", "_eth")).sort_values("ts").reset_index(drop=True)
     m["dt"] = pd.to_datetime(m["ts"], unit="s", utc=True)
 
     h1 = (
@@ -190,7 +197,7 @@ def main() -> None:
     cost = cost_value(mode)
     train_days, test_days, step_days = [int(x) for x in args.wf]
 
-    events = build_h33_events(days=int(args.days), horizon=int(args.horizon))
+    events = build_h33_events(days=int(args.days), horizon=int(args.horizon), dsn=args.dsn.strip())
     returns = (events["gross_r"] - cost).to_numpy(dtype=float)
     n = int(len(returns))
     mean = float(returns.mean()) if n else 0.0

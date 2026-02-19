@@ -1,7 +1,7 @@
 # AI_AGENT.md (compact handoff)
 ## Regime Crypto Bot — Current Operating Brief
 
-Last Updated: 2026-02-18 UTC
+Last Updated: 2026-02-18 UTC (Postgres rc migration handoff added)
 
 ## 1) Mission
 - Run strict, no-tuning hypothesis research and validate only with fixed OOS protocols.
@@ -18,9 +18,11 @@ Note:
 
 ## 3) Data/Environment
 - Primary data: Coinbase 5m candles, BTC + ETH.
-- Local DBs:
-  - `data/market.sqlite` (BTC)
-  - `data/market_eth.sqlite` (ETH)
+- Active migration target:
+  - Postgres `rc.*` schema (multi-asset canonical store)
+- Legacy DBs (read-only sanity reference only):
+  - `data/market.sqlite`
+  - `data/market_eth.sqlite`
 - Typical window in current findings: ~180 days (~51k 5m bars).
 
 ## 4) Frozen Research Protocol (Hard Guardrails)
@@ -116,3 +118,36 @@ Next unused hypothesis ID after H85: H86 (available).
   4. Read `results/summary.json`
   5. Run `make batch` again
 - Do not change frozen hypotheses during unattended batch execution.
+
+## 11) Postgres RC Migration Status (Resume Here)
+- Scope completed in code:
+  - `db/schema.sql` and `db/seed.sql` are prepared.
+  - Backfill pipeline now targets Postgres: `scripts/backfill_5m.py --dsn ...` (BTC+ETH by default).
+  - Feature pipeline supports Postgres: `scripts/compute_features.py --dsn ...`.
+  - Batch/research runners support Postgres via `--dsn`; `scripts/run_hypothesis_batch.py` auto-passes DSN from `RC_DB_DSN`.
+  - Sanity compare script exists: `scripts/sanity_compare_legacy_vs_rc.py`.
+  - Dashboard/health/report/audit scripts have optional `--dsn` support.
+  - Signal snapshot support added:
+    - table: `rc.paper_signal_snapshots`
+    - capture script: `scripts/capture_paper_signal_snapshots.py`
+- Not yet executed in this repo session:
+  - Create live Postgres DB and apply schema.
+  - Seed reference rows.
+  - Backfill candles into `rc.candles`.
+
+## 12) First-Run Commands After DB Creation
+1. Export DSN:
+   - `export RC_DB_DSN='postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require'`
+2. Apply schema:
+   - `psql "$RC_DB_DSN" -f db/schema.sql`
+3. Seed venue/timeframe/symbols:
+   - `make db-seed`
+4. Backfill candles:
+   - `PYTHONPATH=. .venv/bin/python scripts/backfill_5m.py --dsn "$RC_DB_DSN" --days 180`
+5. Compute features:
+   - `PYTHONPATH=. .venv/bin/python scripts/compute_features.py --dsn "$RC_DB_DSN" --symbol BTC-USD --days 365`
+   - `PYTHONPATH=. .venv/bin/python scripts/compute_features.py --dsn "$RC_DB_DSN" --symbol ETH-USD --days 365`
+6. Sanity check overlap vs legacy:
+   - `PYTHONPATH=. .venv/bin/python scripts/sanity_compare_legacy_vs_rc.py --dsn "$RC_DB_DSN" --days 30`
+7. Batch runs against Postgres source:
+   - `make batch`

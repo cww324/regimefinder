@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import pandas as pd
 
 from app.data.db import connect, init_db
+from app.db.market_data import load_symbol_candles_last_days, load_symbol_candles_with_features_last_days
 
 
 HORIZONS = [5, 10, 20]
@@ -19,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--hypothesis", required=True, help="Hypothesis id (e.g., H1)")
     parser.add_argument("--days", type=int, default=180, help="Lookback window in days.")
     parser.add_argument("--window", type=int, default=2000, help="Rolling window for percentiles.")
+    parser.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema")
     return parser.parse_args()
 
 
@@ -54,12 +56,35 @@ def append_findings(hypothesis: str, header: str, table_text: str, days: int, wi
         )
 
 
-def run_h1(days: int, window: int) -> pd.DataFrame:
+def _load_close(days: int, dsn: str = "") -> pd.DataFrame:
+    if dsn:
+        return load_symbol_candles_last_days(
+            dsn=dsn, venue_code="coinbase", symbol_code="BTC-USD", timeframe_code="5m", days=days
+        )[["ts", "close"]].copy()
     conn = connect("data/market.sqlite")
     init_db(conn)
-
     cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
+    return pd.read_sql_query(
+        """
+        SELECT ts, close
+        FROM candles_5m
+        WHERE ts >= ?
+        ORDER BY ts
+        """,
+        conn,
+        params=(cutoff_ts,),
+    )
+
+
+def _load_close_rv(days: int, dsn: str = "") -> pd.DataFrame:
+    if dsn:
+        return load_symbol_candles_with_features_last_days(
+            dsn=dsn, venue_code="coinbase", symbol_code="BTC-USD", timeframe_code="5m", days=days
+        )[["ts", "close", "rv48"]].copy()
+    conn = connect("data/market.sqlite")
+    init_db(conn)
+    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
+    return pd.read_sql_query(
         """
         SELECT c.ts, c.close, f.rv48
         FROM candles_5m c
@@ -70,6 +95,31 @@ def run_h1(days: int, window: int) -> pd.DataFrame:
         conn,
         params=(cutoff_ts,),
     )
+
+
+def _load_open_close_atr_rv(days: int, dsn: str = "") -> pd.DataFrame:
+    if dsn:
+        return load_symbol_candles_with_features_last_days(
+            dsn=dsn, venue_code="coinbase", symbol_code="BTC-USD", timeframe_code="5m", days=days
+        )[["ts", "open", "close", "atr14", "rv48"]].copy()
+    conn = connect("data/market.sqlite")
+    init_db(conn)
+    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
+    return pd.read_sql_query(
+        """
+        SELECT c.ts, c.open, c.close, f.atr14, f.rv48
+        FROM candles_5m c
+        JOIN features_5m f ON f.ts = c.ts
+        WHERE c.ts >= ?
+        ORDER BY c.ts
+        """,
+        conn,
+        params=(cutoff_ts,),
+    )
+
+
+def run_h1(days: int, window: int, dsn: str = "") -> pd.DataFrame:
+    df = _load_close_rv(days=days, dsn=dsn)
 
     if df.empty:
         raise SystemExit("no data")
@@ -88,21 +138,8 @@ def run_h1(days: int, window: int) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def run_h2(days: int, window: int) -> pd.DataFrame:
-    conn = connect("data/market.sqlite")
-    init_db(conn)
-
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
-        """
-        SELECT ts, close
-        FROM candles_5m
-        WHERE ts >= ?
-        ORDER BY ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+def run_h2(days: int, window: int, dsn: str = "") -> pd.DataFrame:
+    df = _load_close(days=days, dsn=dsn)
 
     if df.empty:
         raise SystemExit("no data")
@@ -128,21 +165,8 @@ def run_h2(days: int, window: int) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def run_h2s(days: int, window: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    conn = connect("data/market.sqlite")
-    init_db(conn)
-
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
-        """
-        SELECT ts, close
-        FROM candles_5m
-        WHERE ts >= ?
-        ORDER BY ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+def run_h2s(days: int, window: int, dsn: str = "") -> tuple[pd.DataFrame, pd.DataFrame]:
+    df = _load_close(days=days, dsn=dsn)
 
     if df.empty:
         raise SystemExit("no data")
@@ -184,22 +208,8 @@ def run_h2s(days: int, window: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     return pd.DataFrame(cont_rows), pd.DataFrame(fwd_rows)
 
 
-def run_h2s_vol(days: int, window: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    conn = connect("data/market.sqlite")
-    init_db(conn)
-
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
-        """
-        SELECT c.ts, c.close, f.rv48
-        FROM candles_5m c
-        JOIN features_5m f ON f.ts = c.ts
-        WHERE c.ts >= ?
-        ORDER BY c.ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+def run_h2s_vol(days: int, window: int, dsn: str = "") -> tuple[pd.DataFrame, pd.DataFrame]:
+    df = _load_close_rv(days=days, dsn=dsn)
 
     if df.empty:
         raise SystemExit("no data")
@@ -314,22 +324,8 @@ def compute_h2s_vol_robust_tables(df: pd.DataFrame, window: int) -> tuple[pd.Dat
     return continuation_table, fwd_table
 
 
-def load_h2s_vol_robust_data(days: int) -> pd.DataFrame:
-    conn = connect("data/market.sqlite")
-    init_db(conn)
-
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
-        """
-        SELECT c.ts, c.open, c.close, f.atr14, f.rv48
-        FROM candles_5m c
-        JOIN features_5m f ON f.ts = c.ts
-        WHERE c.ts >= ?
-        ORDER BY c.ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+def load_h2s_vol_robust_data(days: int, dsn: str = "") -> pd.DataFrame:
+    df = _load_open_close_atr_rv(days=days, dsn=dsn)
 
     if df.empty:
         raise SystemExit("no data")
@@ -337,8 +333,8 @@ def load_h2s_vol_robust_data(days: int) -> pd.DataFrame:
     return df
 
 
-def run_h2s_vol_robust(days: int, window: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    df = load_h2s_vol_robust_data(days)
+def run_h2s_vol_robust(days: int, window: int, dsn: str = "") -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    df = load_h2s_vol_robust_data(days, dsn=dsn)
     continuation_table, fwd_table = compute_h2s_vol_robust_tables(df, window)
 
     top_tail = ["1.5-2.5xATR", ">2.5xATR"]
@@ -357,8 +353,8 @@ def run_h2s_vol_robust(days: int, window: int) -> tuple[pd.DataFrame, pd.DataFra
     return continuation_table, fwd_table, summary_cont, summary_fwd
 
 
-def run_h2s_vol_robust_oos(days: int, window: int) -> pd.DataFrame:
-    df = load_h2s_vol_robust_data(days)
+def run_h2s_vol_robust_oos(days: int, window: int, dsn: str = "") -> pd.DataFrame:
+    df = load_h2s_vol_robust_data(days, dsn=dsn)
 
     if len(df) < 2:
         raise SystemExit("not enough data")
@@ -392,7 +388,7 @@ def run_h2s_vol_robust_oos(days: int, window: int) -> pd.DataFrame:
     return comparison
 
 
-def main(hypothesis: str, days: int, window: int) -> None:
+def main(hypothesis: str, days: int, window: int, dsn: str = "") -> None:
     hypothesis = hypothesis.upper()
     if hypothesis == "H2S-VOL":
         hypothesis = "H2SVOL"
@@ -402,13 +398,13 @@ def main(hypothesis: str, days: int, window: int) -> None:
         hypothesis = "H2SVOLROBUSTOOS"
     if hypothesis == "H1":
         header = "H1: Volatility Compression → Expansion"
-        table = run_h1(days, window)
+        table = run_h1(days, window, dsn=dsn)
     elif hypothesis == "H2":
         header = "H2: Large Shock Continuation"
-        table = run_h2(days, window)
+        table = run_h2(days, window, dsn=dsn)
     elif hypothesis == "H2S":
         header = "H2S: Large Shock Continuation (By Side)"
-        continuation_table, fwd_table = run_h2s(days, window)
+        continuation_table, fwd_table = run_h2s(days, window, dsn=dsn)
         table_text = (
             "Continuation metric (sign-adjusted forward return):\n"
             f"{continuation_table.to_string(index=False)}\n\n"
@@ -421,7 +417,7 @@ def main(hypothesis: str, days: int, window: int) -> None:
         return
     elif hypothesis == "H2SVOL":
         header = "H2S-VOL: Shock Asymmetry conditioned on RV regime"
-        continuation_table, fwd_table = run_h2s_vol(days, window)
+        continuation_table, fwd_table = run_h2s_vol(days, window, dsn=dsn)
         table_text = (
             "Continuation metric (sign-adjusted forward return):\n"
             f"{continuation_table.to_string(index=False)}\n\n"
@@ -434,7 +430,7 @@ def main(hypothesis: str, days: int, window: int) -> None:
         return
     elif hypothesis == "H2SVOLROBUST":
         header = "H2S-VOL-ROBUST: Shock Asymmetry Robustness Check"
-        continuation_table, fwd_table, summary_cont, summary_fwd = run_h2s_vol_robust(days, window)
+        continuation_table, fwd_table, summary_cont, summary_fwd = run_h2s_vol_robust(days, window, dsn=dsn)
         table_text = (
             "Continuation metric (sign-adjusted forward return):\n"
             f"{continuation_table.to_string(index=False)}\n\n"
@@ -451,7 +447,7 @@ def main(hypothesis: str, days: int, window: int) -> None:
         return
     elif hypothesis == "H2SVOLROBUSTOOS":
         header = "H2S-VOL-ROBUST-OOS: In-sample vs Out-of-sample comparison"
-        comparison = run_h2s_vol_robust_oos(days, window)
+        comparison = run_h2s_vol_robust_oos(days, window, dsn=dsn)
         table_text = comparison.to_string(index=False)
         print(f"=== Running {header} ===")
         print(table_text)
@@ -470,4 +466,4 @@ def main(hypothesis: str, days: int, window: int) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.hypothesis, args.days, args.window)
+    main(args.hypothesis, args.days, args.window, args.dsn)

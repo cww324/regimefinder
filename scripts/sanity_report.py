@@ -1,23 +1,43 @@
-import math
+import argparse
 
 import pandas as pd
 
 from app.config import get_settings
 from app.data.db import connect
+from app.db.market_data import load_symbol_candles_with_features_last_days
 
 
-def main() -> None:
-    settings = get_settings()
-    conn = connect(settings.db_path)
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Sanity report for candles/features.")
+    parser.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema")
+    parser.add_argument("--days", type=int, default=30, help="Lookback days when using rc schema")
+    return parser.parse_args()
 
-    candles = pd.read_sql_query(
-        "SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts DESC LIMIT 500",
-        conn,
-    )
-    features = pd.read_sql_query(
-        "SELECT ts, atr14, er20, rv48, vwap48 FROM features_5m ORDER BY ts DESC LIMIT 500",
-        conn,
-    )
+
+def main(dsn: str = "", days: int = 30) -> None:
+    if dsn:
+        joined = load_symbol_candles_with_features_last_days(
+            dsn=dsn,
+            venue_code="coinbase",
+            symbol_code="BTC-USD",
+            timeframe_code="5m",
+            days=days,
+        ).tail(500)
+        candles = joined[["ts", "open", "high", "low", "close", "volume"]].copy()
+        features = joined[["ts", "atr14", "er20", "rv48", "vwap48"]].copy()
+    else:
+        settings = get_settings()
+        conn = connect(settings.db_path)
+
+        candles = pd.read_sql_query(
+            "SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts DESC LIMIT 500",
+            conn,
+        )
+        features = pd.read_sql_query(
+            "SELECT ts, atr14, er20, rv48, vwap48 FROM features_5m ORDER BY ts DESC LIMIT 500",
+            conn,
+        )
+        joined = candles.merge(features, on="ts", how="left")
 
     if candles.empty:
         print("no candles found")
@@ -28,7 +48,8 @@ def main() -> None:
         print("no features found")
         return
 
-    joined = candles.merge(features, on="ts", how="left")
+    if not dsn:
+        joined = candles.merge(features, on="ts", how="left")
     missing = joined["atr14"].isna().sum()
     print(f"features: rows={len(features)} missing_in_join={missing}")
 
@@ -60,4 +81,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.dsn, args.days)

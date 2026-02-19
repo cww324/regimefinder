@@ -5,6 +5,7 @@ import pandas as pd
 
 from app.config import get_settings
 from app.data.db import connect, init_db
+from app.db.market_data import load_symbol_candles_with_features_last_days
 from app.execution.paper import run_trend_level1, run_meanrev_level1
 
 
@@ -41,6 +42,7 @@ COLUMNS = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run ablation backtests.")
     parser.add_argument("--days", type=int, default=14, help="Lookback window in days.")
+    parser.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema")
     return parser.parse_args()
 
 
@@ -128,24 +130,33 @@ def run_case(df: pd.DataFrame, settings, label: str):
     return label, stats
 
 
-def main(days: int) -> None:
+def main(days: int, dsn: str = "") -> None:
     settings = get_settings()
-    conn = connect(settings.db_path)
-    init_db(conn)
+    if dsn:
+        df = load_symbol_candles_with_features_last_days(
+            dsn=dsn,
+            venue_code="coinbase",
+            symbol_code="BTC-USD",
+            timeframe_code="5m",
+            days=days,
+        )[["ts", "open", "high", "low", "close", "volume", "atr14", "er20", "rv48", "vwap48"]].copy()
+    else:
+        conn = connect(settings.db_path)
+        init_db(conn)
 
-    cutoff_ts = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
-        """
-        SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
-               f.atr14, f.er20, f.rv48, f.vwap48
-        FROM candles_5m c
-        JOIN features_5m f ON f.ts = c.ts
-        WHERE c.ts >= ?
-        ORDER BY c.ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+        cutoff_ts = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
+        df = pd.read_sql_query(
+            """
+            SELECT c.ts, c.open, c.high, c.low, c.close, c.volume,
+                   f.atr14, f.er20, f.rv48, f.vwap48
+            FROM candles_5m c
+            JOIN features_5m f ON f.ts = c.ts
+            WHERE c.ts >= ?
+            ORDER BY c.ts
+            """,
+            conn,
+            params=(cutoff_ts,),
+        )
 
     cases = [
         ("A) baseline", settings),
@@ -242,4 +253,4 @@ def main(days: int) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.days)
+    main(args.days, args.dsn)

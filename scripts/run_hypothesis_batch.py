@@ -5,11 +5,15 @@ import sqlite3
 import subprocess
 import traceback
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 import yaml
+try:
+    import psycopg
+except Exception:  # pragma: no cover
+    psycopg = None
 
 
 ONE_GB = 1024 * 1024 * 1024
@@ -185,6 +189,78 @@ def build_dataset_fingerprint(dataset_defaults: dict[str, Any], lookback_days: i
     }
 
 
+def build_dataset_fingerprint_pg(
+    dsn: str,
+    dataset_defaults: dict[str, Any],
+    lookback_days: int,
+    horizon_bars: int,
+) -> dict[str, Any]:
+    if psycopg is None:
+        raise RuntimeError("psycopg is required for Postgres dataset fingerprinting")
+    primary = list(dataset_defaults.get("primary_symbols", ["BTC-USD"]))
+    secondary = list(dataset_defaults.get("secondary_symbols", ["ETH-USD"]))
+    timeframe = str(dataset_defaults.get("timeframe", "5m"))
+    symbols = primary + [s for s in secondary if s not in primary]
+    cutoff = datetime.now(timezone.utc) - timedelta(days=int(lookback_days))
+
+    source_windows: dict[str, dict[str, Any]] = {}
+    starts: list[datetime] = []
+    ends: list[datetime] = []
+    counts: list[int] = []
+    db_paths: dict[str, str] = {}
+    db_last_mod: dict[str, str] = {}
+
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            for symbol in symbols:
+                cur.execute(
+                    """
+                    SELECT MIN(c.ts), MAX(c.ts), COUNT(*)
+                    FROM rc.candles c
+                    JOIN rc.symbols s ON s.symbol_id = c.symbol_id
+                    JOIN rc.venues v ON v.venue_id = s.venue_id
+                    JOIN rc.timeframes tf ON tf.timeframe_id = c.timeframe_id
+                    WHERE v.venue_code = 'coinbase'
+                      AND s.symbol_code = %s
+                      AND tf.timeframe_code = %s
+                      AND c.ts >= %s
+                    """,
+                    (symbol, timeframe, cutoff),
+                )
+                row = cur.fetchone()
+                min_ts, max_ts, count = row if row else (None, None, 0)
+                source_windows[symbol] = {
+                    "start_ts": min_ts.replace(microsecond=0).isoformat() if min_ts else None,
+                    "end_ts": max_ts.replace(microsecond=0).isoformat() if max_ts else None,
+                    "bar_count": int(count or 0),
+                }
+                if min_ts:
+                    starts.append(min_ts)
+                if max_ts:
+                    ends.append(max_ts)
+                counts.append(int(count or 0))
+                db_paths[symbol] = "postgres:rc.candles"
+                db_last_mod[symbol] = utc_now_iso()
+
+    start_ts = max(starts).replace(microsecond=0).isoformat() if starts else None
+    end_ts = min(ends).replace(microsecond=0).isoformat() if ends else None
+    bar_count = min(counts) if counts else 0
+
+    return {
+        "primary_symbols": primary,
+        "secondary_symbols": secondary,
+        "timeframe": timeframe,
+        "lookback_days": int(lookback_days),
+        "horizon_bars": int(horizon_bars),
+        "start_ts": start_ts,
+        "end_ts": end_ts,
+        "bar_count": int(bar_count),
+        "db_path": db_paths,
+        "db_last_modified": db_last_mod,
+        "source_windows": source_windows,
+    }
+
+
 def unique_run_artifact_path(hypothesis_id: str) -> Path:
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     base = RUNS_DIR / f"{utc_stamp()}_{hypothesis_id}.json"
@@ -229,9 +305,10 @@ def mode_cmd(
     step_days: int,
     bootstrap_iters: int,
     out_path: Path,
+    dsn: str = "",
 ) -> list[str]:
     if hypothesis_id == "H32":
-        return [
+        cmd = [
             "PYTHONPATH=.",
             ".venv/bin/python",
             "scripts/research_h32_runner.py",
@@ -252,8 +329,11 @@ def mode_cmd(
             "--output-json",
             str(out_path),
         ]
+        if dsn:
+            cmd.extend(["--dsn", dsn])
+        return cmd
     if hypothesis_id == "H33":
-        return [
+        cmd = [
             "PYTHONPATH=.",
             ".venv/bin/python",
             "scripts/research_h33_runner.py",
@@ -274,7 +354,10 @@ def mode_cmd(
             "--output-json",
             str(out_path),
         ]
-    return [
+        if dsn:
+            cmd.extend(["--dsn", dsn])
+        return cmd
+    cmd = [
         "PYTHONPATH=.",
         ".venv/bin/python",
         "scripts/research_family_runner.py",
@@ -299,6 +382,9 @@ def mode_cmd(
         "--output-json",
         str(out_path),
     ]
+    if dsn:
+        cmd.extend(["--dsn", dsn])
+    return cmd
 
 
 def flatten_cmd(cmd: list[str]) -> list[str]:
@@ -377,6 +463,7 @@ def run_one_hypothesis(
     hypothesis_def: dict[str, Any],
     dataset_defaults: dict[str, Any],
     gates: dict[str, Any],
+    dsn: str = "",
 ) -> RunOutput:
     ensure_disk_ok()
 
@@ -418,6 +505,7 @@ def run_one_hypothesis(
             step_days=step_days,
             bootstrap_iters=bootstrap_iters,
             out_path=out_path,
+            dsn=dsn,
         )
         commands.append(" ".join(flatten_cmd(cmd)))
         rc, stdout, stderr = execute_python_cmd(cmd)
@@ -464,11 +552,19 @@ def run_one_hypothesis(
             "final_status": final_status,
         }
 
-    dataset = build_dataset_fingerprint(
-        dataset_defaults=dataset_defaults,
-        lookback_days=days,
-        horizon_bars=horizon,
-    )
+    if dsn:
+        dataset = build_dataset_fingerprint_pg(
+            dsn=dsn,
+            dataset_defaults=dataset_defaults,
+            lookback_days=days,
+            horizon_bars=horizon,
+        )
+    else:
+        dataset = build_dataset_fingerprint(
+            dataset_defaults=dataset_defaults,
+            lookback_days=days,
+            horizon_bars=horizon,
+        )
 
     final_status = combine_status([mode_status[m]["final_status"] for m in modes])
 
@@ -495,6 +591,7 @@ def run_one_hypothesis(
 def main() -> None:
     ensure_disk_ok()
     queue = load_queue(QUEUE_PATH)
+    rc_dsn = os.getenv("RC_DB_DSN", "").strip()
 
     if queue["paused"]:
         raise SystemExit("queue.yaml has paused: true; refusing to run batch.")
@@ -526,6 +623,7 @@ def main() -> None:
                 hypothesis_def=hyp_index[hyp_id],
                 dataset_defaults=dataset_defaults,
                 gates=gates,
+                dsn=rc_dsn,
             )
             results.append(result)
             print(f"{hyp_id} ok -> {result.artifact_path}")

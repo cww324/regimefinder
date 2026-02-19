@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from app.db.market_data import load_btc_eth_merged_last_days
+
 
 SUPPORTED_FAMILIES = {
     "cross_asset_regime",
@@ -29,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--bootstrap-iters", type=int, default=3000)
     p.add_argument("--output-json", type=str, required=True)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema data source.")
     return p.parse_args()
 
 
@@ -74,18 +77,21 @@ def pct_rank_last(window: pd.Series) -> float:
     return float(s.rank(pct=True).iloc[-1])
 
 
-def load_frame(days: int) -> pd.DataFrame:
-    btc_con = sqlite3.connect("data/market.sqlite")
-    eth_con = sqlite3.connect("data/market_eth.sqlite")
+def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
+    if dsn:
+        m = load_btc_eth_merged_last_days(dsn=dsn, days=days).copy()
+    else:
+        btc_con = sqlite3.connect("data/market.sqlite")
+        eth_con = sqlite3.connect("data/market_eth.sqlite")
 
-    btc = pd.read_sql_query("SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts", btc_con)
-    eth = pd.read_sql_query("SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts", eth_con)
+        btc = pd.read_sql_query("SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts", btc_con)
+        eth = pd.read_sql_query("SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts", eth_con)
 
-    cutoff = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
-    btc = btc[btc.ts >= cutoff].copy().reset_index(drop=True)
-    eth = eth[eth.ts >= cutoff].copy().reset_index(drop=True)
+        cutoff = int(pd.Timestamp.now("UTC").timestamp()) - (days * 86400)
+        btc = btc[btc.ts >= cutoff].copy().reset_index(drop=True)
+        eth = eth[eth.ts >= cutoff].copy().reset_index(drop=True)
 
-    m = btc.merge(eth, on="ts", how="inner", suffixes=("_btc", "_eth")).sort_values("ts").reset_index(drop=True)
+        m = btc.merge(eth, on="ts", how="inner", suffixes=("_btc", "_eth")).sort_values("ts").reset_index(drop=True)
     m["dt"] = pd.to_datetime(m["ts"], unit="s", utc=True)
 
     h1 = (
@@ -262,8 +268,8 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
     raise ValueError(f"Unsupported hypothesis/family route: {hypothesis_id} ({family})")
 
 
-def build_events(days: int, horizon: int, hypothesis_id: str, family: str) -> pd.DataFrame:
-    x = load_frame(days=days)
+def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: str = "") -> pd.DataFrame:
+    x = load_frame(days=days, dsn=dsn)
     signal = build_signal(x, hypothesis_id=hypothesis_id, family=family)
     x["signal_dir"] = signal
     x["entry"] = x["signal_dir"].ne(0)
@@ -503,6 +509,7 @@ def main() -> None:
         horizon=int(args.horizon),
         hypothesis_id=args.hypothesis_id,
         family=args.family,
+        dsn=args.dsn.strip(),
     )
 
     baseline_mode, wf, diagnostics = compute_for_cost(

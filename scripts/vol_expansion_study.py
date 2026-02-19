@@ -4,6 +4,7 @@ import pandas as pd
 
 from app.config import get_settings
 from app.data.db import connect, init_db
+from app.db.market_data import load_symbol_candles_with_features_last_days
 
 
 HORIZONS = [5, 10, 20]
@@ -18,6 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--days", type=int, default=180, help="Lookback window in days.")
     parser.add_argument("--window", type=int, default=2000, help="Rolling window for percentile.")
     parser.add_argument("--save", action="store_true", help="Save outputs to logs/")
+    parser.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN for rc schema")
     return parser.parse_args()
 
 
@@ -41,23 +43,28 @@ def summarize_returns(returns: pd.Series) -> dict:
     }
 
 
-def main(days: int, window: int, save: bool) -> None:
-    settings = get_settings()
-    conn = connect(settings.db_path)
-    init_db(conn)
+def main(days: int, window: int, save: bool, dsn: str = "") -> None:
+    if dsn:
+        df = load_symbol_candles_with_features_last_days(
+            dsn=dsn, venue_code="coinbase", symbol_code="BTC-USD", timeframe_code="5m", days=days
+        )[["ts", "close", "rv48"]].copy()
+    else:
+        settings = get_settings()
+        conn = connect(settings.db_path)
+        init_db(conn)
 
-    cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
-    df = pd.read_sql_query(
-        """
-        SELECT c.ts, c.close, f.rv48
-        FROM candles_5m c
-        JOIN features_5m f ON f.ts = c.ts
-        WHERE c.ts >= ?
-        ORDER BY c.ts
-        """,
-        conn,
-        params=(cutoff_ts,),
-    )
+        cutoff_ts = int(pd.Timestamp.utcnow().timestamp()) - (days * 86400)
+        df = pd.read_sql_query(
+            """
+            SELECT c.ts, c.close, f.rv48
+            FROM candles_5m c
+            JOIN features_5m f ON f.ts = c.ts
+            WHERE c.ts >= ?
+            ORDER BY c.ts
+            """,
+            conn,
+            params=(cutoff_ts,),
+        )
 
     if df.empty:
         print("no data")
@@ -105,4 +112,4 @@ def main(days: int, window: int, save: bool) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.days, args.window, args.save)
+    main(args.days, args.window, args.save, args.dsn)
