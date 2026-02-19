@@ -17,6 +17,16 @@ def _fetch_df(conn, query: str, params: tuple[Any, ...], columns: list[str]) -> 
     return pd.DataFrame(rows, columns=columns)
 
 
+def _coerce_numeric_columns(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    if df.empty:
+        return df
+    out = df.copy()
+    for col in cols:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out
+
+
 def load_symbol_ohlcv_last_days(
     dsn: str,
     venue_code: str,
@@ -47,6 +57,7 @@ def load_symbol_ohlcv_last_days(
         df = _fetch_df(conn, q, (venue_code, symbol_code, timeframe_code, cutoff), ["ts", "open", "high", "low", "close", "volume"])
     if not df.empty:
         df["ts"] = df["ts"].astype(int)
+        df = _coerce_numeric_columns(df, ["open", "high", "low", "close", "volume"])
     return df
 
 
@@ -108,6 +119,7 @@ def load_symbol_candles_with_features_last_days(
         df = _fetch_df(conn, q, (feature_version, venue_code, symbol_code, timeframe_code, cutoff), cols)
     if not df.empty:
         df["ts"] = df["ts"].astype(int)
+        df = _coerce_numeric_columns(df, ["open", "high", "low", "close", "volume", "atr14", "er20", "rv48", "vwap48"])
     return df
 
 
@@ -158,6 +170,21 @@ def load_btc_eth_merged_last_days(dsn: str, days: int) -> pd.DataFrame:
         df = _fetch_df(conn, q, (cutoff,), cols)
     if not df.empty:
         df["ts"] = df["ts"].astype(int)
+        df = _coerce_numeric_columns(
+            df,
+            [
+                "open_btc",
+                "high_btc",
+                "low_btc",
+                "close_btc",
+                "volume_btc",
+                "open_eth",
+                "high_eth",
+                "low_eth",
+                "close_eth",
+                "volume_eth",
+            ],
+        )
     return df
 
 

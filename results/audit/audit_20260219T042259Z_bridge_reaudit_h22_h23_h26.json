@@ -1,0 +1,253 @@
+{
+  "artifacts": [
+    {
+      "artifact": "results/runs/20260219T042009Z_H22.json",
+      "dataset": {
+        "bar_count": 51754,
+        "db_last_modified": {
+          "BTC-USD": "2026-02-19T04:20:09+00:00",
+          "ETH-USD": "2026-02-19T04:20:09+00:00"
+        },
+        "db_path": {
+          "BTC-USD": "postgres:rc.candles",
+          "ETH-USD": "postgres:rc.candles"
+        },
+        "end_ts": "2026-02-19T03:00:00+00:00",
+        "primary_symbols": [
+          "BTC-USD"
+        ],
+        "secondary_symbols": [
+          "ETH-USD"
+        ],
+        "start_ts": "2025-08-23T04:25:00+00:00",
+        "timeframe": "5m"
+      },
+      "hypothesis_id": "H22",
+      "modes": [
+        {
+          "baseline_ci": [
+            0.002461066789295696,
+            0.004771943948721491
+          ],
+          "baseline_n": 2,
+          "baseline_p": 1.0,
+          "mode": "gross",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        },
+        {
+          "baseline_ci": [
+            0.0016610667892956962,
+            0.003971943948721491
+          ],
+          "baseline_n": 2,
+          "baseline_p": 1.0,
+          "mode": "bps8",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        },
+        {
+          "baseline_ci": [
+            0.001461066789295696,
+            0.003771943948721491
+          ],
+          "baseline_n": 2,
+          "baseline_p": 1.0,
+          "mode": "bps10",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        }
+      ],
+      "timestamp_utc": "2026-02-19T04:20:09+00:00",
+      "wf_split": {
+        "step_days": 15,
+        "test_days": 15,
+        "train_days": 60
+      }
+    },
+    {
+      "artifact": "results/runs/20260219T042025Z_H23.json",
+      "dataset": {
+        "bar_count": 51754,
+        "db_last_modified": {
+          "BTC-USD": "2026-02-19T04:20:25+00:00",
+          "ETH-USD": "2026-02-19T04:20:25+00:00"
+        },
+        "db_path": {
+          "BTC-USD": "postgres:rc.candles",
+          "ETH-USD": "postgres:rc.candles"
+        },
+        "end_ts": "2026-02-19T03:00:00+00:00",
+        "primary_symbols": [
+          "BTC-USD"
+        ],
+        "secondary_symbols": [
+          "ETH-USD"
+        ],
+        "start_ts": "2025-08-23T04:25:00+00:00",
+        "timeframe": "5m"
+      },
+      "hypothesis_id": "H23",
+      "modes": [
+        {
+          "baseline_ci": [
+            0.002461066789295696,
+            0.004771943948721491
+          ],
+          "baseline_n": 3,
+          "baseline_p": 1.0,
+          "mode": "gross",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        },
+        {
+          "baseline_ci": [
+            0.0016610667892956964,
+            0.003971943948721491
+          ],
+          "baseline_n": 3,
+          "baseline_p": 1.0,
+          "mode": "bps8",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        },
+        {
+          "baseline_ci": [
+            0.001461066789295696,
+            0.0037719439487214914
+          ],
+          "baseline_n": 3,
+          "baseline_p": 1.0,
+          "mode": "bps10",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        }
+      ],
+      "timestamp_utc": "2026-02-19T04:20:25+00:00",
+      "wf_split": {
+        "step_days": 15,
+        "test_days": 15,
+        "train_days": 60
+      }
+    },
+    {
+      "artifact": "results/runs/20260219T042041Z_H26.json",
+      "dataset": {
+        "bar_count": 51754,
+        "db_last_modified": {
+          "BTC-USD": "2026-02-19T04:20:41+00:00",
+          "ETH-USD": "2026-02-19T04:20:41+00:00"
+        },
+        "db_path": {
+          "BTC-USD": "postgres:rc.candles",
+          "ETH-USD": "postgres:rc.candles"
+        },
+        "end_ts": "2026-02-19T03:00:00+00:00",
+        "primary_symbols": [
+          "BTC-USD"
+        ],
+        "secondary_symbols": [
+          "ETH-USD"
+        ],
+        "start_ts": "2025-08-23T04:25:00+00:00",
+        "timeframe": "5m"
+      },
+      "hypothesis_id": "H26",
+      "modes": [
+        {
+          "baseline_ci": [
+            0.002461066789295696,
+            0.004771943948721491
+          ],
+          "baseline_n": 2,
+          "baseline_p": 1.0,
+          "mode": "gross",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        },
+        {
+          "baseline_ci": [
+            0.0016610667892956962,
+            0.003971943948721491
+          ],
+          "baseline_n": 2,
+          "baseline_p": 1.0,
+          "mode": "bps8",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        },
+        {
+          "baseline_ci": [
+            0.001461066789295696,
+            0.003771943948721491
+          ],
+          "baseline_n": 2,
+          "baseline_p": 1.0,
+          "mode": "bps10",
+          "wf_ci": [
+            0.0,
+            0.0
+          ],
+          "wf_fold_count": 0,
+          "wf_p": 0.0,
+          "wf_pos_folds": 0.0
+        }
+      ],
+      "timestamp_utc": "2026-02-19T04:20:41+00:00",
+      "wf_split": {
+        "step_days": 15,
+        "test_days": 15,
+        "train_days": 60
+      }
+    }
+  ],
+  "failure_count": 0,
+  "failures": [],
+  "overall_ok": true,
+  "scope": [
+    "results/runs/20260219T042009Z_H22.json",
+    "results/runs/20260219T042025Z_H23.json",
+    "results/runs/20260219T042041Z_H26.json"
+  ],
+  "timestamp_utc": "2026-02-19T04:22:59+00:00"
+}

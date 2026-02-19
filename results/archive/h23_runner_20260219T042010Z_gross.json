@@ -1,0 +1,75 @@
+{
+  "baseline": {
+    "gross": {
+      "mean": 0.0034013040339600695,
+      "mean_ci_high": 0.004771943948721491,
+      "mean_ci_low": 0.002461066789295696,
+      "n": 3,
+      "p_mean_gt_0": 1.0,
+      "std": 0.0009912864218811698,
+      "win_rate": 1.0
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0,
+    "cost_mode": "gross",
+    "days": 180,
+    "horizon": 6,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "diagnostics": {
+    "mae_proxy_median": 0.001279655909325772,
+    "median_hold_return": 0.002970901363863021,
+    "return_histogram_bins": [
+      "(-inf,-1%)",
+      "[-1%,-0.5%)",
+      "[-0.5%,-0.2%)",
+      "[-0.2%,0%)",
+      "[0%,0.2%)",
+      "[0.2%,0.5%)",
+      "[0.5%,1%)",
+      "[1%,inf)"
+    ],
+    "return_histogram_counts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      3,
+      0,
+      0
+    ],
+    "top10_pct_pnl_contribution": 0.46765827665667525,
+    "trades_per_day": 0.07826086956521738
+  },
+  "family": "mean_reversion",
+  "hypothesis_id": "H23",
+  "timestamp_utc": "2026-02-19T04:20:15+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": 0.0,
+      "mean_ci_high": 0.0,
+      "mean_ci_low": 0.0,
+      "n": 0,
+      "p_mean_gt_0": 0.0
+    },
+    "folds": [],
+    "positive_folds": {
+      "count": 0,
+      "pct": 0.0,
+      "total": 0
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

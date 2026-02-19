@@ -1,0 +1,104 @@
+{
+  "baseline": {
+    "gross": {
+      "mean": 0.001386237796979241,
+      "mean_ci_high": 0.002388875120407631,
+      "mean_ci_low": 0.00031821575563386006,
+      "n": 14,
+      "p_mean_gt_0": 0.9946666666666667,
+      "std": 0.001962471592902242,
+      "win_rate": 0.7142857142857143
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0,
+    "cost_mode": "gross",
+    "days": 180,
+    "horizon": 6,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "diagnostics": {
+    "mae_proxy_median": -7.683857292356544e-05,
+    "median_hold_return": 0.0015740192759511329,
+    "return_histogram_bins": [
+      "(-inf,-1%)",
+      "[-1%,-0.5%)",
+      "[-0.5%,-0.2%)",
+      "[-0.2%,0%)",
+      "[0%,0.2%)",
+      "[0.2%,0.5%)",
+      "[0.5%,1%)",
+      "[1%,inf)"
+    ],
+    "return_histogram_counts": [
+      0,
+      0,
+      0,
+      4,
+      4,
+      6,
+      0,
+      0
+    ],
+    "top10_pct_pnl_contribution": 0.42561140902313466,
+    "trades_per_day": 0.10932754880694144
+  },
+  "family": "mean_reversion",
+  "hypothesis_id": "H15",
+  "timestamp_utc": "2026-02-19T03:51:36+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": 0.0010284512009021934,
+      "mean_ci_high": 0.002809178978691786,
+      "mean_ci_low": -0.000680643241598933,
+      "n": 7,
+      "p_mean_gt_0": 0.8746666666666667
+    },
+    "folds": [
+      {
+        "fold_id": 1,
+        "mean": 0.002970901363863021,
+        "n": 1,
+        "test_end": "2025-12-05T00:00:00+00:00",
+        "test_start": "2025-11-20T00:00:00+00:00"
+      },
+      {
+        "fold_id": 2,
+        "mean": 0.0,
+        "n": 0,
+        "test_end": "2025-12-20T00:00:00+00:00",
+        "test_start": "2025-12-05T00:00:00+00:00"
+      },
+      {
+        "fold_id": 3,
+        "mean": 0.000277718484046674,
+        "n": 2,
+        "test_end": "2026-01-04T00:00:00+00:00",
+        "test_start": "2025-12-20T00:00:00+00:00"
+      },
+      {
+        "fold_id": 4,
+        "mean": 0.0009182050185897461,
+        "n": 4,
+        "test_end": "2026-01-19T00:00:00+00:00",
+        "test_start": "2026-01-04T00:00:00+00:00"
+      }
+    ],
+    "positive_folds": {
+      "count": 3,
+      "pct": 75.0,
+      "total": 4
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import shutil
@@ -22,6 +23,7 @@ HYPOTHESES_PATH = Path("hypotheses.yaml")
 RUNS_DIR = Path("results/runs")
 ERRORS_DIR = Path("results/errors")
 ARCHIVE_DIR = Path("results/archive")
+ENV_PATH = Path(".env")
 
 
 @dataclass
@@ -53,6 +55,44 @@ def load_yaml(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"YAML root must be mapping: {path}")
     return payload
+
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Queue-driven hypothesis batch runner.")
+    p.add_argument("--dsn", type=str, default="", help="Optional Postgres DSN. Overrides RC_DB_DSN env/.env.")
+    p.add_argument(
+        "--hypothesis-ids",
+        type=str,
+        default="",
+        help="Optional comma-separated IDs for a targeted run (bypasses queue progression).",
+    )
+    return p.parse_args()
+
+
+def load_env_value(path: Path, key: str) -> str:
+    if not path.exists():
+        return ""
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        if k.strip() != key:
+            continue
+        val = v.strip()
+        if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+            val = val[1:-1]
+        return val.strip()
+    return ""
+
+
+def resolve_rc_dsn(cli_dsn: str) -> str:
+    if cli_dsn.strip():
+        return cli_dsn.strip()
+    env_dsn = os.getenv("RC_DB_DSN", "").strip()
+    if env_dsn:
+        return env_dsn
+    return load_env_value(ENV_PATH, "RC_DB_DSN")
 
 
 def atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
@@ -137,6 +177,70 @@ def read_db_window(db_path: Path, cutoff_ts: int) -> dict[str, Any]:
         "_min_ts": min_ts,
         "_max_ts": max_ts,
     }
+
+
+def sqlite_has_candles(db_path: Path, cutoff_ts: int) -> bool:
+    if not db_path.exists():
+        return False
+    con = sqlite3.connect(str(db_path))
+    try:
+        table_exists = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='candles_5m' LIMIT 1"
+        ).fetchone()
+        if not table_exists:
+            return False
+        row = con.execute("SELECT COUNT(*) FROM candles_5m WHERE ts >= ?", (int(cutoff_ts),)).fetchone()
+        return bool(row and int(row[0]) > 0)
+    finally:
+        con.close()
+
+
+def validate_data_source(dsn: str, dataset_defaults: dict[str, Any], lookback_days: int) -> None:
+    primary = list(dataset_defaults.get("primary_symbols", ["BTC-USD"]))
+    secondary = list(dataset_defaults.get("secondary_symbols", ["ETH-USD"]))
+    timeframe = str(dataset_defaults.get("timeframe", "5m"))
+    symbols = primary + [s for s in secondary if s not in primary]
+    cutoff_ts = int(utc_now().timestamp()) - (int(lookback_days) * 86400)
+    if dsn:
+        if psycopg is None:
+            raise RuntimeError("Postgres DSN provided but psycopg is unavailable.")
+        cutoff_dt = datetime.fromtimestamp(cutoff_ts, tz=timezone.utc)
+        with psycopg.connect(dsn) as conn:
+            with conn.cursor() as cur:
+                for symbol in symbols:
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM rc.candles c
+                        JOIN rc.symbols s ON s.symbol_id = c.symbol_id
+                        JOIN rc.venues v ON v.venue_id = s.venue_id
+                        JOIN rc.timeframes tf ON tf.timeframe_id = c.timeframe_id
+                        WHERE v.venue_code = 'coinbase'
+                          AND s.symbol_code = %s
+                          AND tf.timeframe_code = %s
+                          AND c.ts >= %s
+                        """,
+                        (symbol, timeframe, cutoff_dt),
+                    )
+                    row = cur.fetchone()
+                    count = int(row[0]) if row and row[0] is not None else 0
+                    if count <= 0:
+                        raise RuntimeError(
+                            f"Postgres source configured but no rc.candles rows for {symbol} timeframe={timeframe} "
+                            f"in lookback_days={lookback_days}."
+                        )
+        return
+
+    bad: list[str] = []
+    for symbol in symbols:
+        db = symbol_to_db(symbol)
+        if not sqlite_has_candles(db, cutoff_ts=cutoff_ts):
+            bad.append(f"{symbol}:{db}")
+    if bad:
+        raise RuntimeError(
+            "No valid data source: RC_DB_DSN/--dsn is not set and legacy SQLite candles_5m is unavailable for "
+            + ", ".join(bad)
+        )
 
 
 def build_dataset_fingerprint(dataset_defaults: dict[str, Any], lookback_days: int, horizon_bars: int) -> dict[str, Any]:
@@ -475,6 +579,7 @@ def run_one_hypothesis(
     days = int(params.get("lookback_days", dataset_defaults.get("lookback_default_days", 180)))
     horizon = int(params.get("horizon_bars", dataset_defaults.get("horizon_default_bars", 6)))
     timeframe = str(dataset_defaults.get("timeframe", "5m"))
+    validate_data_source(dsn=dsn, dataset_defaults=dataset_defaults, lookback_days=days)
 
     wf = dict(gates.get("walkforward", {}))
     train_days = int(wf.get("train_days", 60))
@@ -589,19 +694,23 @@ def run_one_hypothesis(
 
 
 def main() -> None:
+    args = parse_args()
     ensure_disk_ok()
     queue = load_queue(QUEUE_PATH)
-    rc_dsn = os.getenv("RC_DB_DSN", "").strip()
+    rc_dsn = resolve_rc_dsn(args.dsn)
 
     if queue["paused"]:
         raise SystemExit("queue.yaml has paused: true; refusing to run batch.")
 
     dataset_defaults, gates, hyp_index = load_hypotheses(HYPOTHESES_PATH)
 
+    targeted_ids = [x.strip() for x in str(args.hypothesis_ids).split(",") if x.strip()]
+    targeted_mode = len(targeted_ids) > 0
+
     batch_size = int(queue["batch_size"])
     next_index = int(queue["next_index"])
     queue_ids = list(queue["queue"])
-    batch_ids = queue_ids[next_index : next_index + batch_size]
+    batch_ids = targeted_ids if targeted_mode else queue_ids[next_index : next_index + batch_size]
 
     if not batch_ids:
         print("No hypotheses remaining in queue slice; nothing to run.")
@@ -635,10 +744,15 @@ def main() -> None:
                     "batch_ids": batch_ids,
                     "next_index": next_index,
                     "completed": [r.hypothesis_id for r in results],
+                    "targeted_mode": targeted_mode,
                 },
             )
             print(f"Batch stopped: {hyp_id} failed. Error written to {error_path}")
             raise SystemExit(1)
+
+    if targeted_mode:
+        print(f"Targeted batch success: completed ids={batch_ids}. queue.yaml unchanged.")
+        return
 
     queue["next_index"] = next_index + len(batch_ids)
     atomic_write_yaml(QUEUE_PATH, queue)

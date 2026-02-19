@@ -154,6 +154,8 @@ Run hypotheses exactly as defined, using the queue.
 
 Allowed:
 - Run the batch runner (for example: `scripts/run_hypothesis_batch.py`)
+- Postgres safety preference: run `scripts/run_batch_pg.sh` (single-shell DSN + probe + batch)
+- Direct `make batch` is allowed when environment is already verified in the same shell
 - Run exactly the next batch of size `queue.yaml:batch_size` (default 5)
 - Produce append-only artifacts under `results/runs/`
 

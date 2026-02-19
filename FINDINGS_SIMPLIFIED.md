@@ -288,6 +288,16 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
 <!-- DERIVED_STATUS_START -->
 
 ## Derived Status (Artifact-Backed)
+- H15: `INCONCLUSIVE` (artifact: `results/runs/20260219T035146Z_H15.json`)
+- H18: `INCONCLUSIVE` (artifact: `results/runs/20260219T035159Z_H18.json`)
+- H19: `INCONCLUSIVE` (artifact: `results/runs/20260219T035211Z_H19.json`)
+- H22: `INCONCLUSIVE` (artifact: `results/runs/20260219T042009Z_H22.json`)
+- H23: `INCONCLUSIVE` (artifact: `results/runs/20260219T042025Z_H23.json`)
+- H26: `INCONCLUSIVE` (artifact: `results/runs/20260219T042041Z_H26.json`)
+- H27: `FAIL` (artifact: `results/runs/20260219T040716Z_H27.json`)
+- H28: `FAIL` (artifact: `results/runs/20260219T040727Z_H28.json`)
+- H29: `INCONCLUSIVE` (artifact: `results/runs/20260219T040739Z_H29.json`)
+- H30: `FAIL` (artifact: `results/runs/20260219T040752Z_H30.json`)
 - H32: `INCONCLUSIVE` (artifact: `results/runs/20260217T171153Z_H32.json`)
 - H33: `INCONCLUSIVE` (artifact: `results/runs/20260217T172009Z_H33.json`)
 - H37: `INCONCLUSIVE` (artifact: `results/runs/20260217T174740Z_H37.json`)
@@ -339,3 +349,4 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
 - H85: `PASS` (artifact: `results/runs/20260218T211400Z_H85.json`)
 
 <!-- DERIVED_STATUS_END -->
+

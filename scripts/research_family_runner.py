@@ -51,7 +51,7 @@ def bootstrap_mean_stats(values: np.ndarray, iters: int, seed: int, ci: float = 
     x = x[np.isfinite(x)]
     n = len(x)
     if n == 0:
-        return {"mean_ci_low": None, "mean_ci_high": None, "p_mean_gt_0": None}
+        return {"mean_ci_low": 0.0, "mean_ci_high": 0.0, "p_mean_gt_0": 0.0}
     rng = np.random.default_rng(seed)
     samples = rng.choice(x, size=(iters, n), replace=True)
     means = samples.mean(axis=1)
@@ -92,6 +92,21 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
         eth = eth[eth.ts >= cutoff].copy().reset_index(drop=True)
 
         m = btc.merge(eth, on="ts", how="inner", suffixes=("_btc", "_eth")).sort_values("ts").reset_index(drop=True)
+
+    for col in [
+        "open_btc",
+        "high_btc",
+        "low_btc",
+        "close_btc",
+        "volume_btc",
+        "open_eth",
+        "high_eth",
+        "low_eth",
+        "close_eth",
+        "volume_eth",
+    ]:
+        if col in m.columns:
+            m[col] = pd.to_numeric(m[col], errors="coerce")
     m["dt"] = pd.to_datetime(m["ts"], unit="s", utc=True)
 
     h1 = (
@@ -109,13 +124,14 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     h1["eth_ema20_1h"] = h1["close_eth"].ewm(span=20, adjust=False).mean()
     h1["eth_slope_1h"] = h1["eth_ema20_1h"].diff(3)
     h1["eth_slope_sign_1h"] = np.sign(h1["eth_slope_1h"])
+    h1["eth_above_ema20_1h"] = h1["close_eth"] > h1["eth_ema20_1h"]
     h1["btc_ema20_1h"] = h1["close_btc"].ewm(span=20, adjust=False).mean()
     h1["btc_slope_1h"] = h1["btc_ema20_1h"].diff(3)
     h1["btc_slope_sign_1h"] = np.sign(h1["btc_slope_1h"])
 
     x = pd.merge_asof(
         m.sort_values("dt"),
-        h1[["dt", "spread_pct", "eth_slope_sign_1h", "btc_slope_sign_1h"]].sort_values("dt"),
+        h1[["dt", "spread_pct", "eth_slope_sign_1h", "btc_slope_sign_1h", "eth_above_ema20_1h"]].sort_values("dt"),
         on="dt",
         direction="backward",
     )
@@ -174,6 +190,16 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
         eth_sign = x["eth_slope_sign_1h"]
         btc_sign = x["btc_slope_sign_1h"]
 
+        if hypothesis_id == "H19":
+            # Frozen regime tails: long on short-tail, short on long-tail.
+            return pd.Series(np.where(spread.lt(0.10), 1.0, np.where(spread.ge(0.90), -1.0, 0.0)), index=x.index)
+        if hypothesis_id == "H29":
+            neutral = spread.ge(0.10) & spread.lt(0.90)
+            entered_neutral = neutral & (~neutral.shift(1).fillna(False))
+            return pd.Series(np.where(entered_neutral, 1.0, 0.0), index=x.index)
+        if hypothesis_id == "H30":
+            mask = eth_sign.ne(btc_sign) & eth_sign.ne(0) & btc_sign.ne(0)
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
         if hypothesis_id == "H37":
             mask = spread.ge(0.10) & spread.lt(0.90) & eth_sign.ne(0)
             return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
@@ -200,6 +226,13 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
             return pd.Series(np.where(flip, eth_sign, 0.0), index=x.index)
 
     if family == "shock_structure":
+        if hypothesis_id == "H27":
+            tr = x["high_btc"] - x["low_btc"]
+            tr_med20 = tr.rolling(20).median()
+            vol_med20 = x["volume_btc"].rolling(20).median()
+            mask = tr.gt(1.8 * tr_med20) & x["volume_btc"].gt(1.8 * vol_med20)
+            return pd.Series(np.where(mask, np.sign(x["close_btc"] - x["open_btc"]), 0.0), index=x.index)
+
         btc_shock = x["ret1_btc"].abs().ge(x["ret1_abs_btc_q90"])
         eth_shock = x["ret1_eth"].abs().ge(x["ret1_abs_eth_q90"])
         btc_dir = np.sign(x["ret1_btc"])
@@ -238,6 +271,25 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
 
     if family == "mean_reversion":
         neutral = x["spread_pct"].ge(0.10) & x["spread_pct"].lt(0.90)
+        h15_base = x["vwap_z"].le(-2.0) & x["eth_above_ema20_1h"].fillna(False) & x["eth_slope_sign_1h"].gt(0)
+        h17_gate = x["ret1_eth"].abs().ge(x["ret1_abs_eth_q90"])
+
+        if hypothesis_id == "H15":
+            return pd.Series(np.where(h15_base, 1.0, 0.0), index=x.index)
+        if hypothesis_id == "H18":
+            mask = h15_base & h17_gate
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+        if hypothesis_id == "H22":
+            mask = h15_base & h17_gate & neutral
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+        if hypothesis_id == "H23":
+            mask = h15_base & neutral
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+        if hypothesis_id == "H26":
+            mid = x["spread_pct"].ge(0.25) & x["spread_pct"].lt(0.75)
+            mask = h15_base & mid
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
         if hypothesis_id == "H51":
             mask = x["vwap_z"].le(-2.0) & neutral
             return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
@@ -249,6 +301,22 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
             return pd.Series(np.where(mask, -np.sign(x["vwap_z"]), 0.0), index=x.index)
 
     if family == "range_structure":
+        if hypothesis_id == "H28":
+            close = x["close_btc"]
+            prior_high = x["high_btc"].shift(1).rolling(12).max()
+            prior_low = x["low_btc"].shift(1).rolling(12).min()
+            up_break = close.gt(prior_high)
+            dn_break = close.lt(prior_low)
+            failed_high = (
+                (up_break.shift(1).fillna(False) & close.le(prior_high.shift(1)))
+                | (up_break.shift(2).fillna(False) & close.le(prior_high.shift(2)))
+            )
+            failed_low = (
+                (dn_break.shift(1).fillna(False) & close.ge(prior_low.shift(1)))
+                | (dn_break.shift(2).fillna(False) & close.ge(prior_low.shift(2)))
+            )
+            return pd.Series(np.where(failed_high, -1.0, np.where(failed_low, 1.0, 0.0)), index=x.index)
+
         close = x["close_btc"]
         high_brk = close.gt(x["prior_high_12"])
         low_brk = close.lt(x["prior_low_12"])

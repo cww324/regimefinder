@@ -1,0 +1,17 @@
+{
+  "context": {
+    "batch_ids": [
+      "H15",
+      "H18",
+      "H19",
+      "H22",
+      "H23"
+    ],
+    "completed": [],
+    "next_index": 0
+  },
+  "error": "Runner failed for H15 mode=gross rc=1 stdout= stderr=py\", line 497, in read_sql_query\n    return pandas_sql.read_query(\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/io/sql.py\", line 2766, in read_query\n    cursor = self.execute(sql, params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/io/sql.py\", line 2714, in execute\n    raise ex from exc\npandas.errors.DatabaseError: Execution failed on sql 'SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts': no such table: candles_5m\n",
+  "hypothesis_id": "H15",
+  "timestamp_utc": "2026-02-19T03:34:43+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 621, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 513, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H15 mode=gross rc=1 stdout= stderr=py\", line 497, in read_sql_query\n    return pandas_sql.read_query(\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/io/sql.py\", line 2766, in read_query\n    cursor = self.execute(sql, params)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/io/sql.py\", line 2714, in execute\n    raise ex from exc\npandas.errors.DatabaseError: Execution failed on sql 'SELECT ts, open, high, low, close, volume FROM candles_5m ORDER BY ts': no such table: candles_5m\n\n"
+}

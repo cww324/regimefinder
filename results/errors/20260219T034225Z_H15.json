@@ -1,0 +1,17 @@
+{
+  "context": {
+    "batch_ids": [
+      "H15",
+      "H18",
+      "H19",
+      "H22",
+      "H23"
+    ],
+    "completed": [],
+    "next_index": 0
+  },
+  "error": "connection is bad: no error details available",
+  "hypothesis_id": "H15",
+  "timestamp_utc": "2026-02-19T03:42:25+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 721, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 576, in run_one_hypothesis\n    validate_data_source(dsn=dsn, dataset_defaults=dataset_defaults, lookback_days=days)\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 202, in validate_data_source\n    with psycopg.connect(dsn) as conn:\n         ^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/psycopg/connection.py\", line 122, in connect\n    raise last_ex.with_traceback(None)\npsycopg.OperationalError: connection is bad: no error details available\n"
+}

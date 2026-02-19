@@ -6327,3 +6327,81 @@ Key metrics:
 - diagnostics `bps10` return_hist=[2, 8, 10, 20, 20, 15, 13, 11]
 - Final classification: `INCONCLUSIVE`
 - Artifact: `results/runs/20260218T211400Z_H85.json`
+
+## Bridge Artifact Guardian Processing (2026-02-19)
+Run: 2026-02-19T04:13:55+00:00
+Role: Guardian
+
+Scope artifacts:
+- `results/runs/20260219T035146Z_H15.json`
+- `results/runs/20260219T035159Z_H18.json`
+- `results/runs/20260219T035211Z_H19.json`
+- `results/runs/20260219T035222Z_H22.json`
+- `results/runs/20260219T035233Z_H23.json`
+- `results/runs/20260219T040705Z_H26.json`
+- `results/runs/20260219T040716Z_H27.json`
+- `results/runs/20260219T040727Z_H28.json`
+- `results/runs/20260219T040739Z_H29.json`
+- `results/runs/20260219T040752Z_H30.json`
+
+Validation and rebuild commands:
+- `PYTHONPATH=. .venv/bin/python scripts/build_summary.py`
+- `PYTHONPATH=. .venv/bin/python scripts/update_findings_from_summary.py`
+
+Scoped audit artifact:
+- `results/audit/audit_20260219T041355Z_bridge.json`
+
+Integrity results:
+- Schema/completeness check: `PASS` for scoped artifacts.
+- Dataset fingerprints: two coherent groups detected in-scope.
+  - Group A (`H15/H18/H19/H22/H23`): start `2025-08-23T03:55:00+00:00`, end `2026-02-19T03:00:00+00:00`, bar_count `51760`, symbols `BTC-USD` + `ETH-USD`, db `postgres:rc.candles`.
+  - Group B (`H26/H27/H28/H29/H30`): start `2025-08-23T04:10:00+00:00`, end `2026-02-19T03:00:00+00:00`, bar_count `51757`, symbols `BTC-USD` + `ETH-USD`, db `postgres:rc.candles`.
+- Required gates: `FAIL` for 3 artifacts (9 mode-level issues):
+  - `results/runs/20260219T035222Z_H22.json` (`gross`,`bps8`,`bps10`) missing WF bootstrap fields: `mean_ci_low`, `mean_ci_high`, `p_mean_gt_0`.
+  - `results/runs/20260219T035233Z_H23.json` (`gross`,`bps8`,`bps10`) missing WF bootstrap fields: `mean_ci_low`, `mean_ci_high`, `p_mean_gt_0`.
+  - `results/runs/20260219T040705Z_H26.json` (`gross`,`bps8`,`bps10`) missing WF bootstrap fields: `mean_ci_low`, `mean_ci_high`, `p_mean_gt_0`.
+
+Derived classifications from `results/summary.json` (artifact-backed):
+- `H15`: `INCONCLUSIVE` (artifact: `results/runs/20260219T035146Z_H15.json`; reason all modes: `baseline_n_lt_50`)
+- `H18`: `INCONCLUSIVE` (artifact: `results/runs/20260219T035159Z_H18.json`; reason all modes: `baseline_n_lt_50`)
+- `H19`: `INCONCLUSIVE` (artifact: `results/runs/20260219T035211Z_H19.json`; reason all modes: `fold_count_lt_5`)
+- `H22`: `INCONCLUSIVE` (artifact: `results/runs/20260219T035222Z_H22.json`; reason all modes: `baseline_n_lt_50`)
+- `H23`: `INCONCLUSIVE` (artifact: `results/runs/20260219T035233Z_H23.json`; reason all modes: `baseline_n_lt_50`)
+- `H26`: `INCONCLUSIVE` (artifact: `results/runs/20260219T040705Z_H26.json`; reason all modes: `baseline_n_lt_50`)
+- `H27`: `FAIL` (artifact: `results/runs/20260219T040716Z_H27.json`; reason all modes: `non_positive_wf_or_fold_support_lt_50`)
+- `H28`: `FAIL` (artifact: `results/runs/20260219T040727Z_H28.json`; reason all modes: `non_positive_wf_or_fold_support_lt_50`)
+- `H29`: `INCONCLUSIVE` (artifact: `results/runs/20260219T040739Z_H29.json`; reason all modes: `fold_count_lt_5`)
+- `H30`: `FAIL` (artifact: `results/runs/20260219T040752Z_H30.json`; reason all modes: `non_positive_wf_or_fold_support_lt_50`)
+
+Determinism check:
+- Rebuilt `results/summary.json` twice in this session.
+- SHA256 after rebuilds: `d7d5d487f323876924e49d8ef72efd3a5dd6539af9e1146c392dfd39ac285690`.
+
+## Bridge Artifact Guardian Re-Audit (2026-02-19)
+Run: 2026-02-19T04:22:59+00:00
+Role: Guardian
+
+Scope artifacts (latest reruns):
+- `results/runs/20260219T042009Z_H22.json`
+- `results/runs/20260219T042025Z_H23.json`
+- `results/runs/20260219T042041Z_H26.json`
+
+Audit artifact:
+- `results/audit/audit_20260219T042259Z_bridge_reaudit_h22_h23_h26.json`
+
+Checks:
+- Schema/completeness: `PASS`
+- Required gates present (`gross`, `bps8`, `bps10`, WF `60/15/15`, WF bootstrap CI + `P(mean>0)` fields): `PASS`
+- Dataset fingerprints in-scope: coherent (`BTC-USD` + `ETH-USD`, `5m`, `postgres:rc.candles`)
+
+Issue-closure note:
+- Prior missing WF bootstrap-field issue for `H22/H23/H26` is `CLEARED` at field-presence level in these rerun artifacts.
+
+Derived classifications from rebuilt summary (artifact-backed):
+- `H22`: `INCONCLUSIVE` (artifact: `results/runs/20260219T042009Z_H22.json`; all modes reason: `baseline_n_lt_50`)
+- `H23`: `INCONCLUSIVE` (artifact: `results/runs/20260219T042025Z_H23.json`; all modes reason: `baseline_n_lt_50`)
+- `H26`: `INCONCLUSIVE` (artifact: `results/runs/20260219T042041Z_H26.json`; all modes reason: `baseline_n_lt_50`)
+
+Determinism check:
+- Rebuilt `results/summary.json` twice in-session.
+- SHA256: `9e2dc9f8844ead6230342ab1ca680d0e2b6296a63abec5e6545577d997f98436`.

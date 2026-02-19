@@ -1,5 +1,17 @@
 batch_size: 5
 next_index: 10
-queue: ["H76", "H77", "H78", "H79", "H80", "H81", "H82", "H83", "H84", "H85"]
 paused: false
-notes: ""
+queue:
+- H15
+- H18
+- H19
+- H22
+- H23
+- H26
+- H27
+- H28
+- H29
+- H30
+notes: 'Blocked 2026-02-19: batch2 start failed on H26 with psycopg connectivity (results/errors/20260219T035417Z_H26.json).
+  Batch1 artifacts exist; rerun batch2 only in the same verified shell context with
+  explicit RC_DB_DSN export + immediate probe.'

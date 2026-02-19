@@ -1,0 +1,17 @@
+{
+  "context": {
+    "batch_ids": [
+      "H15",
+      "H18",
+      "H19",
+      "H22",
+      "H23"
+    ],
+    "completed": [],
+    "next_index": 0
+  },
+  "error": "Runner failed for H15 mode=gross rc=1 stdout= stderr=: ignore[arg-type]\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/core/ops/array_ops.py\", line 229, in _na_arithmetic_op\n    result = _masked_arith_op(left, right, op)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/core/ops/array_ops.py\", line 184, in _masked_arith_op\n    result[mask] = op(xrav[mask], y)\n                   ^^^^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for -: 'decimal.Decimal' and 'float'\n",
+  "hypothesis_id": "H15",
+  "timestamp_utc": "2026-02-19T03:45:09+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 721, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 612, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H15 mode=gross rc=1 stdout= stderr=: ignore[arg-type]\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/core/ops/array_ops.py\", line 229, in _na_arithmetic_op\n    result = _masked_arith_op(left, right, op)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/.venv/lib/python3.12/site-packages/pandas/core/ops/array_ops.py\", line 184, in _masked_arith_op\n    result[mask] = op(xrav[mask], y)\n                   ^^^^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for -: 'decimal.Decimal' and 'float'\n\n"
+}

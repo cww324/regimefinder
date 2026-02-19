@@ -1,0 +1,90 @@
+{
+  "baseline": {
+    "gross": {
+      "mean": -1.981713962012259e-05,
+      "mean_ci_high": 8.88654049470074e-05,
+      "mean_ci_low": -0.0001301916597821084,
+      "n": 3776,
+      "p_mean_gt_0": 0.369,
+      "std": 0.0034223222555610326,
+      "win_rate": 0.5005296610169492
+    }
+  },
+  "config": {
+    "bootstrap_iters": 3000,
+    "cost": 0.0,
+    "cost_mode": "gross",
+    "days": 180,
+    "horizon": 6,
+    "timeframe": "5m",
+    "wf": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "diagnostics": {
+    "mae_proxy_median": -0.0008617209400033077,
+    "median_hold_return": 3.1947638184925964e-06,
+    "return_histogram_bins": [
+      "(-inf,-1%)",
+      "[-1%,-0.5%)",
+      "[-0.5%,-0.2%)",
+      "[-0.2%,0%)",
+      "[0%,0.2%)",
+      "[0.2%,0.5%)",
+      "[0.5%,1%)",
+      "[1%,inf)"
+    ],
+    "return_histogram_counts": [
+      52,
+      133,
+      474,
+      1226,
+      1202,
+      512,
+      144,
+      33
+    ],
+    "top10_pct_pnl_contribution": -30.10238627531275,
+    "trades_per_day": 39.25666016894087
+  },
+  "family": "cross_asset_regime",
+  "hypothesis_id": "H29",
+  "timestamp_utc": "2026-02-19T04:07:31+00:00",
+  "wf": {
+    "aggregate": {
+      "mean": -0.00012346590577091385,
+      "mean_ci_high": 0.00012507225786086208,
+      "mean_ci_low": -0.0003719657550101994,
+      "n": 1072,
+      "p_mean_gt_0": 0.16866666666666666
+    },
+    "folds": [
+      {
+        "fold_id": 1,
+        "mean": -4.935125119767148e-05,
+        "n": 594,
+        "test_end": "2026-01-28T00:00:00+00:00",
+        "test_start": "2026-01-13T00:00:00+00:00"
+      },
+      {
+        "fold_id": 2,
+        "mean": -0.00021556654346234895,
+        "n": 478,
+        "test_end": "2026-02-12T00:00:00+00:00",
+        "test_start": "2026-01-28T00:00:00+00:00"
+      }
+    ],
+    "positive_folds": {
+      "count": 0,
+      "pct": 0.0,
+      "total": 2
+    },
+    "split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  }
+}

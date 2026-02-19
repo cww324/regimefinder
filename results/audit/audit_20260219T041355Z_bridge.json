@@ -1,0 +1,194 @@
+{
+  "dataset_fingerprint": {
+    "groups": [
+      {
+        "artifact_count": 5,
+        "artifacts": [
+          "results/runs/20260219T035146Z_H15.json",
+          "results/runs/20260219T035159Z_H18.json",
+          "results/runs/20260219T035211Z_H19.json",
+          "results/runs/20260219T035222Z_H22.json",
+          "results/runs/20260219T035233Z_H23.json"
+        ],
+        "fingerprint": {
+          "bar_count": 51760,
+          "db_path": {
+            "BTC-USD": "postgres:rc.candles",
+            "ETH-USD": "postgres:rc.candles"
+          },
+          "end_ts": "2026-02-19T03:00:00+00:00",
+          "primary_symbols": [
+            "BTC-USD"
+          ],
+          "secondary_symbols": [
+            "ETH-USD"
+          ],
+          "start_ts": "2025-08-23T03:55:00+00:00",
+          "timeframe": "5m"
+        }
+      },
+      {
+        "artifact_count": 5,
+        "artifacts": [
+          "results/runs/20260219T040705Z_H26.json",
+          "results/runs/20260219T040716Z_H27.json",
+          "results/runs/20260219T040727Z_H28.json",
+          "results/runs/20260219T040739Z_H29.json",
+          "results/runs/20260219T040752Z_H30.json"
+        ],
+        "fingerprint": {
+          "bar_count": 51757,
+          "db_path": {
+            "BTC-USD": "postgres:rc.candles",
+            "ETH-USD": "postgres:rc.candles"
+          },
+          "end_ts": "2026-02-19T03:00:00+00:00",
+          "primary_symbols": [
+            "BTC-USD"
+          ],
+          "secondary_symbols": [
+            "ETH-USD"
+          ],
+          "start_ts": "2025-08-23T04:10:00+00:00",
+          "timeframe": "5m"
+        }
+      }
+    ],
+    "ok": true,
+    "unique_fingerprint_count": 2
+  },
+  "overall_ok": false,
+  "required_gates": {
+    "issue_count": 9,
+    "issues": [
+      {
+        "artifact": "results/runs/20260219T035222Z_H22.json",
+        "cost_mode": "gross",
+        "hypothesis_id": "H22",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T035222Z_H22.json",
+        "cost_mode": "bps8",
+        "hypothesis_id": "H22",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T035222Z_H22.json",
+        "cost_mode": "bps10",
+        "hypothesis_id": "H22",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T035233Z_H23.json",
+        "cost_mode": "gross",
+        "hypothesis_id": "H23",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T035233Z_H23.json",
+        "cost_mode": "bps8",
+        "hypothesis_id": "H23",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T035233Z_H23.json",
+        "cost_mode": "bps10",
+        "hypothesis_id": "H23",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T040705Z_H26.json",
+        "cost_mode": "gross",
+        "hypothesis_id": "H26",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T040705Z_H26.json",
+        "cost_mode": "bps8",
+        "hypothesis_id": "H26",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      },
+      {
+        "artifact": "results/runs/20260219T040705Z_H26.json",
+        "cost_mode": "bps10",
+        "hypothesis_id": "H26",
+        "issue": "missing_wf_bootstrap_metrics",
+        "missing_fields": [
+          "mean_ci_low",
+          "mean_ci_high",
+          "p_mean_gt_0"
+        ]
+      }
+    ],
+    "ok": false,
+    "required_cost_modes": [
+      "gross",
+      "bps8",
+      "bps10"
+    ],
+    "required_wf_split": {
+      "step_days": 15,
+      "test_days": 15,
+      "train_days": 60
+    }
+  },
+  "schema_validation": {
+    "failure_count": 0,
+    "ok": true
+  },
+  "scope": [
+    "results/runs/20260219T035146Z_H15.json",
+    "results/runs/20260219T035159Z_H18.json",
+    "results/runs/20260219T035211Z_H19.json",
+    "results/runs/20260219T035222Z_H22.json",
+    "results/runs/20260219T035233Z_H23.json",
+    "results/runs/20260219T040705Z_H26.json",
+    "results/runs/20260219T040716Z_H27.json",
+    "results/runs/20260219T040727Z_H28.json",
+    "results/runs/20260219T040739Z_H29.json",
+    "results/runs/20260219T040752Z_H30.json"
+  ],
+  "scoped_artifact_count": 10,
+  "timestamp_utc": "2026-02-19T04:14:18+00:00"
+}
