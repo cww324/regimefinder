@@ -1,5 +1,5 @@
 batch_size: 10
-next_index: 0
+next_index: 10
 paused: false
 queue:
 - H101
@@ -25,8 +25,8 @@ notes: 'Blocked 2026-02-19: Postgres preflight failed in Executor shell (psycopg
   queued H101-H110 as next standard 10-ID batch. Batch blocked at H101: Unsupported
   family volatility_state (error artifact results/errors/20260219T160728Z_H101.json);
   requires Coder runner family support before retry. Coordinator update 2026-02-19:
-  reset next_index to 0 for H101-H105 rerun after logic_hash artifact fix.
-  P01-P04 TODO before any live-paper consideration: (1) Coder fix family-share/heat normalization
-  in run_paper_portfolio output (shares bounded [0,1]), (2) rerun P portfolio evaluation in
-  meaningful multi-policy context (not single-ID only), (3) Guardian re-audit with heat gates,
-  (4) only promote if heat + robustness gates pass.'
+  reset next_index to 0 for H101-H105 rerun after logic_hash artifact fix. P01-P04
+  TODO before any live-paper consideration: (1) Coder fix family-share/heat normalization
+  in run_paper_portfolio output (shares bounded [0,1]), (2) rerun P portfolio evaluation
+  in meaningful multi-policy context (not single-ID only), (3) Guardian re-audit with
+  heat gates, (4) only promote if heat + robustness gates pass.'
