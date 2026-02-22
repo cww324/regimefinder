@@ -44,18 +44,18 @@ def build_markdown(summary: dict) -> str:
     )
     for hyp_id in sorted(summary.keys()):
         row = summary[hyp_id]
-        baseline = row.get("baseline", {})
-        gross = baseline.get("gross", {})
-        slip4 = baseline.get("bps8", {})
-        slip5 = baseline.get("bps10", {})
+        cost_modes = row.get("cost_modes", {})
+        gross = cost_modes.get("gross", {}).get("metrics", {}).get("baseline", {})
+        slip4 = cost_modes.get("bps8", {}).get("metrics", {}).get("baseline", {})
+        slip5 = cost_modes.get("bps10", {}).get("metrics", {}).get("baseline", {})
         lines.append(
             "| "
             f"{hyp_id} | "
-            f"{row.get('classification', row.get('final_classification', 'n/a'))} | "
+            f"{row.get('final_status', 'n/a')} | "
             f"{fmt_num(gross.get('n'))} | "
-            f"{fmt_num(gross.get('mean', gross.get('mean_return')))} | "
-            f"{fmt_num(slip4.get('mean', slip4.get('mean_return')))} | "
-            f"{fmt_num(slip5.get('mean', slip5.get('mean_return')))} | "
+            f"{fmt_num(gross.get('mean'))} | "
+            f"{fmt_num(slip4.get('mean'))} | "
+            f"{fmt_num(slip5.get('mean'))} | "
             f"{row.get('timestamp_utc', 'n/a')} |"
         )
     lines.append("")

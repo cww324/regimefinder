@@ -1,0 +1,41 @@
+{
+  "checks": {
+    "dataset_fingerprint_presence_coherence": "PASS",
+    "metadata_consistency": "PASS",
+    "metrics_integrity_required_blocks": "PASS",
+    "metrics_numeric_validity": "PASS",
+    "schema_completeness_vs_spec": "PASS",
+    "traceability_error_record_present": "PASS"
+  },
+  "continuation_decision": {
+    "reason": "heat_gate_failure",
+    "status": "BLOCKED"
+  },
+  "failure_count": 0,
+  "failures": [],
+  "heat_gates": {
+    "max_pairwise_correlation": {
+      "status": "FAIL",
+      "threshold": 0.75,
+      "value": 0.9995096360000714
+    },
+    "max_single_family_share": {
+      "status": "FAIL",
+      "threshold": 0.6,
+      "value": 1.0
+    },
+    "max_single_strategy_pnl_share": {
+      "status": "PASS",
+      "threshold": 0.4,
+      "value": 0.27921347788388184
+    }
+  },
+  "ok": false,
+  "policy_gate_decision": "BLOCKED_HEAT",
+  "related_traceability_error_artifact": "results/errors/20260220T065448Z_paper_portfolio.json",
+  "role": "Guardian",
+  "scope_artifact": "results/paper/20260220T065602Z_P01_P04_combined_180d.json",
+  "scope_label": "Portfolio-construction rerun audit (P01-P04 combined 180d bps8)",
+  "spec_reference": "docs/paper_portfolio_runner_spec.md",
+  "timestamp_utc": "2026-02-20T08:18:57+00:00"
+}

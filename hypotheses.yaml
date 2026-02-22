@@ -2810,3 +2810,543 @@ hypotheses:
         direction_mode: btc_snapback
     allowed_variants: []
     status: planned
+  - id: H111
+    family: cross_asset_divergence
+    class: tradeable_hypothesis
+    logic_hash: "8723e7067f208150586d357179c7652d9052bbb896e75a5c0356f2bde68b249d"
+    description: "BTC-ETH spread dislocation mean-reversion under mid-volatility regimes."
+    rationale: "Test a cross-asset dislocation family that is orthogonal to single-asset threshold logic."
+    WHY: "Target short-horizon spread shocks between BTC and ETH expected to mean-revert when both assets are in non-extreme RV states."
+    RULES:
+      - "Define 5m spread return s_t = ret1_btc - ret1_eth."
+      - "Compute rolling z-score of spread over 96 bars."
+      - "Entry gate: abs(z_spread) >= 2.0."
+      - "Regime gate: rv48_pct_btc and rv48_pct_eth both in [0.25, 0.80)."
+      - "Session gate: only evaluate entries during UTC 08:00-22:00."
+      - "Direction: if z_spread >= 2.0 short BTC; if z_spread <= -2.0 long BTC."
+      - "No new entry while position is open; apply 2-bar cooldown after exit."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      spread_z_window_bars: 96
+      z_entry_threshold: 2.0
+      rv48_pct_min: 0.25
+      rv48_pct_max: 0.80
+      session_start_utc: "08:00"
+      session_end_utc: "22:00"
+      cooldown_bars: 2
+      direction_mode: opposite_spread_z_sign
+    FAILURE_CONDITIONS:
+      - "Lead-lag assumption is unstable and spread shocks continue trending instead of reverting."
+      - "Session gate removes too many opportunities and produces insufficient sample/folds."
+      - "Spread signals are too correlated with existing momentum logic and provide no independent edge after costs."
+    EXPECTED_FAILURE_MODE: "During sustained directional markets, spread dislocations persist and mean-reversion entries are repeatedly run over."
+    entry_rules:
+      - "Compute spread return s_t = ret1_btc - ret1_eth and z_spread over 96 bars."
+      - "Require abs(z_spread) >= 2.0."
+      - "Require 0.25 <= rv48_pct_btc < 0.80 and 0.25 <= rv48_pct_eth < 0.80."
+      - "Require UTC hour in [08:00, 22:00)."
+      - "Enter opposite spread sign: z_spread > 0 => BTC short, z_spread < 0 => BTC long."
+      - "Apply 2-bar cooldown after each closed trade."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "ret1 feature for BTC and ETH"
+      - "rv48 percentile features for BTC and ETH"
+      - "UTC timestamp series"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        spread_definition: btc_ret1_minus_eth_ret1
+        spread_z_window_bars: 96
+        z_entry_threshold: 2.0
+        rv48_pct_min: 0.25
+        rv48_pct_max: 0.80
+        session_start_utc: "08:00"
+        session_end_utc: "22:00"
+        cooldown_bars: 2
+        direction_mode: opposite_spread_z_sign
+        exit_mode: horizon_only
+    allowed_variants: []
+    status: planned
+  - id: H112
+    family: volatility_state
+    class: tradeable_hypothesis
+    logic_hash: "701b3cce95526b2725819ac5baab6ad4e4a4e2a04e56a17340adb7f8871a279d"
+    description: "ATR-to-RV percentile ratio carry in balanced volatility bands."
+    rationale: "Test directional carry when short-range pressure (ATR pct) dominates realized variance without entering shock tails."
+    WHY: "Add an orthogonal single-asset volatility-ratio family distinct from spread-dislocation and prior divergence hypotheses."
+    RULES:
+      - "Compute ratio r = atr14_pct / max(rv48_pct, eps)."
+      - "Require rv48_pct in [0.30, 0.75)."
+      - "Require ratio percentile in [0.60, 0.90)."
+      - "Require abs(dist_to_vwap48_z) in [0.8, 2.0)."
+      - "Trade in sign(dist_to_vwap48) direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      rv48_pct_min: 0.30
+      rv48_pct_max: 0.75
+      atr_rv_pct_ratio_pct_min: 0.60
+      atr_rv_pct_ratio_pct_max: 0.90
+      abs_vwap_dist_z_min: 0.8
+      abs_vwap_dist_z_max: 2.0
+      direction_mode: vwap_distance_sign
+    FAILURE_CONDITIONS:
+      - "ATR/RV percentile ratio fails to transport across volatility baselines."
+      - "Ratio concentration near tails causes unstable entry clustering."
+      - "VWAP distance filter admits late entries in exhausted moves."
+    EXPECTED_FAILURE_MODE: "Volatility-regime drift degrades ratio calibration and produces inconsistent follow-through."
+    entry_rules:
+      - "Compute atr14_pct and rv48_pct, then r = atr14_pct / max(rv48_pct, eps)."
+      - "Require 0.30 <= rv48_pct < 0.75."
+      - "Require ratio percentile in [0.60, 0.90)."
+      - "Require 0.8 <= abs(dist_to_vwap48_z) < 2.0."
+      - "Enter in sign(close-vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "atr14 feature"
+      - "rv48 feature"
+      - "vwap48 feature"
+      - "standardized close-vwap48 distance"
+      - "rolling percentile of atr14_pct/rv48_pct ratio"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        rv48_pct_min: 0.30
+        rv48_pct_max: 0.75
+        atr_rv_pct_ratio_pct_min: 0.60
+        atr_rv_pct_ratio_pct_max: 0.90
+        abs_vwap_dist_z_min: 0.8
+        abs_vwap_dist_z_max: 2.0
+        direction_mode: vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H113
+    family: range_structure
+    class: tradeable_hypothesis
+    logic_hash: "b29d50c3518c49fe6c7e9dafc0a4fbeb185b41e1e70f554f5c53be552b589b7d"
+    description: "24-bar breakout continuation with ER and RV guards."
+    rationale: "Test structural range breaks only when directional efficiency supports continuation and volatility remains mid-band."
+    WHY: "Introduce a distinct range-structure family candidate to diversify away from spread and volatility-ratio predicates."
+    RULES:
+      - "Define prior range using rolling 24-bar high/low excluding current bar."
+      - "Trigger when close crosses above prior high or below prior low."
+      - "Require er20 >= 0.45 and rv48_pct in [0.35, 0.85)."
+      - "Reject overextended states when abs(dist_to_vwap48_z) >= 2.2."
+      - "Trade in breakout direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      breakout_lookback_bars: 24
+      er20_min: 0.45
+      rv48_pct_min: 0.35
+      rv48_pct_max: 0.85
+      abs_vwap_dist_z_max: 2.2
+      direction_mode: breakout_sign
+    FAILURE_CONDITIONS:
+      - "Breakouts fail in chop despite ER filter."
+      - "ER threshold lags and admits late entries after move exhaustion."
+      - "RV mid-band gate excludes too many valid trend transitions."
+    EXPECTED_FAILURE_MODE: "False-breakout clustering around local ranges creates adverse churn and weak post-cost edge."
+    entry_rules:
+      - "Compute prior_high_24 and prior_low_24 from trailing 24 bars (excluding current bar)."
+      - "Long when close > prior_high_24; short when close < prior_low_24."
+      - "Require er20 >= 0.45."
+      - "Require 0.35 <= rv48_pct < 0.85."
+      - "Require abs(dist_to_vwap48_z) < 2.2."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "rolling 24-bar prior high/low"
+      - "er20 feature"
+      - "rv48 feature"
+      - "standardized close-vwap48 distance"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        breakout_lookback_bars: 24
+        er20_min: 0.45
+        rv48_pct_min: 0.35
+        rv48_pct_max: 0.85
+        abs_vwap_dist_z_max: 2.2
+        direction_mode: breakout_sign
+    allowed_variants: []
+    status: planned
+  - id: H114
+    family: cross_asset_regime
+    class: tradeable_hypothesis
+    logic_hash: "e44fe83f677b56516a9f0c500905d1cc68961715cacddbae57a0d3f8f98ee45e"
+    description: "Cross-asset slope disagreement continuation in neutral spread regimes."
+    rationale: "Test whether ETH slope leads BTC when assets disagree, but only outside spread-tail stress states."
+    WHY: "Use cross-asset slope disagreement plus spread neutralization to isolate transfer effects from tail-regime noise."
+    RULES:
+      - "Compute ETH and BTC 1h EMA20 slope signs."
+      - "Require cross-asset disagreement: eth_slope_sign_1h != btc_slope_sign_1h and both non-zero."
+      - "Require spread_pct in [0.20, 0.80)."
+      - "Require ETH slope absolute percentile >= 0.65."
+      - "Trade BTC in ETH slope sign direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      spread_pct_min: 0.20
+      spread_pct_max: 0.80
+      eth_slope_abs_pct_min: 0.65
+      direction_source: eth_slope_sign
+    FAILURE_CONDITIONS:
+      - "ETH slope does not lead BTC when disagreement persists for structural reasons."
+      - "Neutral spread gate overfilters and lowers trade count."
+      - "High ETH slope magnitude can coincide with reversal, not continuation."
+    EXPECTED_FAILURE_MODE: "Extended disagreement windows decouple assets and invalidate ETH-led direction transfer."
+    entry_rules:
+      - "Require eth_slope_sign_1h != btc_slope_sign_1h and both signs non-zero."
+      - "Require 0.20 <= spread_pct < 0.80."
+      - "Require eth_slope_abs_pct_1h >= 0.65."
+      - "Enter BTC in sign(eth_slope_sign_1h)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m closes"
+      - "ETH-USD 5m closes"
+      - "BTC 1h EMA20 slope sign"
+      - "ETH 1h EMA20 slope sign"
+      - "ETH slope absolute percentile"
+      - "spread_pct feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        spread_pct_min: 0.20
+        spread_pct_max: 0.80
+        eth_slope_abs_pct_min: 0.65
+        direction_source: eth_slope_sign
+    allowed_variants: []
+    status: planned
+  - id: H115
+    family: shock_structure
+    class: tradeable_hypothesis
+    logic_hash: "b14b876c138afea101913f52ce37bbf7d0d3e6220ec844ac089a2dffda7c8759"
+    description: "Delayed BTC fade after isolated ETH shock impulse."
+    rationale: "Test one-bar delayed BTC mean-reversion after ETH-only shock events when BTC is not simultaneously shocked."
+    WHY: "Separate cross-asset shock-transfer from same-bar reaction and enforce isolation from broad market shock states."
+    RULES:
+      - "Define ETH shock as ret1_abs_eth_pct >= 0.95."
+      - "Require BTC is not in concurrent shock state: ret1_abs_btc_pct < 0.90."
+      - "Require BTC rv48_pct in [0.35, 0.85)."
+      - "Apply one-bar delay after ETH shock then trade BTC opposite ETH shock direction."
+      - "Apply minimum 10-bar spacing between entries."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      eth_shock_pct_min: 0.95
+      btc_shock_pct_max: 0.90
+      btc_rv48_pct_min: 0.35
+      btc_rv48_pct_max: 0.85
+      entry_delay_bars: 1
+      min_signal_gap_bars: 10
+      direction_mode: opposite_eth_shock_direction
+    FAILURE_CONDITIONS:
+      - "ETH shock direction continues and delayed fade entries are late."
+      - "Shock isolation condition under-samples valid transfer events."
+      - "RV gating misses critical post-shock adjustment periods."
+    EXPECTED_FAILURE_MODE: "Trend-following shock cascades overwhelm delayed reversion logic and produce serial losses."
+    entry_rules:
+      - "Trigger when ret1_abs_eth_pct >= 0.95 and ret1_abs_btc_pct < 0.90."
+      - "Require 0.35 <= rv48_pct_btc < 0.85."
+      - "Enter one bar after trigger."
+      - "Direction is opposite sign(ret1_eth on trigger bar)."
+      - "Enforce at least 10 bars between entries."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "ret1_abs percentile features for BTC and ETH"
+      - "rv48 percentile feature for BTC"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        eth_shock_pct_min: 0.95
+        btc_shock_pct_max: 0.90
+        btc_rv48_pct_min: 0.35
+        btc_rv48_pct_max: 0.85
+        entry_delay_bars: 1
+        min_signal_gap_bars: 10
+        direction_mode: opposite_eth_shock_direction
+    allowed_variants: []
+    status: planned
+  - id: H116
+    family: volatility_conditioning
+    class: tradeable_hypothesis
+    logic_hash: "b277ecab8cfe1b3eb5cfd571896876f28e956690282df875f1a87b7b85c29c8e"
+    description: "Compression-to-expansion breakout with cross-asset bar-direction confirmation."
+    rationale: "Test volatility expansion continuation only after explicit compression and dual-asset directional agreement."
+    WHY: "Introduce a volatility transition state machine distinct from static percentile gates and pure slope-sign transfer."
+    RULES:
+      - "Require BTC true-range percentile in low regime for prior 6 bars: tr_btc_pct <= 0.25."
+      - "Trigger expansion when current tr_btc_pct crosses above 0.60."
+      - "Require ETH bar direction agrees with BTC bar direction on trigger bar."
+      - "Require BTC close-vwap48 sign equals BTC bar direction."
+      - "Trade in BTC trigger-bar direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      compression_tr_pct_max: 0.25
+      compression_bars: 6
+      expansion_tr_pct_cross: 0.60
+      confirm_with_eth_bar_direction: true
+      confirm_with_vwap_sign: true
+      direction_source: btc_bar_direction
+    FAILURE_CONDITIONS:
+      - "Expansion follows noise bursts rather than true breakouts."
+      - "Dual confirmation suppresses too many signals."
+      - "Compression windows fail to represent latent energy states."
+    EXPECTED_FAILURE_MODE: "False expansions after compression produce whipsaw breakouts with insufficient follow-through."
+    entry_rules:
+      - "Require tr_btc_pct <= 0.25 for prior 6 bars."
+      - "Require current tr_btc_pct crosses above 0.60."
+      - "Require sign(bar_return_btc) == sign(bar_return_eth)."
+      - "Require sign(close_btc-vwap48_btc) equals sign(bar_return_btc)."
+      - "Enter in sign(bar_return_btc)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "BTC true-range percentile"
+      - "BTC/ETH bar-return sign"
+      - "BTC vwap48 distance sign"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        compression_tr_pct_max: 0.25
+        compression_bars: 6
+        expansion_tr_pct_cross: 0.60
+        confirm_with_eth_bar_direction: true
+        confirm_with_vwap_sign: true
+        direction_source: btc_bar_direction
+    allowed_variants: []
+    status: planned
+  - id: H117
+    family: mean_reversion
+    class: tradeable_hypothesis
+    logic_hash: "2a12bb19292db000ce2beb2bb43b1d87eed41c37ae3b1db3799e1ed4db450013"
+    description: "Dual-asset VWAP extreme convergence reversion."
+    rationale: "Test BTC snapback when both BTC and ETH are jointly displaced from VWAP in the same direction under low efficiency."
+    WHY: "Use synchronized cross-asset overextension as a stricter reversion context than single-asset VWAP distance."
+    RULES:
+      - "Require BTC dist_to_vwap48_z <= -1.8 for long or >= 1.8 for short."
+      - "Require ETH dist_to_vwap48_z has same sign and abs >= 1.2."
+      - "Require BTC er20 <= 0.35."
+      - "Require spread_pct in [0.15, 0.85)."
+      - "Trade BTC opposite BTC dist_to_vwap48 sign."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      btc_abs_vwap_dist_z_min: 1.8
+      eth_abs_vwap_dist_z_min: 1.2
+      er20_max: 0.35
+      spread_pct_min: 0.15
+      spread_pct_max: 0.85
+      direction_mode: opposite_btc_vwap_distance_sign
+    FAILURE_CONDITIONS:
+      - "Joint displacement marks broad trend acceleration, not exhaustion."
+      - "ER filter is insufficient to screen transition regimes."
+      - "Spread neutral gate still includes unstable decoupling periods."
+    EXPECTED_FAILURE_MODE: "Multi-asset aligned displacement persists and turns convergence entries into repeated trend fades."
+    entry_rules:
+      - "Require abs(dist_to_vwap48_z_btc) >= 1.8 and abs(dist_to_vwap48_z_eth) >= 1.2."
+      - "Require sign(dist_to_vwap48_btc) == sign(dist_to_vwap48_eth)."
+      - "Require er20_btc <= 0.35."
+      - "Require 0.15 <= spread_pct < 0.85."
+      - "Enter BTC opposite sign(dist_to_vwap48_btc)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "ETH-USD 5m OHLCV"
+      - "dist_to_vwap48_z for BTC and ETH"
+      - "er20 for BTC"
+      - "spread_pct feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        btc_abs_vwap_dist_z_min: 1.8
+        eth_abs_vwap_dist_z_min: 1.2
+        er20_max: 0.35
+        spread_pct_min: 0.15
+        spread_pct_max: 0.85
+        direction_mode: opposite_btc_vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H118
+    family: volatility_state
+    class: tradeable_hypothesis
+    logic_hash: "60140cf7b7c3fab607c6ae00a5d0fcb6502ba1d8a0332025ce4213bcf8e380d1"
+    description: "ATR-over-RV pressure carry with bounded VWAP displacement."
+    rationale: "Test continuation when local range pressure exceeds realized variance by a minimum margin."
+    WHY: "Differentiate from existing volatility-state rules by requiring explicit atr-minus-rv separation instead of pure bands."
+    RULES:
+      - "Require rv48_pct in [0.45, 0.88)."
+      - "Require atr14_pct in [0.55, 0.92)."
+      - "Require atr14_pct - rv48_pct >= 0.10."
+      - "Require abs(dist_to_vwap48_z) in [0.7, 1.9)."
+      - "Trade in sign(dist_to_vwap48)."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      rv48_pct_min: 0.45
+      rv48_pct_max: 0.88
+      atr14_pct_min: 0.55
+      atr14_pct_max: 0.92
+      atr_minus_rv_min: 0.10
+      abs_vwap_dist_z_min: 0.7
+      abs_vwap_dist_z_max: 1.9
+      direction_mode: vwap_distance_sign
+    FAILURE_CONDITIONS:
+      - "ATR-RV spread condition captures late volatility spikes."
+      - "Bounded displacement misses strongest follow-through segments."
+      - "Band interactions are unstable under volatility regime shifts."
+    EXPECTED_FAILURE_MODE: "Pressure states are short-lived and reverse before horizon completion."
+    entry_rules:
+      - "Require 0.45 <= rv48_pct < 0.88."
+      - "Require 0.55 <= atr14_pct < 0.92."
+      - "Require atr14_pct - rv48_pct >= 0.10."
+      - "Require 0.7 <= abs(dist_to_vwap48_z) < 1.9."
+      - "Enter in sign(dist_to_vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "atr14 percentile feature"
+      - "rv48 percentile feature"
+      - "vwap48 distance z-score feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        rv48_pct_min: 0.45
+        rv48_pct_max: 0.88
+        atr14_pct_min: 0.55
+        atr14_pct_max: 0.92
+        atr_minus_rv_min: 0.10
+        abs_vwap_dist_z_min: 0.7
+        abs_vwap_dist_z_max: 1.9
+        direction_mode: vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H119
+    family: efficiency_mean_reversion
+    class: tradeable_hypothesis
+    logic_hash: "0f833f58269e4481f786e3eff0082aba1649e009749618ca73c4f364e56d63bc"
+    description: "Efficiency-collapse reversion after mid-efficiency states."
+    rationale: "Test reversion immediately after rapid ER deterioration from moderate efficiency regimes."
+    WHY: "Introduce an ER-delta trigger (state transition) rather than static ER threshold classification."
+    RULES:
+      - "Require er20 in [0.25, 0.55)."
+      - "Require 3-bar change in er20 <= -0.12."
+      - "Require abs(dist_to_vwap48_z) >= 1.1."
+      - "Require rv48_pct < 0.90."
+      - "Trade opposite dist_to_vwap48 sign."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      er20_min: 0.25
+      er20_max: 0.55
+      er20_delta3_max: -0.12
+      abs_vwap_dist_z_min: 1.1
+      rv48_pct_max: 0.90
+      direction_mode: opposite_vwap_distance_sign
+    FAILURE_CONDITIONS:
+      - "ER drops are noise and do not indicate exhaustion."
+      - "Moderate ER band includes mixed regimes with weak edge."
+      - "Distance filter triggers into momentum continuation."
+    EXPECTED_FAILURE_MODE: "Rapid ER decay occurs during regime transitions where trends extend despite apparent efficiency collapse."
+    entry_rules:
+      - "Require 0.25 <= er20 < 0.55."
+      - "Require er20[t] - er20[t-3] <= -0.12."
+      - "Require abs(dist_to_vwap48_z) >= 1.1 and rv48_pct < 0.90."
+      - "Enter opposite sign(dist_to_vwap48)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "er20 feature"
+      - "vwap48 distance z-score feature"
+      - "rv48 percentile feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        er20_min: 0.25
+        er20_max: 0.55
+        er20_delta3_max: -0.12
+        abs_vwap_dist_z_min: 1.1
+        rv48_pct_max: 0.90
+        direction_mode: opposite_vwap_distance_sign
+    allowed_variants: []
+    status: planned
+  - id: H120
+    family: range_structure
+    class: tradeable_hypothesis
+    logic_hash: "ca0df5814108bcedbaa1df63904eef82dc95b4855457938fd37cb30d436b20f2"
+    description: "Inside-bar range break continuation with ER and RV gates."
+    rationale: "Test break continuation only when a tight inside-bar setup resolves with acceptable efficiency and volatility context."
+    WHY: "Use structural inside-bar setup plus breakout resolution to avoid generic prior-high/prior-low triggers."
+    RULES:
+      - "Define 18-bar prior high/low excluding current bar."
+      - "Require inside-bar setup: prior bar high < prior_high_18 and prior bar low > prior_low_18."
+      - "Entry on current close breakout above prior_high_18 or below prior_low_18."
+      - "Require er20 >= 0.40 and rv48_pct in [0.30, 0.80)."
+      - "Trade in breakout direction."
+    PARAMETERS:
+      lookback_days: 180
+      horizon_bars: 8
+      breakout_lookback_bars: 18
+      require_inside_bar_setup: true
+      er20_min: 0.40
+      rv48_pct_min: 0.30
+      rv48_pct_max: 0.80
+      direction_mode: breakout_sign
+    FAILURE_CONDITIONS:
+      - "Inside-bar setups break frequently in low-liquidity chop."
+      - "ER filter misses true breakouts that start from low efficiency."
+      - "RV band truncates high-conviction expansion legs."
+    EXPECTED_FAILURE_MODE: "Frequent false range breaks produce churn before directional extension materializes."
+    entry_rules:
+      - "Compute prior_high_18 and prior_low_18 from trailing 18 bars excluding current."
+      - "Require inside bar at t-1 inside [prior_low_18, prior_high_18]."
+      - "Long if close_t > prior_high_18; short if close_t < prior_low_18."
+      - "Require er20 >= 0.40."
+      - "Require 0.30 <= rv48_pct < 0.80."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV"
+      - "rolling 18-bar prior high/low"
+      - "inside-bar detector"
+      - "er20 feature"
+      - "rv48 percentile feature"
+    parameters:
+      lookback_days: 180
+      horizon_bars: 8
+      fixed:
+        breakout_lookback_bars: 18
+        require_inside_bar_setup: true
+        er20_min: 0.40
+        rv48_pct_min: 0.30
+        rv48_pct_max: 0.80
+        direction_mode: breakout_sign
+    allowed_variants: []
+    status: planned

@@ -6683,3 +6683,87 @@ Derived classifications from rebuilt summary (artifact-backed):
 
 Queue continuation gate decision:
 - `BLOCKED` (reason: logic-hash integrity failures on all scoped artifacts).
+
+## Standard Batch Audit - H101-H110 (queue batch 2/2) (2026-02-20)
+Run: 2026-02-20T06:07:30+00:00
+Role: Guardian
+
+Scope label:
+- Standard Batch Audit - H101-H110
+
+Scope artifacts:
+- `results/runs/20260219T210243Z_H101.json`
+- `results/runs/20260219T211115Z_H102.json`
+- `results/runs/20260219T211942Z_H103.json`
+- `results/runs/20260219T212809Z_H104.json`
+- `results/runs/20260219T213637Z_H105.json`
+- `results/runs/20260219T214503Z_H106.json`
+- `results/runs/20260219T215330Z_H107.json`
+- `results/runs/20260219T220202Z_H108.json`
+- `results/runs/20260219T221028Z_H109.json`
+- `results/runs/20260219T221847Z_H110.json`
+
+Audit output:
+- `results/audit/audit_20260220T060730Z_h101_h110_batch.json`
+
+Validation results:
+- Schema/completeness across 10 artifacts: `PASS`
+- Dataset fingerprint presence/coherence: `PASS`
+- Required gates per mode (`gross`,`bps8`,`bps10`) including WF `60/15/15` split and bootstrap CI + `P(mean>0)`: `PASS`
+- Logic-hash integrity (artifact `logic_hash` vs `hypotheses.yaml`): `PASS` for `H101` through `H110`
+- Integrity issues: none in scoped artifacts.
+
+Deterministic summary rebuild:
+- Rebuilt `results/summary.json` twice from `results/runs/*.json` via `python3 scripts/build_summary.py`.
+- SHA256 run1: `abc8b6f8ed1229ad13707833f443f526dc415a95f0adef236ca8a44317cae34b`
+- SHA256 run2: `abc8b6f8ed1229ad13707833f443f526dc415a95f0adef236ca8a44317cae34b`
+- Determinism check: `PASS`
+
+Derived classifications from rebuilt summary (artifact-backed):
+- `H101`: `FAIL` (artifact: `results/runs/20260219T210243Z_H101.json`)
+- `H102`: `INCONCLUSIVE` (artifact: `results/runs/20260219T211115Z_H102.json`)
+- `H103`: `FAIL` (artifact: `results/runs/20260219T211942Z_H103.json`)
+- `H104`: `FAIL` (artifact: `results/runs/20260219T212809Z_H104.json`)
+- `H105`: `FAIL` (artifact: `results/runs/20260219T213637Z_H105.json`)
+- `H106`: `FAIL` (artifact: `results/runs/20260219T214503Z_H106.json`)
+- `H107`: `FAIL` (artifact: `results/runs/20260219T215330Z_H107.json`)
+- `H108`: `FAIL` (artifact: `results/runs/20260219T220202Z_H108.json`)
+- `H109`: `INCONCLUSIVE` (artifact: `results/runs/20260219T221028Z_H109.json`)
+- `H110`: `INCONCLUSIVE` (artifact: `results/runs/20260219T221847Z_H110.json`)
+
+Queue continuation gate decision:
+- `CLEAR` (integrity checks pass for scoped artifacts).
+
+## Portfolio-Construction Rerun Audit - P01 to P04 Combined 180d bps8 (2026-02-20)
+Run: 2026-02-20T08:18:57+00:00
+Role: Guardian
+
+Scope:
+- Success artifact: `results/paper/20260220T065602Z_P01_P04_combined_180d.json`
+- Related traceability-only failure artifact: `results/errors/20260220T065448Z_paper_portfolio.json`
+- Spec reference: `docs/paper_portfolio_runner_spec.md`
+
+Audit output:
+- `results/audit/audit_20260220T081857Z_portfolio_construction_p01_p04_combined_180d_rerun.json`
+
+Audit checks:
+- Schema/completeness vs spec required fields (`timestamp_utc`, `mode`, `hypothesis_ids`, `window_days`, `cost_mode`, `metrics`, `dataset`, `config`): `PASS`
+- Dataset fingerprint presence/coherence (`start_ts`, `end_ts`, `bar_count`, `db_path`, `db_last_modified`): `PASS`
+- Metadata consistency (`mode=combined`, `window_days=180`, `cost_mode=bps8`, IDs=`P01,P02,P03,P04`): `PASS`
+- Metrics integrity/internal consistency:
+  - `summary`, `concentration`, `cross_strategy_correlation`, `heat_audit` present: `PASS`
+  - numeric validity (no NaN/inf in audited metric fields): `PASS`
+  - cross-strategy correlation matrix coherence (square/symmetric/diagonal=1/bounded in [-1,1]): `PASS`
+  - concentration/exposure coherence (`mean_gross_exposure <= max_gross_exposure <= config cap`): `PASS`
+- Traceability error-record presence check: `PASS` (`results/errors/20260220T065448Z_paper_portfolio.json`)
+
+Heat gate checks:
+- `max_pairwise_correlation <= 0.75`: `FAIL` (value `0.9995096360000714`)
+- `max_single_strategy_pnl_share <= 0.40`: `PASS` (value `0.27921347788388184`)
+- `max_single_family_share <= 0.60`: `FAIL` (value `1.0`)
+
+Policy decision (artifact-backed):
+- `BLOCKED_HEAT` (artifact: `results/paper/20260220T065602Z_P01_P04_combined_180d.json`)
+
+Queue continuation gate note:
+- `BLOCKED` (reason: heat-gate failure on pairwise correlation and family concentration).

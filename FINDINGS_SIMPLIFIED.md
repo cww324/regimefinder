@@ -289,6 +289,16 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
 
 ## Derived Status (Artifact-Backed)
 - H100: `FAIL` (artifact: `results/runs/20260219T060657Z_H100.json`)
+- H101: `FAIL` (artifact: `results/runs/20260219T210243Z_H101.json`)
+- H102: `INCONCLUSIVE` (artifact: `results/runs/20260219T211115Z_H102.json`)
+- H103: `FAIL` (artifact: `results/runs/20260219T211942Z_H103.json`)
+- H104: `FAIL` (artifact: `results/runs/20260219T212809Z_H104.json`)
+- H105: `FAIL` (artifact: `results/runs/20260219T213637Z_H105.json`)
+- H106: `FAIL` (artifact: `results/runs/20260219T214503Z_H106.json`)
+- H107: `FAIL` (artifact: `results/runs/20260219T215330Z_H107.json`)
+- H108: `FAIL` (artifact: `results/runs/20260219T220202Z_H108.json`)
+- H109: `INCONCLUSIVE` (artifact: `results/runs/20260219T221028Z_H109.json`)
+- H110: `INCONCLUSIVE` (artifact: `results/runs/20260219T221847Z_H110.json`)
 - H15: `INCONCLUSIVE` (artifact: `results/runs/20260219T035146Z_H15.json`)
 - H18: `INCONCLUSIVE` (artifact: `results/runs/20260219T035159Z_H18.json`)
 - H19: `INCONCLUSIVE` (artifact: `results/runs/20260219T035211Z_H19.json`)
@@ -365,3 +375,6 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
 
 <!-- DERIVED_STATUS_END -->
 
+
+## Portfolio-Construction Rerun (2026-02-20)
+- P01-P04 combined 180d bps8 rerun: `BLOCKED_HEAT` (artifact: `results/paper/20260220T065602Z_P01_P04_combined_180d.json`; audit: `results/audit/audit_20260220T081857Z_portfolio_construction_p01_p04_combined_180d_rerun.json`; continuation: `BLOCKED`).

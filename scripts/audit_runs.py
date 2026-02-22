@@ -14,6 +14,7 @@ REQUIRED_TOP_KEYS = [
     "dataset",
     "baseline",
     "walkforward",
+    "mode_classification",
 ]
 
 REQUIRED_DATASET_KEYS = [
@@ -59,16 +60,12 @@ def validate_artifact(path: Path) -> list[dict[str, Any]]:
         add_failure(failures, artifact, "dataset_type", "dataset must be object")
         dataset = {}
 
-    has_symbols = (
-        isinstance(dataset.get("primary_symbols"), list)
-        or isinstance(dataset.get("symbols"), list)
-    )
-    if not has_symbols:
+    if not isinstance(dataset.get("primary_symbols"), list):
         add_failure(
             failures,
             artifact,
             "missing_dataset_symbols",
-            "dataset.primary_symbols (or dataset.symbols) is required",
+            "dataset.primary_symbols is required",
         )
 
     for k in REQUIRED_DATASET_KEYS:
@@ -108,6 +105,16 @@ def validate_artifact(path: Path) -> list[dict[str, Any]]:
         add_failure(failures, artifact, "walkforward_modes_type", "walkforward.modes must be object")
         wf_modes = {}
 
+    mode_classification = obj.get("mode_classification", {})
+    if not isinstance(mode_classification, dict):
+        add_failure(
+            failures,
+            artifact,
+            "mode_classification_type",
+            "mode_classification must be object",
+        )
+        mode_classification = {}
+
     for mode in COST_MODES:
         b = baseline.get(mode)
         if not isinstance(b, dict):
@@ -141,6 +148,14 @@ def validate_artifact(path: Path) -> list[dict[str, Any]]:
         folds = w.get("folds")
         if not isinstance(folds, list):
             add_failure(failures, artifact, "missing_folds_list", mode)
+
+        mode_cls = mode_classification.get(mode)
+        if not isinstance(mode_cls, dict):
+            add_failure(failures, artifact, "missing_mode_classification_mode", mode)
+            continue
+        for k in ["baseline_status", "wf_status", "final_status"]:
+            if not isinstance(mode_cls.get(k), str):
+                add_failure(failures, artifact, "missing_mode_classification_metric", f"{mode}.{k}")
 
     return failures
 

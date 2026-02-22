@@ -1,0 +1,297 @@
+{
+  "config": {
+    "bootstrap_iters": 3000,
+    "cooldown_bars": 0,
+    "daily_loss_stop_pct": 0.03,
+    "dsn_source": "RC_DB_DSN",
+    "max_asset_exposure": 1.0,
+    "max_gross_exposure": 1.0,
+    "max_strategy_weight": 0.35,
+    "report_csv_prefix": "",
+    "seed": 42,
+    "timeframe": "5m"
+  },
+  "cost_mode": "bps8",
+  "dataset": {
+    "bar_count": 51420,
+    "db_last_modified": {
+      "BTC-USD": "2026-02-19T03:00:00+00:00",
+      "ETH-USD": "2026-02-19T03:00:00+00:00"
+    },
+    "db_path": {
+      "BTC-USD": "postgres:rc.candles",
+      "ETH-USD": "postgres:rc.candles"
+    },
+    "end_ts": "2026-02-19T03:00:00+00:00",
+    "start_ts": "2025-08-24T08:15:00+00:00"
+  },
+  "hypothesis_ids": [
+    "P01",
+    "P02",
+    "P03",
+    "P04"
+  ],
+  "metrics": {
+    "concentration": {
+      "max_gross_exposure": 1.0,
+      "mean_abs_asset_exposure": {
+        "BTC-USD": 0.998356401384083
+      },
+      "mean_gross_exposure": 0.998356401384083,
+      "strategy_pnl_share": {
+        "P01": 0.27921347788388184,
+        "P02": 0.2645760552772677,
+        "P03": 0.18358785897512622,
+        "P04": 0.2726226078637243
+      },
+      "strategy_trade_counts": {
+        "P01": 577,
+        "P02": 578,
+        "P03": 239,
+        "P04": 576
+      }
+    },
+    "cross_strategy_correlation": {
+      "P01": {
+        "P01": 1.0,
+        "P02": 0.9978207994001045,
+        "P03": 0.5918049946565215,
+        "P04": 0.9995096360000714
+      },
+      "P02": {
+        "P01": 0.9978207994001045,
+        "P02": 1.0,
+        "P03": 0.5989644517382142,
+        "P04": 0.9980164074359423
+      },
+      "P03": {
+        "P01": 0.5918049946565215,
+        "P02": 0.5989644517382142,
+        "P03": 1.0,
+        "P04": 0.6002315155333127
+      },
+      "P04": {
+        "P01": 0.9995096360000714,
+        "P02": 0.9980164074359423,
+        "P03": 0.6002315155333127,
+        "P04": 1.0
+      }
+    },
+    "heat_audit": {
+      "active_strategy_count_distribution": {
+        "1": 252,
+        "2": 759,
+        "3": 683,
+        "4": 125,
+        "5": 155
+      },
+      "effective_strategy_weights_summary": {
+        "H76": {
+          "mean_abs_weight": 0.33912698268175795,
+          "mean_weight": 0.33912698268175795,
+          "runs": 4
+        },
+        "H77": {
+          "mean_abs_weight": 0.47656606481529445,
+          "mean_weight": 0.47656606481529445,
+          "runs": 4
+        },
+        "H78": {
+          "mean_abs_weight": 0.33008679737635127,
+          "mean_weight": 0.33008679737635127,
+          "runs": 4
+        },
+        "H79": {
+          "mean_abs_weight": 0.35374213114654557,
+          "mean_weight": 0.35374213114654557,
+          "runs": 3
+        },
+        "H81": {
+          "mean_abs_weight": 0.33444815795676835,
+          "mean_weight": 0.33444815795676835,
+          "runs": 4
+        },
+        "H82": {
+          "mean_abs_weight": 0.33242737488870366,
+          "mean_weight": 0.33242737488870366,
+          "runs": 4
+        }
+      },
+      "family_contribution_pnl": {
+        "cross_asset_regime": 4.930645052599905
+      },
+      "family_contribution_summary": {
+        "cross_asset_regime": 1.0
+      },
+      "policy_config_snapshot": {
+        "P01": {
+          "candidate_universe": [
+            "H76",
+            "H77",
+            "H79",
+            "H81",
+            "H78",
+            "H82"
+          ],
+          "consensus_threshold": 0.0,
+          "core_set": [],
+          "core_weight_share": 0.6,
+          "dedup_drop": "H79",
+          "dedup_keep": "H77",
+          "exclude_members": [],
+          "fallback_mode": "core_only_equal_weight",
+          "fallback_weighting": "equal_weight_active",
+          "include_members": [],
+          "min_active_members": 1,
+          "policy_id": "P01",
+          "rank_window_days": 30,
+          "score_clip_floor": 0.0,
+          "session_map": {},
+          "specialist_weight_share": 0.4,
+          "weighting_mode": "equal_weight_active"
+        },
+        "P02": {
+          "candidate_universe": [
+            "H76",
+            "H77",
+            "H79",
+            "H81",
+            "H78",
+            "H82"
+          ],
+          "consensus_threshold": 0.0,
+          "core_set": [],
+          "core_weight_share": 0.6,
+          "dedup_drop": "",
+          "dedup_keep": "",
+          "exclude_members": [],
+          "fallback_mode": "core_only_equal_weight",
+          "fallback_weighting": "equal_weight_active",
+          "include_members": [],
+          "min_active_members": 1,
+          "policy_id": "P02",
+          "rank_window_days": 30,
+          "score_clip_floor": 0.0,
+          "session_map": {},
+          "specialist_weight_share": 0.4,
+          "weighting_mode": "rank_weight"
+        },
+        "P03": {
+          "candidate_universe": [
+            "H76",
+            "H77",
+            "H79",
+            "H81",
+            "H78",
+            "H82"
+          ],
+          "consensus_threshold": 0.67,
+          "core_set": [],
+          "core_weight_share": 0.6,
+          "dedup_drop": "",
+          "dedup_keep": "",
+          "exclude_members": [],
+          "fallback_mode": "core_only_equal_weight",
+          "fallback_weighting": "equal_weight_active",
+          "include_members": [],
+          "min_active_members": 3,
+          "policy_id": "P03",
+          "rank_window_days": 30,
+          "score_clip_floor": 0.0,
+          "session_map": {},
+          "specialist_weight_share": 0.4,
+          "weighting_mode": "equal_weight_active"
+        },
+        "P04": {
+          "candidate_universe": [
+            "H76",
+            "H77",
+            "H79",
+            "H81",
+            "H78",
+            "H82"
+          ],
+          "consensus_threshold": 0.0,
+          "core_set": [
+            "H76",
+            "H77",
+            "H79",
+            "H78"
+          ],
+          "core_weight_share": 0.6,
+          "dedup_drop": "",
+          "dedup_keep": "",
+          "exclude_members": [],
+          "fallback_mode": "core_only_equal_weight",
+          "fallback_weighting": "equal_weight_active",
+          "include_members": [],
+          "min_active_members": 1,
+          "policy_id": "P04",
+          "rank_window_days": 30,
+          "score_clip_floor": 0.0,
+          "session_map": {
+            "08:00-16:00": "H81",
+            "16:00-24:00": "H82"
+          },
+          "specialist_weight_share": 0.4,
+          "weighting_mode": "equal_weight_active"
+        }
+      }
+    },
+    "summary": {
+      "expectancy": 0.00012251103286404951,
+      "max_drawdown": -0.108882732744642,
+      "monthly_stability": {
+        "2025-08": {
+          "mean_return": -0.00028521705914737655,
+          "net_return": -0.007415643537831791,
+          "trades": 26,
+          "win_rate": 0.5384615384615384
+        },
+        "2025-09": {
+          "mean_return": 4.7400514223433576e-05,
+          "net_return": 0.005071855021907393,
+          "trades": 107,
+          "win_rate": 0.48598130841121495
+        },
+        "2025-10": {
+          "mean_return": 0.00011425908136670022,
+          "net_return": 0.01051183548573642,
+          "trades": 92,
+          "win_rate": 0.5
+        },
+        "2025-11": {
+          "mean_return": 0.0007377410493458479,
+          "net_return": 0.07672506913196818,
+          "trades": 104,
+          "win_rate": 0.5769230769230769
+        },
+        "2025-12": {
+          "mean_return": -0.0002567285088539291,
+          "net_return": -0.025159393867685054,
+          "trades": 98,
+          "win_rate": 0.3979591836734694
+        },
+        "2026-01": {
+          "mean_return": -0.0004186581180797667,
+          "net_return": -0.037679230627179004,
+          "trades": 90,
+          "win_rate": 0.43333333333333335
+        },
+        "2026-02": {
+          "mean_return": 0.0007992932030902369,
+          "net_return": 0.04875688538850445,
+          "trades": 61,
+          "win_rate": 0.5573770491803278
+        }
+      },
+      "net_return": 0.07081137699542062,
+      "trade_count": 578,
+      "turnover": 578.0,
+      "win_rate": 0.4913494809688581
+    }
+  },
+  "mode": "combined",
+  "timestamp_utc": "2026-02-20T08:14:14+00:00",
+  "window_days": 180
+}

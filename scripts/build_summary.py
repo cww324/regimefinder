@@ -96,14 +96,21 @@ def build_summary() -> dict[str, Any]:
         path, payload, _ts = latest[hyp_id]
         dataset = payload.get("dataset", {})
         baseline = payload.get("baseline", {})
-        wf_modes = payload.get("walkforward", {}).get("modes", {})
+        walkforward = payload.get("walkforward", {})
+        wf_modes = walkforward.get("modes", {}) if isinstance(walkforward, dict) else {}
+        wf_split = walkforward.get("split", {}) if isinstance(walkforward, dict) else {}
+        mode_classification = payload.get("mode_classification", {})
 
         mode_summary: dict[str, Any] = {}
         statuses: list[str] = []
         for mode in COST_MODES:
             b = baseline.get(mode, {}) if isinstance(baseline, dict) else {}
             w = wf_modes.get(mode, {}) if isinstance(wf_modes, dict) else {}
-            baseline_status, wf_status, final_status, reason = classify_mode(b, w)
+            mode_cls = mode_classification.get(mode, {}) if isinstance(mode_classification, dict) else {}
+            d_baseline_status, d_wf_status, d_final_status, reason = classify_mode(b, w)
+            baseline_status = str(mode_cls.get("baseline_status", d_baseline_status))
+            wf_status = str(mode_cls.get("wf_status", d_wf_status))
+            final_status = str(mode_cls.get("final_status", d_final_status))
             statuses.append(final_status)
 
             agg = w.get("aggregate", {}) if isinstance(w, dict) else {}
@@ -148,6 +155,11 @@ def build_summary() -> dict[str, Any]:
                 "bar_count": dataset.get("bar_count"),
                 "db_path": dataset.get("db_path"),
                 "db_last_modified": dataset.get("db_last_modified"),
+            },
+            "walkforward_split": {
+                "train_days": wf_split.get("train_days"),
+                "test_days": wf_split.get("test_days"),
+                "step_days": wf_split.get("step_days"),
             },
             "cost_modes": mode_summary,
             "final_status": combine_status(statuses),

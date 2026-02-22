@@ -1,17 +1,17 @@
 batch_size: 10
-next_index: 10
+next_index: 0
 paused: false
 queue:
-- H101
-- H102
-- H103
-- H104
-- H105
-- H106
-- H107
-- H108
-- H109
-- H110
+- H72
+- H73
+- H76
+- H77
+- H78
+- H79
+- H81
+- H82
+- H83
+- H84
 notes: 'Blocked 2026-02-19: Postgres preflight failed in Executor shell (psycopg OperationalError).
   Restore DB reachability in same shell, then resume H91-H100 batch. Carry-forward
   2026-02-19 (paper protocol): 365d standalone artifact results/paper/20260219T065212Z_standalone_365d.json
@@ -29,4 +29,60 @@ notes: 'Blocked 2026-02-19: Postgres preflight failed in Executor shell (psycopg
   TODO before any live-paper consideration: (1) Coder fix family-share/heat normalization
   in run_paper_portfolio output (shares bounded [0,1]), (2) rerun P portfolio evaluation
   in meaningful multi-policy context (not single-ID only), (3) Guardian re-audit with
-  heat gates, (4) only promote if heat + robustness gates pass.'
+  heat gates, (4) only promote if heat + robustness gates pass. Coordinator update
+  2026-02-20: Coder TODO to deprecate/archive legacy run-artifact schema assumptions
+  in validators/scripts and standardize on current artifact schema (baseline + walkforward.modes
+  + mode_classification). Coordinator assignment: once Coder fix is merged, Guardian
+  must audit latest H101-H110 artifacts (20260219T210243Z_H101.json through 20260219T221847Z_H110.json),
+  publish results/audit/audit_<timestamp>_h101_h110_batch.json, rebuild results/summary.json
+  deterministically, and append derived findings references. Coordinator reference
+  runbook for proper P01-P04 retest sequence: docs/coordinator_p01_p04_execution_plan.md.
+  Coordinator update 2026-02-20: Guardian completed H101-H110 audit (results/audit/audit_20260220T060730Z_h101_h110_batch.json)
+  with queue continuation gate CLEAR; summary rebuilt deterministically at SHA256
+  abc8b6f8ed1229ad13707833f443f526dc415a95f0adef236ca8a44317cae34b. Next active track:
+  execute docs/coordinator_p01_p04_execution_plan.md (Coder fix -> Executor reruns
+  -> Guardian audits). Architect assignment 2026-02-20: draft NEW hypothesis IDs starting
+  at H111 (no edits to existing IDs) targeting at least 6 TRADEABLE hypotheses across
+  distinct families from failed H101-H110 set. Require canonical WHY/RULES/PARAMETERS/FAILURE_CONDITIONS/EXPECTED_FAILURE_MODE
+  blocks and deterministic logic_hash fields. Prefer orthogonal signal families (e.g.,
+  liquidity/flow, microstructure/time-of-day interaction, cross-asset lead/lag variants
+  not reusing prior threshold templates) to satisfy diversification track in paper
+  protocol. Forward portfolio note: after P01-P04 rerun/audit closeout, Architect
+  should open NEW portfolio-construction IDs (P05+) for an explicit regime-router
+  layer (regime classification + fixed per-regime strategy allowlists/weights + fixed
+  transition rules). Treat router as portfolio-construction, not normal single-strategy
+  hypothesis; do not edit frozen standalone IDs. Architect update 2026-02-20: H114-H120
+  added in hypotheses.yaml with canonical blocks + logic_hash and YAML parse pass.
+  Coder follow-up required before execution: add research_family_runner routing/feature
+  plumbing/preflight support for H114-H120. Coordinator metadata convention: all NEW
+  portfolio-construction hypotheses (P IDs) must include parameters.fixed fields portfolio_track_id,
+  candidate_universe_version, construction_variant as documented in docs/portfolio_hypothesis_metadata_convention.md.
+  Coordinator pending work tracker: docs/coordinator_next_todos.md (includes Executor->Guardian
+  P01-P04 sequence, 365d expansion sequence, Coder progress-logging task for run_paper_portfolio,
+  and H114-H120 runner support task). Add high-priority Coder perf task: optimize
+  run_paper_portfolio repeated recomputation/single-core bottlenecks with strict no-metric-drift/no-schema-drift
+  validation before adoption. Coordinator update 2026-02-20: Guardian audited P01-P04
+  combined 180d rerun artifact results/paper/20260220T065602Z_P01_P04_combined_180d.json
+  via results/audit/audit_20260220T081857Z_portfolio_construction_p01_p04_combined_180d_rerun.json.
+  Decision BLOCKED_HEAT; continuation BLOCKED (heat-gate failures: max_pairwise_correlation=0.9995096360000714
+  > 0.75, max_single_family_share=1.0 > 0.60; strategy_pnl_share gate passed). Tomorrow
+  first priority: Guardian/Coordinator PASS-inventory readiness map for H1-H110, then
+  choose cross-family shortlist (6-10 PASS IDs) for current-contract reruns before
+  next portfolio-construction track. Coordinator update 2026-02-21T06:30:57Z: PASS
+  rerun Batch 1 execution attempt (H39,H59,H60,H63,H64,H65,H68,H69,H70,H71) failed
+  early; scripts/run_batch_pg.sh exited 1 with psycopg OperationalError connection
+  is bad. DSN preflight reported exit code 0 in same shell before batch start. No
+  new run artifacts produced and no new results/errors/*_paper_portfolio.json created.
+  Queue paused pending DB connectivity stabilization in Executor shell and root-cause
+  check for missing error artifact emission on early batch failure. Coordinator update
+  2026-02-21T06:46:56Z: retry attempt blocked before batch run; same-shell DSN preflight
+  failed (exit 1) with psycopg OperationalError connection is bad, and batch command
+  was not executed. Coordinator directive 2026-02-21: keep batch_size=10 for reliability
+  while DB path is unstable. After successful closeout of current queued 10-ID PASS
+  batch (H39,H59,H60,H63,H64,H65,H68,H69,H70,H71), queue follow-on PASS rerun batches
+  for remaining 11 IDs: Batch 2 (H72,H73,H76,H77,H78,H79,H81,H82,H83,H84) and Batch
+  3 (H85). Coordinator update 2026-02-21T07:08:21Z: DB preflight now passing in Executor
+  shell; prior batch refusal was due to paused=true gate only. Queue reopened for
+  immediate execution of current 10-ID PASS batch. Coordinator update 2026-02-22T00:13:27Z:
+  Batch 1 completed (new artifacts 20260221T071807Z_H39.json through 20260221T083827Z_H71.json).
+  Queue rotated to PASS Batch 2 (H72,H73,H76,H77,H78,H79,H81,H82,H83,H84) with next_index reset to 0.'

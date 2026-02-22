@@ -342,6 +342,15 @@ def _weights_rank(active: list[str], scores: dict[str, float], fallback_mode: st
     return {m: 0.0 for m in active}
 
 
+def _normalize_share_map(values: dict[str, float]) -> dict[str, float]:
+    """Convert non-negative values to normalized shares in [0, 1]."""
+    cleaned = {str(k): max(0.0, float(v)) for k, v in values.items()}
+    total = float(sum(cleaned.values()))
+    if total <= 0:
+        return {k: 0.0 for k in sorted(cleaned)}
+    return {k: float(cleaned[k] / total) for k in sorted(cleaned)}
+
+
 def build_hypothesis_metrics(events: pd.DataFrame, cost: float, hypothesis_id: str, asset: str) -> dict[str, Any]:
     net = events["gross_r"].astype(float) - float(cost)
     arr = to_float_array(net)
@@ -693,7 +702,8 @@ def build_portfolio_hypothesis_run(
     rows: list[dict[str, Any]] = []
     strategy_weight_obs: dict[str, list[float]] = {m: [] for m in members}
     active_count_obs: list[int] = []
-    family_pnl: dict[str, float] = {}
+    family_pnl_signed: dict[str, float] = {}
+    family_pnl_abs: dict[str, float] = {}
 
     for ts in sorted(timeline):
         bucket = timeline[ts]
@@ -755,7 +765,9 @@ def build_portfolio_hypothesis_run(
             gross_r += float(weight) * mr
             strategy_weight_obs[member].append(float(weight))
             fam = str(member_items[member]["family"])
-            family_pnl[fam] = family_pnl.get(fam, 0.0) + float(weight) * mr
+            contribution = float(weight) * mr
+            family_pnl_signed[fam] = family_pnl_signed.get(fam, 0.0) + contribution
+            family_pnl_abs[fam] = family_pnl_abs.get(fam, 0.0) + abs(contribution)
         active_count_obs.append(active_count)
 
         rows.append({
@@ -781,11 +793,17 @@ def build_portfolio_hypothesis_run(
         k = str(int(n))
         active_dist[k] = active_dist.get(k, 0) + 1
 
+    family_share = _normalize_share_map(family_pnl_abs)
+
     details = {
         "policy_config_snapshot": policy.policy_snapshot,
         "effective_strategy_weights_summary": weight_summary,
         "active_strategy_count_distribution": dict(sorted(active_dist.items(), key=lambda x: int(x[0]))),
-        "family_contribution_summary": {k: float(v) for k, v in sorted(family_pnl.items())},
+        # Kept for heat-gate consumers: normalized family shares in [0, 1].
+        "family_contribution_summary": family_share,
+        # Raw signed PnL by family retained for diagnostic/debug use.
+        "family_contribution_pnl": {k: float(v) for k, v in sorted(family_pnl_signed.items())},
+        "family_contribution_abs_total": {k: float(v) for k, v in sorted(family_pnl_abs.items())},
         "resolved_members": members,
     }
 
@@ -826,7 +844,8 @@ def build_heat_audit(runs: list[HypothesisRun]) -> dict[str, Any]:
 
     agg_weights: dict[str, list[float]] = {}
     agg_active: dict[str, int] = {}
-    agg_family: dict[str, float] = {}
+    agg_family_shares: dict[str, list[float]] = {}
+    agg_family_pnl: dict[str, float] = {}
     policy_snapshot: dict[str, Any] = {}
 
     for run in audit_rows:
@@ -838,8 +857,13 @@ def build_heat_audit(runs: list[HypothesisRun]) -> dict[str, Any]:
         for k, v in ad.items():
             agg_active[str(k)] = agg_active.get(str(k), 0) + int(v)
         fam = run.details.get("family_contribution_summary", {})
-        for k, v in fam.items():
-            agg_family[k] = agg_family.get(k, 0.0) + float(v)
+        if isinstance(fam, dict):
+            for k, v in fam.items():
+                agg_family_shares.setdefault(str(k), []).append(max(0.0, float(v)))
+        fam_pnl = run.details.get("family_contribution_pnl", {})
+        if isinstance(fam_pnl, dict):
+            for k, v in fam_pnl.items():
+                agg_family_pnl[str(k)] = agg_family_pnl.get(str(k), 0.0) + float(v)
 
     weight_summary = {
         s: {
@@ -850,10 +874,16 @@ def build_heat_audit(runs: list[HypothesisRun]) -> dict[str, Any]:
         for s, vals in sorted(agg_weights.items())
     }
 
+    family_summary = {
+        k: float(np.mean(vals)) if vals else 0.0 for k, vals in sorted(agg_family_shares.items())
+    }
+    family_summary = _normalize_share_map(family_summary)
+
     return {
         "effective_strategy_weights_summary": weight_summary,
         "active_strategy_count_distribution": dict(sorted(agg_active.items(), key=lambda x: int(x[0]))),
-        "family_contribution_summary": {k: float(v) for k, v in sorted(agg_family.items())},
+        "family_contribution_summary": family_summary,
+        "family_contribution_pnl": {k: float(v) for k, v in sorted(agg_family_pnl.items())},
         "policy_config_snapshot": policy_snapshot,
     }
 

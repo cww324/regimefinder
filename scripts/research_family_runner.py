@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import yaml
 
 from app.db.market_data import load_btc_eth_merged_last_days
 
@@ -19,6 +20,70 @@ SUPPORTED_FAMILIES = {
     "volatility_state",
     "efficiency_mean_reversion",
     "cross_asset_divergence",
+}
+HYPOTHESES_PATH = Path("hypotheses.yaml")
+EPS = 1e-12
+
+SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
+    "cross_asset_regime": {
+        "H19",
+        "H29",
+        "H30",
+        "H37",
+        "H38",
+        "H39",
+        "H40",
+        "H41",
+        "H59",
+        "H60",
+        "H61",
+        "H62",
+        "H63",
+        "H64",
+        "H65",
+        "H66",
+        "H67",
+        "H68",
+        "H69",
+        "H70",
+        "H71",
+        "H72",
+        "H73",
+        "H74",
+        "H75",
+        "H76",
+        "H77",
+        "H78",
+        "H79",
+        "H80",
+        "H81",
+        "H82",
+        "H83",
+        "H84",
+        "H85",
+        "H86",
+        "H87",
+        "H88",
+        "H89",
+        "H90",
+        "H91",
+        "H92",
+        "H93",
+        "H94",
+        "H95",
+        "H96",
+        "H97",
+        "H98",
+        "H99",
+        "H100",
+    },
+    "shock_structure": {"H27", "H42", "H43", "H44", "H45", "H46"},
+    "volatility_conditioning": {"H47", "H48", "H49", "H50"},
+    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53"},
+    "range_structure": {"H28", "H54", "H55", "H56", "H113"},
+    "volatility_state": {"H101", "H102", "H103", "H104", "H112"},
+    "efficiency_mean_reversion": {"H105", "H106", "H107"},
+    "cross_asset_divergence": {"H108", "H109", "H110", "H111"},
 }
 
 
@@ -84,6 +149,128 @@ def require_columns(frame: pd.DataFrame, hypothesis_id: str, columns: list[str])
     missing = [c for c in columns if c not in frame.columns]
     if missing:
         raise ValueError(f"{hypothesis_id} missing required columns: {missing}")
+
+
+def parse_utc_hhmm(value: str, hypothesis_id: str, param_name: str) -> tuple[int, int]:
+    raw = str(value).strip()
+    parts = raw.split(":")
+    if len(parts) != 2:
+        raise ValueError(f"{hypothesis_id} invalid {param_name}='{value}' (expected HH:MM)")
+    try:
+        hour = int(parts[0])
+        minute = int(parts[1])
+    except ValueError as exc:
+        raise ValueError(f"{hypothesis_id} invalid {param_name}='{value}' (expected HH:MM)") from exc
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        raise ValueError(f"{hypothesis_id} invalid {param_name}='{value}' (hour 0-23, minute 0-59)")
+    return hour, minute
+
+
+def load_fixed_params(hypothesis_id: str) -> dict[str, object]:
+    if not HYPOTHESES_PATH.exists():
+        raise ValueError(f"{hypothesis_id} cannot load params: missing {HYPOTHESES_PATH}")
+    payload = yaml.safe_load(HYPOTHESES_PATH.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{hypothesis_id} cannot parse {HYPOTHESES_PATH}: root must be mapping")
+    rows = payload.get("hypotheses", [])
+    if not isinstance(rows, list):
+        raise ValueError(f"{hypothesis_id} cannot parse {HYPOTHESES_PATH}: hypotheses must be a list")
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("id", "")).strip() != hypothesis_id:
+            continue
+        params = row.get("parameters", {})
+        if not isinstance(params, dict):
+            return {}
+        fixed = params.get("fixed", {})
+        if isinstance(fixed, dict):
+            return dict(fixed)
+        return {}
+    return {}
+
+
+def validate_route_and_params(
+    hypothesis_id: str,
+    family: str,
+    horizon: int,
+    fixed_params: dict[str, object] | None = None,
+) -> dict[str, object]:
+    allowed = SUPPORTED_IDS_BY_FAMILY.get(family, set())
+    if hypothesis_id not in allowed:
+        allowed_list = ", ".join(sorted(allowed)) if allowed else "(none)"
+        raise ValueError(
+            f"Unsupported hypothesis/family route: {hypothesis_id} ({family}). "
+            f"Allowed IDs for family '{family}': {allowed_list}"
+        )
+    fixed = dict(fixed_params or {})
+    if hypothesis_id == "H111":
+        try:
+            spread_window = int(fixed.get("spread_z_window_bars", 96))
+            z_entry = float(fixed.get("z_entry_threshold", 2.0))
+            rv_min = float(fixed.get("rv48_pct_min", 0.25))
+            rv_max = float(fixed.get("rv48_pct_max", 0.80))
+            cooldown_bars = int(fixed.get("cooldown_bars", 2))
+            start_hour, start_min = parse_utc_hhmm(str(fixed.get("session_start_utc", "08:00")), hypothesis_id, "session_start_utc")
+            end_hour, end_min = parse_utc_hhmm(str(fixed.get("session_end_utc", "22:00")), hypothesis_id, "session_end_utc")
+        except Exception as exc:
+            raise ValueError(f"{hypothesis_id} invalid parameter set: {exc}") from exc
+        if spread_window < 2:
+            raise ValueError(f"{hypothesis_id} invalid spread_z_window_bars={spread_window}; expected >= 2")
+        if z_entry <= 0:
+            raise ValueError(f"{hypothesis_id} invalid z_entry_threshold={z_entry}; expected > 0")
+        if not (0.0 <= rv_min < rv_max <= 1.0):
+            raise ValueError(
+                f"{hypothesis_id} invalid rv48 pct range [{rv_min},{rv_max}); expected 0 <= min < max <= 1"
+            )
+        if cooldown_bars < 0:
+            raise ValueError(f"{hypothesis_id} invalid cooldown_bars={cooldown_bars}; expected >= 0")
+        if (start_hour, start_min) == (end_hour, end_min):
+            raise ValueError(f"{hypothesis_id} invalid session window: start equals end")
+    elif hypothesis_id == "H112":
+        try:
+            rv_min = float(fixed.get("rv48_pct_min", 0.30))
+            rv_max = float(fixed.get("rv48_pct_max", 0.75))
+            ratio_min = float(fixed.get("atr_rv_pct_ratio_pct_min", 0.60))
+            ratio_max = float(fixed.get("atr_rv_pct_ratio_pct_max", 0.90))
+            z_min = float(fixed.get("abs_vwap_dist_z_min", 0.8))
+            z_max = float(fixed.get("abs_vwap_dist_z_max", 2.0))
+        except Exception as exc:
+            raise ValueError(f"{hypothesis_id} invalid parameter set: {exc}") from exc
+        if not (0.0 <= rv_min < rv_max <= 1.0):
+            raise ValueError(
+                f"{hypothesis_id} invalid rv48 pct range [{rv_min},{rv_max}); expected 0 <= min < max <= 1"
+            )
+        if not (0.0 <= ratio_min < ratio_max <= 1.0):
+            raise ValueError(
+                f"{hypothesis_id} invalid atr_rv_pct_ratio percentile range [{ratio_min},{ratio_max}); expected 0 <= min < max <= 1"
+            )
+        if not (0.0 <= z_min < z_max):
+            raise ValueError(
+                f"{hypothesis_id} invalid abs_vwap_dist_z range [{z_min},{z_max}); expected 0 <= min < max"
+            )
+    elif hypothesis_id == "H113":
+        try:
+            lookback = int(fixed.get("breakout_lookback_bars", 24))
+            er_min = float(fixed.get("er20_min", 0.45))
+            rv_min = float(fixed.get("rv48_pct_min", 0.35))
+            rv_max = float(fixed.get("rv48_pct_max", 0.85))
+            z_max = float(fixed.get("abs_vwap_dist_z_max", 2.2))
+        except Exception as exc:
+            raise ValueError(f"{hypothesis_id} invalid parameter set: {exc}") from exc
+        if lookback < 2:
+            raise ValueError(f"{hypothesis_id} invalid breakout_lookback_bars={lookback}; expected >= 2")
+        if not (0.0 <= er_min <= 1.0):
+            raise ValueError(f"{hypothesis_id} invalid er20_min={er_min}; expected in [0,1]")
+        if not (0.0 <= rv_min < rv_max <= 1.0):
+            raise ValueError(
+                f"{hypothesis_id} invalid rv48 pct range [{rv_min},{rv_max}); expected 0 <= min < max <= 1"
+            )
+        if z_max <= 0:
+            raise ValueError(f"{hypothesis_id} invalid abs_vwap_dist_z_max={z_max}; expected > 0")
+        if int(horizon) <= 0:
+            raise ValueError(f"{hypothesis_id} invalid horizon={horizon}; expected > 0")
+    return fixed
 
 
 def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
@@ -216,6 +403,8 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     prior_low_12 = x["low_btc"].shift(1).rolling(12).min()
     x["prior_high_12"] = prior_high_12
     x["prior_low_12"] = prior_low_12
+    x["prior_high_24"] = x["high_btc"].shift(1).rolling(24).max()
+    x["prior_low_24"] = x["low_btc"].shift(1).rolling(24).min()
 
     # Deterministic feature set for newer families (H101+), computed locally
     # from merged BTC/ETH OHLCV to avoid changing data-source contracts.
@@ -248,6 +437,9 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
 
     atr_rv_ratio = x["atr14_btc"] / x["rv48_btc"].replace(0, np.nan)
     x["atr_rv_ratio_pct_btc"] = atr_rv_ratio.rolling(w20d).apply(pct_rank_last, raw=False)
+    atr_rv_pct_ratio = x["atr14_pct_btc"] / x["rv48_pct_btc"].clip(lower=EPS)
+    x["atr_rv_pct_ratio"] = atr_rv_pct_ratio
+    x["atr_rv_pct_ratio_pct"] = atr_rv_pct_ratio.rolling(w20d).apply(pct_rank_last, raw=False)
     x["abs_vwap_dist_pct_btc"] = x["dist_to_vwap48_btc"].abs().rolling(w20d).apply(pct_rank_last, raw=False)
 
     x["delta_er"] = x["er20_btc"] - x["er20_eth"]
@@ -267,8 +459,15 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     return x
 
 
-def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Series:
+def build_signal(
+    frame: pd.DataFrame,
+    hypothesis_id: str,
+    family: str,
+    fixed_params: dict[str, object] | None = None,
+    horizon: int = 0,
+) -> pd.Series:
     x = frame
+    fixed = dict(fixed_params or {})
 
     if family == "cross_asset_regime":
         spread = x["spread_pct"]
@@ -589,6 +788,31 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
             sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
             mask = ratio_ok & dist_ok & sign.ne(0)
             return pd.Series(np.where(mask, sign, 0.0), index=x.index)
+        if hypothesis_id == "H112":
+            require_columns(
+                x,
+                hypothesis_id,
+                [
+                    "rv48_pct",
+                    "atr_rv_pct_ratio_pct",
+                    "dist_to_vwap48_z",
+                    "dist_to_vwap48",
+                ],
+            )
+            rv_min = float(fixed.get("rv48_pct_min", 0.30))
+            rv_max = float(fixed.get("rv48_pct_max", 0.75))
+            ratio_min = float(fixed.get("atr_rv_pct_ratio_pct_min", 0.60))
+            ratio_max = float(fixed.get("atr_rv_pct_ratio_pct_max", 0.90))
+            z_min = float(fixed.get("abs_vwap_dist_z_min", 0.8))
+            z_max = float(fixed.get("abs_vwap_dist_z_max", 2.0))
+
+            rv_ok = x["rv48_pct"].ge(rv_min) & x["rv48_pct"].lt(rv_max)
+            ratio_ok = x["atr_rv_pct_ratio_pct"].ge(ratio_min) & x["atr_rv_pct_ratio_pct"].lt(ratio_max)
+            abs_z = x["dist_to_vwap48_z"].abs()
+            dist_ok = abs_z.ge(z_min) & abs_z.lt(z_max)
+            sign = pd.Series(np.sign(x["dist_to_vwap48"]), index=x.index)
+            mask = rv_ok & ratio_ok & dist_ok & sign.ne(0)
+            return pd.Series(np.where(mask, sign, 0.0), index=x.index)
 
     if family == "efficiency_mean_reversion":
         if hypothesis_id == "H105":
@@ -644,6 +868,45 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
             er_ok = x["er20_btc"].le(0.50) & x["er20_eth"].le(0.50)
             mask = opposite & dist_ok & er_ok
             return pd.Series(np.where(mask, -btc_sign, 0.0), index=x.index)
+        if hypothesis_id == "H111":
+            require_columns(x, hypothesis_id, ["dt", "ret1_btc", "ret1_eth", "rv48_pct_btc", "rv48_pct_eth"])
+            spread_window = int(fixed.get("spread_z_window_bars", 96))
+            z_entry = float(fixed.get("z_entry_threshold", 2.0))
+            rv_min = float(fixed.get("rv48_pct_min", 0.25))
+            rv_max = float(fixed.get("rv48_pct_max", 0.80))
+            cooldown_bars = int(fixed.get("cooldown_bars", 2))
+            start_h, start_m = parse_utc_hhmm(str(fixed.get("session_start_utc", "08:00")), hypothesis_id, "session_start_utc")
+            end_h, end_m = parse_utc_hhmm(str(fixed.get("session_end_utc", "22:00")), hypothesis_id, "session_end_utc")
+
+            spread = x["ret1_btc"] - x["ret1_eth"]
+            spread_mean = spread.rolling(spread_window).mean()
+            spread_std = spread.rolling(spread_window).std(ddof=0).replace(0, np.nan)
+            spread_z = (spread - spread_mean) / spread_std
+            x["spread_z"] = spread_z
+
+            minutes = x["dt"].dt.hour * 60 + x["dt"].dt.minute
+            start_minutes = (start_h * 60) + start_m
+            end_minutes = (end_h * 60) + end_m
+            if start_minutes < end_minutes:
+                session_ok = minutes.ge(start_minutes) & minutes.lt(end_minutes)
+            else:
+                session_ok = minutes.ge(start_minutes) | minutes.lt(end_minutes)
+            rv_ok = (
+                x["rv48_pct_btc"].ge(rv_min)
+                & x["rv48_pct_btc"].lt(rv_max)
+                & x["rv48_pct_eth"].ge(rv_min)
+                & x["rv48_pct_eth"].lt(rv_max)
+            )
+
+            direction = np.where(spread_z.ge(z_entry), -1.0, np.where(spread_z.le(-z_entry), 1.0, 0.0))
+            candidate = pd.Series(direction, index=x.index).ne(0) & rv_ok & session_ok
+            gap = max(1, int(horizon) + max(0, cooldown_bars))
+            idx = dedup_idx(candidate, gap=gap)
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = np.asarray(direction, dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
 
     if family == "range_structure":
         if hypothesis_id == "H28":
@@ -677,13 +940,60 @@ def build_signal(frame: pd.DataFrame, hypothesis_id: str, family: str) -> pd.Ser
             up3 = d.eq(1) & d.shift(1).eq(1) & d.shift(2).eq(1)
             dn3 = d.eq(-1) & d.shift(1).eq(-1) & d.shift(2).eq(-1)
             return pd.Series(np.where(up3, 1.0, np.where(dn3, -1.0, 0.0)), index=x.index)
+        if hypothesis_id == "H113":
+            require_columns(
+                x,
+                hypothesis_id,
+                [
+                    "close_btc",
+                    "high_btc",
+                    "low_btc",
+                    "er20",
+                    "rv48_pct",
+                    "dist_to_vwap48_z",
+                    "prior_high_24",
+                    "prior_low_24",
+                ],
+            )
+            lookback = int(fixed.get("breakout_lookback_bars", 24))
+            er_min = float(fixed.get("er20_min", 0.45))
+            rv_min = float(fixed.get("rv48_pct_min", 0.35))
+            rv_max = float(fixed.get("rv48_pct_max", 0.85))
+            z_max = float(fixed.get("abs_vwap_dist_z_max", 2.2))
 
-    raise ValueError(f"Unsupported hypothesis/family route: {hypothesis_id} ({family})")
+            prior_high = x["high_btc"].shift(1).rolling(lookback).max()
+            prior_low = x["low_btc"].shift(1).rolling(lookback).min()
+            close = x["close_btc"]
+            up_break = close.gt(prior_high)
+            dn_break = close.lt(prior_low)
+            er_ok = x["er20"].ge(er_min)
+            rv_ok = x["rv48_pct"].ge(rv_min) & x["rv48_pct"].lt(rv_max)
+            z_ok = x["dist_to_vwap48_z"].abs().lt(z_max)
+            mask = er_ok & rv_ok & z_ok
+            return pd.Series(np.where(mask & up_break, 1.0, np.where(mask & dn_break, -1.0, 0.0)), index=x.index)
+
+    raise ValueError(
+        f"Unsupported hypothesis/family route: {hypothesis_id} ({family}). "
+        f"Known IDs for family: {sorted(SUPPORTED_IDS_BY_FAMILY.get(family, set()))}"
+    )
 
 
 def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: str = "") -> pd.DataFrame:
+    fixed_params = load_fixed_params(hypothesis_id)
+    fixed_params = validate_route_and_params(
+        hypothesis_id=hypothesis_id,
+        family=family,
+        horizon=int(horizon),
+        fixed_params=fixed_params,
+    )
     x = load_frame(days=days, dsn=dsn)
-    signal = build_signal(x, hypothesis_id=hypothesis_id, family=family)
+    signal = build_signal(
+        x,
+        hypothesis_id=hypothesis_id,
+        family=family,
+        fixed_params=fixed_params,
+        horizon=int(horizon),
+    )
     x["signal_dir"] = signal
     x["entry"] = x["signal_dir"].ne(0)
     entry_offset = 0
