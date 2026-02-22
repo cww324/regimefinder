@@ -13,8 +13,15 @@ Last Updated: 2026-02-19 UTC (H86-H100 batch + paper-candidate promotion cycle c
 2. `FINDINGS_TECHNICAL.md` (commands, fold tables, CIs, reproducibility)
 3. `AI_AGENT.md` (this operating brief)
 
+Strategic guidance documents (read before starting new research cycles):
+4. `RESEARCH_ROADMAP.md` — new signal families, ML-assisted hypothesis generation, data extension priorities, H114+ roadmap
+5. `VALIDATION_IMPROVEMENTS.md` — gaps in current validation framework (FDR correction, permutation test, Sharpe gate, MAE gate, trade independence fix, hold-out OOS)
+6. `PERFORMANCE_OPTIMIZATION.md` — pipeline bottlenecks and fixes (vectorize pct_rank_last, single-process multi-mode, parallelization)
+
 Note:
 - `FINDINGS.md` is treated as legacy/archive for now (do not require new updates there).
+- Before running H114+, read `RESEARCH_ROADMAP.md` for signal family guidance.
+- Before accepting a PASS classification, check `VALIDATION_IMPROVEMENTS.md` for gates not yet implemented.
 
 ## 3) Data/Environment
 - Primary data: Coinbase 5m candles, BTC + ETH.
