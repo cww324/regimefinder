@@ -299,6 +299,16 @@ Scope: BTC-USD, Coinbase, 5m, ~180 days
 - H108: `FAIL` (artifact: `results/runs/20260219T220202Z_H108.json`)
 - H109: `INCONCLUSIVE` (artifact: `results/runs/20260219T221028Z_H109.json`)
 - H110: `INCONCLUSIVE` (artifact: `results/runs/20260219T221847Z_H110.json`)
+
+## Funding Regime Family — First Run (2026-02-22)
+Data source: Hyperliquid public API (1h funding, 365 days). Infrastructure committed:
+`db/schema.sql` (3 new tables), `scripts/backfill_derivatives.py`, `app/db/derivatives.py`,
+`load_frame()` wired with `merge_asof`. 17,520 hourly funding records loaded (BTC + ETH).
+
+- H121: `FAIL` — extreme funding long fade. 365d rerun: 70 trades, gross mean=+0.00032, P>0=0.771, but WF only 3/11 folds positive. Signal is inconsistent — extreme funding crowding does not reliably predict short-term mean reversion at 5m/6-bar horizon. (180d: `results/runs/20260222T203728Z_H121.json`; 365d: `results/runs/20260222T205008Z_H121.json`)
+- H122: `FAIL` — funding sign flip momentum does not predict returns. Gross mean=-0.00038, P>0=0.08 (negative before costs). All modes FAIL. (artifact: `results/runs/20260222T203731Z_H122.json`)
+- H123: `FAIL` — H32 filtered by non-extreme funding (gate: funding_btc_pct < 0.85). **365-day rerun (2026-02-22):** Gross n=2006, mean=+0.00065, CI=[+0.00048,+0.00083], P>0=1.000. WF gross: 12/14 folds positive, mean=+0.00068, P>0=1.000. Signal has real gross alpha. FAIL due to cost: inherits H32's ~7 trades/day cadence — 8bps round-trip cost (+0.080%) exceeds gross edge (+0.065%) by 23%. bps8 mean=-0.00015, WF 4/14 folds positive. Diagnosis: funding filter improves quality but not enough to overcome cost drag at high frequency. **Next step: H124 — use funding filter with much tighter spread threshold to reduce to 1-2 trades/day.** (180d artifact: `results/runs/20260222T203735Z_H123.json`; 365d artifact: `results/runs/20260222T204904Z_H123.json`)
+
 - H15: `INCONCLUSIVE` (artifact: `results/runs/20260219T035146Z_H15.json`)
 - H18: `INCONCLUSIVE` (artifact: `results/runs/20260219T035159Z_H18.json`)
 - H19: `INCONCLUSIVE` (artifact: `results/runs/20260219T035211Z_H19.json`)

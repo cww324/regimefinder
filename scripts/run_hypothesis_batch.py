@@ -491,6 +491,38 @@ def mode_cmd(
     return cmd
 
 
+def all_modes_cmd(
+    hypothesis_id: str,
+    family: str,
+    days: int,
+    timeframe: str,
+    horizon: int,
+    train_days: int,
+    test_days: int,
+    step_days: int,
+    bootstrap_iters: int,
+    out_path: Path,
+    dsn: str = "",
+) -> list[str]:
+    cmd = [
+        "PYTHONPATH=.",
+        ".venv/bin/python",
+        "scripts/research_family_runner.py",
+        "--hypothesis-id", hypothesis_id,
+        "--family", family,
+        "--days", str(days),
+        "--timeframe", timeframe,
+        "--horizon", str(horizon),
+        "--all-modes",
+        "--wf", str(train_days), str(test_days), str(step_days),
+        "--bootstrap-iters", str(bootstrap_iters),
+        "--output-json", str(out_path),
+    ]
+    if dsn:
+        cmd.extend(["--dsn", dsn])
+    return cmd
+
+
 def flatten_cmd(cmd: list[str]) -> list[str]:
     if cmd[0] == "PYTHONPATH=.":
         env = os.environ.copy()
@@ -589,19 +621,22 @@ def run_one_hypothesis(
     bootstrap = dict(gates.get("bootstrap", {}))
     bootstrap_iters = int(bootstrap.get("iterations", 3000))
 
-    mode_paths: dict[str, Path] = {}
     commands: list[str] = []
     modes = ["gross", "bps8", "bps10"]
+    # Normalised per-mode results: mode -> (baseline_dict, wf_dict, diagnostics_dict)
+    mode_data: dict[str, tuple[dict, dict, dict]] = {}
 
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
-    for mode in modes:
+    uses_family_runner = hypothesis_id not in {"H32", "H33"}
+
+    if uses_family_runner:
+        # Single subprocess: load_frame() once, compute all 3 cost modes.
         ensure_disk_ok()
-        out_path = ARCHIVE_DIR / f"{hypothesis_id.lower()}_runner_{utc_stamp()}_{mode}.json"
-        cmd = mode_cmd(
+        out_path = ARCHIVE_DIR / f"{hypothesis_id.lower()}_runner_{utc_stamp()}_all.json"
+        cmd = all_modes_cmd(
             hypothesis_id=hypothesis_id,
             family=family,
-            mode=mode,
             days=days,
             timeframe=timeframe,
             horizon=horizon,
@@ -616,11 +651,51 @@ def run_one_hypothesis(
         rc, stdout, stderr = execute_python_cmd(cmd)
         if rc != 0:
             raise RuntimeError(
-                f"Runner failed for {hypothesis_id} mode={mode} rc={rc} stdout={stdout[-600:]} stderr={stderr[-600:]}"
+                f"Runner failed for {hypothesis_id} all-modes rc={rc} stdout={stdout[-600:]} stderr={stderr[-600:]}"
             )
         if not out_path.exists():
             raise RuntimeError(f"Runner did not produce JSON output: {out_path}")
-        mode_paths[mode] = out_path
+        payload = json.loads(out_path.read_text(encoding="utf-8"))
+        for mode in modes:
+            b = payload.get("baseline", {}).get(mode, {})
+            w = payload.get("wf_by_mode", {}).get(mode, {})
+            d = payload.get("diagnostics_by_mode", {}).get(mode, {})
+            mode_data[mode] = (b, w, d)
+    else:
+        # H32 / H33: dedicated runners, one subprocess per cost mode.
+        mode_paths: dict[str, Path] = {}
+        for mode in modes:
+            ensure_disk_ok()
+            out_path = ARCHIVE_DIR / f"{hypothesis_id.lower()}_runner_{utc_stamp()}_{mode}.json"
+            cmd = mode_cmd(
+                hypothesis_id=hypothesis_id,
+                family=family,
+                mode=mode,
+                days=days,
+                timeframe=timeframe,
+                horizon=horizon,
+                train_days=train_days,
+                test_days=test_days,
+                step_days=step_days,
+                bootstrap_iters=bootstrap_iters,
+                out_path=out_path,
+                dsn=dsn,
+            )
+            commands.append(" ".join(flatten_cmd(cmd)))
+            rc, stdout, stderr = execute_python_cmd(cmd)
+            if rc != 0:
+                raise RuntimeError(
+                    f"Runner failed for {hypothesis_id} mode={mode} rc={rc} stdout={stdout[-600:]} stderr={stderr[-600:]}"
+                )
+            if not out_path.exists():
+                raise RuntimeError(f"Runner did not produce JSON output: {out_path}")
+            mode_paths[mode] = out_path
+        for mode in modes:
+            payload = json.loads(mode_paths[mode].read_text(encoding="utf-8"))
+            b = payload.get("baseline", {}).get(mode, {})
+            w = payload.get("wf", {})
+            d = payload.get("diagnostics", {})
+            mode_data[mode] = (b, w, d)
 
     baseline: dict[str, dict[str, Any]] = {}
     wf_modes: dict[str, dict[str, Any]] = {}
@@ -628,10 +703,7 @@ def run_one_hypothesis(
     split_ref = {"train_days": train_days, "test_days": test_days, "step_days": step_days}
 
     for mode in modes:
-        payload = json.loads(mode_paths[mode].read_text(encoding="utf-8"))
-        b = payload.get("baseline", {}).get(mode, {})
-        w = payload.get("wf", {})
-        d = payload.get("diagnostics", {})
+        b, w, d = mode_data[mode]
         split_ref = w.get("split", split_ref)
 
         baseline[mode] = {

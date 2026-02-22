@@ -3350,3 +3350,151 @@ hypotheses:
         direction_mode: breakout_sign
     allowed_variants: []
     status: planned
+  - id: H121
+    family: funding_regime
+    class: tradeable_hypothesis
+    description: "Funding extreme long fade — short BTC when perp funding is crowded long and ETH slope is positive."
+    rationale: >
+      When perpetual funding is at extreme positive levels (top 10% of 30-day rolling window),
+      the market is maximally long and paying a daily carry tax to stay long.
+      A normally bullish ETH slope signal (the H32 entry condition) becomes unreliable
+      in this environment because there is no marginal buyer left. Fade the crowd.
+    WHY: "Extreme funding = crowded positioning = mean reversion pressure. Use derivatives sentiment to gate spot entries."
+    RULES:
+      - "Compute rolling 30-day percentile rank of BTC funding rate (window=8640 bars at 5m = 90 settlements)."
+      - "Require funding_btc_pct >= 0.90 (extreme long territory)."
+      - "Require ETH 1h slope positive (eth_slope_sign_1h > 0)."
+      - "Require spread_pct < 0.10 (short-tail regime, same condition as H32)."
+      - "Enter SHORT BTC (fade the crowded long)."
+      - "Require rv48_pct in [0.30, 0.80) to avoid trading into shock vol."
+    FAILURE_CONDITIONS:
+      - "Extreme funding persists for days in strong trending markets — fade loses in sustained trends."
+      - "30-day window may be too short to define extreme in structural bull markets."
+    EXPECTED_FAILURE_MODE: "Trending markets sustain high funding; fade logic triggers premature shorts that get squeezed."
+    entry_rules:
+      - "Require funding_btc_pct >= 0.90 (rolling 8640-bar window)."
+      - "Require eth_slope_sign_1h > 0."
+      - "Require spread_pct < 0.10."
+      - "Require 0.30 <= rv48_pct < 0.80."
+      - "Enter short BTC (signal_dir = -1)."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV (Coinbase)"
+      - "ETH-USD 5m OHLCV (Coinbase)"
+      - "ETH 1h EMA20 slope sign"
+      - "ETH-BTC spread_pct (H19 regime)"
+      - "funding_rate_btc from rc.funding_rates (Bybit)"
+      - "funding_btc_pct rolling percentile"
+      - "rv48_pct"
+    parameters:
+      lookback_days: 365
+      horizon_bars: 6
+      fixed:
+        funding_pct_threshold: 0.90
+        funding_window_bars: 8640
+        spread_pct_max: 0.10
+        rv48_pct_min: 0.30
+        rv48_pct_max: 0.80
+        signal_dir: -1
+    allowed_variants: []
+    status: fail
+    decision_date: "2026-02-22"
+    decision_notes: "FAIL. 365d: 70 trades, gross P>0=0.771 but WF only 3/11 folds positive. Extreme funding crowding does not reliably predict short-term mean reversion at 5m/6-bar horizon."
+    prerequisites:
+      - "rc.funding_rates populated via scripts/backfill_derivatives.py"
+      - "funding_regime family added to research_family_runner.py SUPPORTED_FAMILIES"
+      - "load_frame() extended with app/db/derivatives.py merge_asof join"
+
+  - id: H122
+    family: funding_regime
+    class: tradeable_hypothesis
+    description: "Funding sign flip momentum — trade in the direction of a BTC funding regime change."
+    rationale: >
+      A flip from positive to negative funding (or vice versa) marks a structural shift in
+      perpetual market positioning. These regime changes in sentiment often precede directional
+      moves on spot as leveraged positions unwind or re-build.
+    WHY: "Sentiment regime change (not just level) carries directional information — the transition matters more than the absolute value."
+    RULES:
+      - "Detect when BTC funding sign changes from the prior 8h settlement."
+      - "Trade in direction of the new funding sign: positive flip = long, negative flip = short."
+      - "Require rv48_pct in [0.20, 0.85)."
+      - "Cooldown: no new entry within 2 * horizon bars of a prior flip entry."
+    FAILURE_CONDITIONS:
+      - "Funding oscillates sign in choppy low-vol environments producing many small flips with no follow-through."
+    EXPECTED_FAILURE_MODE: "High-frequency sign oscillation in sideways markets generates whipsaw entries."
+    entry_rules:
+      - "Require funding_btc_flip == True (sign changed at most recent 8h settlement)."
+      - "Long if new funding_sign > 0, short if new funding_sign < 0."
+      - "Require 0.20 <= rv48_pct < 0.85."
+      - "Cooldown gap of 2 * horizon bars from prior flip entry."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV (Coinbase)"
+      - "funding_rate_btc from rc.funding_rates (Bybit)"
+      - "funding_btc_sign and funding_btc_flip computed features"
+      - "rv48_pct"
+    parameters:
+      lookback_days: 365
+      horizon_bars: 6
+      fixed:
+        cooldown_multiplier: 2
+        rv48_pct_min: 0.20
+        rv48_pct_max: 0.85
+    allowed_variants: []
+    status: fail
+    decision_date: "2026-02-22"
+    decision_notes: "FAIL. Funding sign flip does not predict returns. Gross mean=-0.00038, P>0=0.08 (negative before costs). Clean failure."
+    prerequisites:
+      - "rc.funding_rates populated via scripts/backfill_derivatives.py"
+      - "funding_regime family added to research_family_runner.py SUPPORTED_FAMILIES"
+      - "load_frame() extended with app/db/derivatives.py merge_asof join"
+
+  - id: H123
+    family: funding_regime
+    class: tradeable_hypothesis
+    description: "H32 core logic filtered by non-extreme funding — exclude crowded-long entries from H32 signal."
+    rationale: >
+      H32 (frozen: trade BTC in ETH 1h slope direction when spread_pct < 0.10) passes at
+      gross and 8bps. The hypothesis is that entries occurring when BTC perpetual funding
+      is in extreme long territory are the drag on H32 performance. Removing those entries
+      should improve the mean without touching any frozen H32 rules.
+    WHY: "Test whether filtering crowded-long funding states out of H32 improves net performance. H32 itself stays frozen."
+    RULES:
+      - "Apply exact H32 entry logic: ETH 1h slope sign direction when spread_pct < 0.10."
+      - "Additional gate only: require funding_btc_pct < 0.85."
+      - "All other H32 parameters unchanged."
+    FAILURE_CONDITIONS:
+      - "If crowded-long entries are not the drag, filtering them just reduces n with no mean improvement."
+      - "Reduced sample size makes bootstrap CI too wide to confirm edge."
+    EXPECTED_FAILURE_MODE: "Reduced n drops below statistical significance threshold before mean improvement is confirmed."
+    entry_rules:
+      - "Require spread_pct < 0.10 (ETH-BTC short-tail regime)."
+      - "Require eth_slope_sign_1h != 0."
+      - "Enter in eth_slope_sign_1h direction."
+      - "Additional gate: require funding_btc_pct < 0.85."
+    exit_rules:
+      - "Hold for fixed horizon bars."
+    required_inputs:
+      - "BTC-USD 5m OHLCV (Coinbase)"
+      - "ETH-USD 5m OHLCV (Coinbase)"
+      - "ETH 1h EMA20 slope sign"
+      - "ETH-BTC spread_pct (H19 regime)"
+      - "funding_rate_btc from rc.funding_rates (Bybit)"
+      - "funding_btc_pct rolling percentile"
+    parameters:
+      lookback_days: 365
+      horizon_bars: 6
+      fixed:
+        spread_pct_max: 0.10
+        funding_pct_ceiling: 0.85
+        funding_window_bars: 8640
+    allowed_variants: []
+    status: fail
+    decision_date: "2026-02-22"
+    decision_notes: "FAIL on cost gate. 365d: gross P>0=1.000, WF 12/14 folds positive — signal is real. But ~7 trades/day × 8bps cost exceeds +0.065% gross edge. Next: H124 with tighter spread threshold to reduce to 1-2 trades/day."
+    prerequisites:
+      - "rc.funding_rates populated via scripts/backfill_derivatives.py"
+      - "funding_regime family added to research_family_runner.py SUPPORTED_FAMILIES"
+      - "load_frame() extended with app/db/derivatives.py merge_asof join"

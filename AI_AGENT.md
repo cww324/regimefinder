@@ -28,7 +28,7 @@ Note:
 - Canonical data store:
   - Postgres `rc.*` schema (multi-asset canonical store)
 - Legacy SQLite market DBs are deprecated and must not be used for active Phase 3 execution.
-- Typical window in current findings: ~180 days (~51k 5m bars).
+- Typical window in current findings: 365 days (~105k 5m bars) as of 2026-02-22.
 
 ## 4) Frozen Research Protocol (Hard Guardrails)
 - No tuning.
@@ -60,7 +60,7 @@ Note:
 - H35: stats-only decile maps logged (no trading logic)
 - H36: `PASS gross / BORDERLINE 8 / FAIL 10` (frozen)
 
-Next unused hypothesis ID after H100: H101 (available).
+Next unused hypothesis ID: H124 (available). H101-H113, H121-H123 all completed.
 
 ## 5b) Phase 2 Results (Replication-Only Additions)
 - H37-H56: mostly `FAIL`; H39 is the primary `PASS`.
@@ -81,6 +81,23 @@ Next unused hypothesis ID after H100: H101 (available).
   - `docs/paper_portfolio_protocol.md`
   - `docs/paper_portfolio_executor_checklist.md`
   - `docs/paper_portfolio_runner_spec.md`
+
+## 5d) Funding Regime Family + Infrastructure (2026-02-22)
+- Data extended: OHLCV now 365 days (2025-02-22 → 2026-02-22), ~105k bars per symbol.
+- Derivatives infrastructure built and running:
+  - Source: Hyperliquid public API (1h funding, US-accessible, no auth). Bybit geo-blocks US IPs.
+  - Tables: `rc.funding_rates`, `rc.open_interest`, `rc.liquidations` (see `db/schema.sql`)
+  - Seed: `hyperliquid` venue + `1h` timeframe + `BTC`/`ETH` symbols (see `db/seed.sql`)
+  - Backfill: `make backfill-derivatives` — fetches 365d Hyperliquid funding, idempotent
+  - Loader: `app/db/derivatives.py` — `load_funding_rates_last_days()`, `compute_funding_features()`
+  - Runner: `load_frame()` in `research_family_runner.py` now merges funding via `merge_asof` (when `--dsn` set)
+  - Family: `funding_regime` added to `SUPPORTED_FAMILIES` and `build_signal()` routing
+- H101-H113 (volatility_state, efficiency_mean_reversion, cross_asset_divergence, range_structure): all FAIL or INCONCLUSIVE (see FINDINGS_SIMPLIFIED.md).
+- H121-H123 (funding_regime family):
+  - `H121 FAIL` — extreme funding long fade; 70 trades/365d, WF 3/11 folds positive, inconsistent.
+  - `H122 FAIL` — funding sign flip momentum; negative gross, clean failure.
+  - `H123 FAIL` on cost gate — gross P>0=1.000, WF 12/14 folds positive (signal is real), but ~7 trades/day × 8bps cost exceeds +0.065% gross edge per trade.
+- **Next hypothesis: H124** — H123 logic with tighter spread threshold (≥0.97/≤0.03) targeting 1-2 trades/day to absorb 8bps friction.
 
 ## 6) Live Paper Runner Status
 - Script: `scripts/run_paper_h32_live.py`

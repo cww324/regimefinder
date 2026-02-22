@@ -21,11 +21,24 @@
 
 ## 2. Data Extension Priorities (Do First)
 
-### 2a. Extend OHLCV History
-- **Target:** 2–3 years of BTC + ETH 5m candles from Coinbase.
-- **Why:** All current signals need at least one full bull/bear cycle to separate regime-specific luck from structural edge.
-- **Action:** Run `scripts/backfill_5m.py` with `--days 730` (or max available). Re-run all frozen hypotheses (H32, H33, H32+H33 portfolio) on extended history to confirm or invalidate.
-- **Gate:** If H32/H33 fail at 2 years, they were likely regime-specific. If they pass, confidence increases significantly.
+### 2a. Extend OHLCV History — Target 12 Months, Not 2 Years
+
+**Important nuance:** Crypto markets change structurally on a 6–18 month cycle. Going back 2+ years risks pooling incompatible regimes:
+- 2022 (FTX/Terra collapse) has entirely different microstructure than 2025
+- Pre- vs post-BTC ETF approval (Jan 2024) represent different participant bases and flow dynamics
+- Signals that "worked" in crisis regimes often fail in normal regimes and vice versa
+
+**Target: 12 months of recent history** (not 2 years)
+- Long enough: supports 4–5 walk-forward folds at 30-day test windows (vs. current 7 folds at 15-day — much better statistical power)
+- Short enough: stays within 1–2 identifiable recent market regimes
+- Captures at least one full volatility cycle
+
+**Action:** Run `scripts/backfill_5m.py` with `--days 365`. Re-run all frozen hypotheses (H32, H33, H32+H33 portfolio) with 12 months of data and 90/30/30 WF splits.
+
+**Regime-aware validation:**
+After extending to 12 months, segment the window into 2–3 regimes using change point detection (PELT on rolling RV). Validate that frozen hypotheses work within each sub-regime, not just across the pooled average. A hypothesis that only works in one regime is fragile.
+
+**Gate:** If H32/H33 hold positive means in at least 2 of 3 identified sub-regimes, confidence increases significantly. If they only work in one sub-regime, they are regime-dependent and should be treated as BORDERLINE.
 
 ### 2b. Add New Data Sources
 Priority order for new data feeds:

@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 
 from app.db.market_data import load_btc_eth_merged_last_days
+from app.db.derivatives import load_funding_rates_last_days, compute_funding_features
 
 
 SUPPORTED_FAMILIES = {
@@ -20,6 +21,7 @@ SUPPORTED_FAMILIES = {
     "volatility_state",
     "efficiency_mean_reversion",
     "cross_asset_divergence",
+    "funding_regime",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -84,6 +86,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     "volatility_state": {"H101", "H102", "H103", "H104", "H112"},
     "efficiency_mean_reversion": {"H105", "H106", "H107"},
     "cross_asset_divergence": {"H108", "H109", "H110", "H111"},
+    "funding_regime": {"H121", "H122", "H123"},
 }
 
 
@@ -94,7 +97,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--days", type=int, default=180)
     p.add_argument("--timeframe", type=str, default="5m")
     p.add_argument("--horizon", type=int, default=6)
-    p.add_argument("--cost-mode", type=str, choices=["gross", "bps8", "bps10"], required=True)
+    p.add_argument("--cost-mode", type=str, choices=["gross", "bps8", "bps10"], default=None)
+    p.add_argument("--all-modes", action="store_true",
+                   help="Run gross+bps8+bps10 in one process. Output JSON contains all three modes.")
     p.add_argument("--wf", nargs=3, type=int, metavar=("TRAIN_DAYS", "TEST_DAYS", "STEP_DAYS"), default=[60, 15, 15])
     p.add_argument("--bootstrap-iters", type=int, default=3000)
     p.add_argument("--output-json", type=str, required=True)
@@ -138,11 +143,6 @@ def cost_value(mode: str) -> float:
     if mode == "bps10":
         return 0.0010
     raise ValueError(f"unsupported cost mode: {mode}")
-
-
-def pct_rank_last(window: pd.Series) -> float:
-    s = pd.Series(window)
-    return float(s.rank(pct=True).iloc[-1])
 
 
 def require_columns(frame: pd.DataFrame, hypothesis_id: str, columns: list[str]) -> None:
@@ -315,7 +315,7 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     h1["ret_btc_1h_6h"] = h1["close_btc"] / h1["close_btc"].shift(6) - 1.0
     h1["ret_eth_1h_6h"] = h1["close_eth"] / h1["close_eth"].shift(6) - 1.0
     h1["spread"] = h1["ret_eth_1h_6h"] - h1["ret_btc_1h_6h"]
-    h1["spread_pct"] = h1["spread"].rolling(2000).apply(pct_rank_last, raw=False)
+    h1["spread_pct"] = h1["spread"].rolling(2000).rank(pct=True)
 
     h1["eth_ema20_1h"] = h1["close_eth"].ewm(span=20, adjust=False).mean()
     h1["eth_slope_1h"] = h1["eth_ema20_1h"].diff(3)
@@ -324,7 +324,7 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     h1["eth_slope_abs_1h"] = h1["eth_slope_1h"].abs()
     w20d_1h = 20 * 24
     h1["eth_slope_abs_q70_1h"] = h1["eth_slope_abs_1h"].rolling(w20d_1h).quantile(0.70)
-    h1["eth_slope_abs_pct_1h"] = h1["eth_slope_abs_1h"].rolling(w20d_1h).apply(pct_rank_last, raw=False)
+    h1["eth_slope_abs_pct_1h"] = h1["eth_slope_abs_1h"].rolling(w20d_1h).rank(pct=True)
     h1["eth_slope_mean_1h"] = h1["eth_slope_1h"].rolling(w20d_1h).mean()
     h1["eth_slope_std_1h"] = h1["eth_slope_1h"].rolling(w20d_1h).std(ddof=0)
     h1["eth_slope_z_1h"] = (h1["eth_slope_1h"] - h1["eth_slope_mean_1h"]) / h1["eth_slope_std_1h"].replace(0, np.nan)
@@ -385,8 +385,8 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["ret1_abs_btc_q80"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.80)
     x["ret1_abs_btc_q90"] = x["ret1_abs_btc"].rolling(w20d).quantile(0.90)
     x["ret1_abs_eth_q90"] = x["ret1_abs_eth"].rolling(w20d).quantile(0.90)
-    x["ret1_abs_btc_pct"] = x["ret1_abs_btc"].rolling(w20d).apply(pct_rank_last, raw=False)
-    x["ret1_abs_eth_pct"] = x["ret1_abs_eth"].rolling(w20d).apply(pct_rank_last, raw=False)
+    x["ret1_abs_btc_pct"] = x["ret1_abs_btc"].rolling(w20d).rank(pct=True)
+    x["ret1_abs_eth_pct"] = x["ret1_abs_eth"].rolling(w20d).rank(pct=True)
     x["tr_btc_q90"] = x["tr_btc"].rolling(w20d).quantile(0.90)
     x["tr_btc_q10"] = x["tr_btc"].rolling(w20d).quantile(0.10)
     x["tr_btc_q25"] = x["tr_btc"].rolling(w20d).quantile(0.25)
@@ -430,20 +430,20 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["dist_to_vwap48_z_btc"] = x["dist_to_vwap48_btc"] / dist_std_btc
     x["dist_to_vwap48_z_eth"] = x["dist_to_vwap48_eth"] / dist_std_eth
 
-    x["atr14_pct_btc"] = x["atr14_btc"].rolling(w20d).apply(pct_rank_last, raw=False)
-    x["atr14_pct_eth"] = x["atr14_eth"].rolling(w20d).apply(pct_rank_last, raw=False)
-    x["rv48_pct_btc"] = x["rv48_btc"].rolling(w20d).apply(pct_rank_last, raw=False)
-    x["rv48_pct_eth"] = x["rv48_eth"].rolling(w20d).apply(pct_rank_last, raw=False)
+    x["atr14_pct_btc"] = x["atr14_btc"].rolling(w20d).rank(pct=True)
+    x["atr14_pct_eth"] = x["atr14_eth"].rolling(w20d).rank(pct=True)
+    x["rv48_pct_btc"] = x["rv48_btc"].rolling(w20d).rank(pct=True)
+    x["rv48_pct_eth"] = x["rv48_eth"].rolling(w20d).rank(pct=True)
 
     atr_rv_ratio = x["atr14_btc"] / x["rv48_btc"].replace(0, np.nan)
-    x["atr_rv_ratio_pct_btc"] = atr_rv_ratio.rolling(w20d).apply(pct_rank_last, raw=False)
+    x["atr_rv_ratio_pct_btc"] = atr_rv_ratio.rolling(w20d).rank(pct=True)
     atr_rv_pct_ratio = x["atr14_pct_btc"] / x["rv48_pct_btc"].clip(lower=EPS)
     x["atr_rv_pct_ratio"] = atr_rv_pct_ratio
-    x["atr_rv_pct_ratio_pct"] = atr_rv_pct_ratio.rolling(w20d).apply(pct_rank_last, raw=False)
-    x["abs_vwap_dist_pct_btc"] = x["dist_to_vwap48_btc"].abs().rolling(w20d).apply(pct_rank_last, raw=False)
+    x["atr_rv_pct_ratio_pct"] = atr_rv_pct_ratio.rolling(w20d).rank(pct=True)
+    x["abs_vwap_dist_pct_btc"] = x["dist_to_vwap48_btc"].abs().rolling(w20d).rank(pct=True)
 
     x["delta_er"] = x["er20_btc"] - x["er20_eth"]
-    x["abs_delta_er_pct"] = x["delta_er"].abs().rolling(w20d).apply(pct_rank_last, raw=False)
+    x["abs_delta_er_pct"] = x["delta_er"].abs().rolling(w20d).rank(pct=True)
 
     # Backward-compatible aliases used by single-asset family rules.
     x["atr14"] = x["atr14_btc"]
@@ -452,6 +452,24 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["vwap48"] = x["vwap48_btc"]
     x["atr14_pct"] = x["atr14_pct_btc"]
     x["rv48_pct"] = x["rv48_pct_btc"]
+
+    # Funding rate features (requires Postgres DSN; skipped for legacy SQLite path)
+    if dsn:
+        try:
+            funding = load_funding_rates_last_days(dsn=dsn, days=days)
+            if not funding.empty:
+                # Normalize both dt columns to microsecond resolution before merge_asof
+                x["dt"] = x["dt"].dt.as_unit("us")
+                funding["dt"] = funding["dt"].dt.as_unit("us")
+                x = pd.merge_asof(
+                    x.sort_values("dt"),
+                    funding.sort_values("dt"),
+                    on="dt",
+                    direction="backward",
+                )
+                x = compute_funding_features(x)
+        except Exception:
+            pass  # funding data unavailable — non-funding families continue normally
     x["dist_to_vwap48"] = x["dist_to_vwap48_btc"]
     x["dist_to_vwap48_z"] = x["dist_to_vwap48_z_btc"]
     x["abs_vwap_dist_pct"] = x["abs_vwap_dist_pct_btc"]
@@ -972,6 +990,45 @@ def build_signal(
             mask = er_ok & rv_ok & z_ok
             return pd.Series(np.where(mask & up_break, 1.0, np.where(mask & dn_break, -1.0, 0.0)), index=x.index)
 
+    if family == "funding_regime":
+        require_columns(
+            x,
+            hypothesis_id,
+            ["funding_rate_btc", "funding_btc_pct", "funding_btc_sign", "funding_btc_flip"],
+        )
+        f_pct = x["funding_btc_pct"]
+        f_sign = x["funding_btc_sign"]
+        f_flip = x["funding_btc_flip"]
+
+        if hypothesis_id == "H121":
+            # Funding extreme long fade: short BTC when funding extremely elevated
+            # (crowded long = mean reversion pressure) + ETH macro trend up (spread < 0.10)
+            extreme_long = f_pct.ge(0.90)
+            eth_up = x["spread_pct"].lt(0.10)
+            mask = extreme_long & eth_up
+            return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H122":
+            # Funding sign flip momentum: trade in direction of BTC funding sign change
+            # Funding flipping positive → longs paying → momentum continuation
+            # Funding flipping negative → shorts paying → mean reversion / downside
+            idx = dedup_idx(f_flip.fillna(False), gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = f_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H123":
+            # H32 filtered by non-extreme funding: same spread_pct + eth_slope signal
+            # but gated out when funding is extreme (overcrowded, mean reversion risk)
+            spread = x["spread_pct"]
+            eth_sign = x["eth_slope_sign_1h"]
+            funding_ok = f_pct.lt(0.85)  # exclude top 15% crowding
+            mask = spread.ge(0.90) & eth_sign.eq(1) & funding_ok
+            mask |= spread.le(0.10) & eth_sign.eq(-1) & funding_ok
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+
     raise ValueError(
         f"Unsupported hypothesis/family route: {hypothesis_id} ({family}). "
         f"Known IDs for family: {sorted(SUPPORTED_IDS_BY_FAMILY.get(family, set()))}"
@@ -1228,6 +1285,65 @@ def walkforward_eval(
     }
 
 
+def _main_all_modes(args: argparse.Namespace) -> None:
+    train_days, test_days, step_days = [int(v) for v in args.wf]
+    events = build_events(
+        days=int(args.days),
+        horizon=int(args.horizon),
+        hypothesis_id=args.hypothesis_id,
+        family=args.family,
+        dsn=args.dsn.strip(),
+    )
+    all_results: dict[str, dict] = {}
+    for mode in ["gross", "bps8", "bps10"]:
+        cost = cost_value(mode)
+        baseline_mode, wf, diag = compute_for_cost(
+            events=events,
+            cost=cost,
+            train_days=train_days,
+            test_days=test_days,
+            step_days=step_days,
+            bootstrap_iters=int(args.bootstrap_iters),
+            seed=int(args.seed),
+        )
+        all_results[mode] = {"baseline": baseline_mode, "wf": wf, "diagnostics": diag}
+
+    payload = {
+        "hypothesis_id": args.hypothesis_id,
+        "family": args.family,
+        "timestamp_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "config": {
+            "days": int(args.days),
+            "timeframe": args.timeframe,
+            "horizon": int(args.horizon),
+            "cost_mode": "all",
+            "wf": {"train_days": train_days, "test_days": test_days, "step_days": step_days},
+            "bootstrap_iters": int(args.bootstrap_iters),
+        },
+        "baseline": {m: all_results[m]["baseline"] for m in all_results},
+        "wf_by_mode": {m: all_results[m]["wf"] for m in all_results},
+        "diagnostics_by_mode": {m: all_results[m]["diagnostics"] for m in all_results},
+    }
+    out = Path(args.output_json)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    for mode in ["gross", "bps8", "bps10"]:
+        b = all_results[mode]["baseline"]
+        wf_mode = all_results[mode]["wf"]
+        print(
+            f"{args.hypothesis_id}_RUNNER {mode} n={b['n']} mean={b['mean']:+.6f} "
+            f"ci=[{b['mean_ci_low']},{b['mean_ci_high']}] p={b['p_mean_gt_0']}"
+        )
+        print(
+            f"{args.hypothesis_id}_WF {mode} n={wf_mode['aggregate']['n']} "
+            f"mean={wf_mode['aggregate']['mean']:+.6f} "
+            f"ci=[{wf_mode['aggregate']['mean_ci_low']},{wf_mode['aggregate']['mean_ci_high']}] "
+            f"p={wf_mode['aggregate']['p_mean_gt_0']}"
+        )
+    print(f"output_json={out}")
+
+
 def main() -> None:
     args = parse_args()
     if args.timeframe != "5m":
@@ -1236,6 +1352,13 @@ def main() -> None:
         raise ValueError("Standard runner expects horizon in {4,6,8,10}.")
     if args.family not in SUPPORTED_FAMILIES:
         raise ValueError(f"Unsupported family: {args.family}")
+
+    if args.all_modes:
+        _main_all_modes(args)
+        return
+
+    if args.cost_mode is None:
+        raise ValueError("--cost-mode is required when --all-modes is not set.")
 
     mode = args.cost_mode
     cost = cost_value(mode)

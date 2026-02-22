@@ -314,7 +314,57 @@ CREATE TABLE IF NOT EXISTS rc.paper_daily_summary (
     UNIQUE (trade_date, hypothesis_pk, symbol_id)
 );
 
--- 10) Governance/audit event log
+-- 10) Derivatives market data (funding rates, open interest, liquidations)
+-- Source: Bybit public API (no auth required). Used as research signals only —
+-- execution remains on Coinbase spot. Venue = bybit_futures in rc.venues.
+
+CREATE TABLE IF NOT EXISTS rc.funding_rates (
+    funding_id          BIGSERIAL PRIMARY KEY,
+    symbol_id           BIGINT NOT NULL REFERENCES rc.symbols(symbol_id),
+    venue_id            BIGINT NOT NULL REFERENCES rc.venues(venue_id),
+    ts                  TIMESTAMPTZ NOT NULL,       -- 8h settlement timestamp (00:00, 08:00, 16:00 UTC)
+    funding_rate        NUMERIC(14, 10) NOT NULL,   -- e.g. 0.0001 = 0.01% per 8h
+    mark_price          NUMERIC(20, 10),             -- mark price at settlement (optional)
+    ingest_run_id       BIGINT REFERENCES rc.ingest_runs(ingest_run_id),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (symbol_id, venue_id, ts)
+);
+
+CREATE INDEX IF NOT EXISTS idx_funding_rates_lookup
+    ON rc.funding_rates (symbol_id, venue_id, ts DESC);
+
+CREATE TABLE IF NOT EXISTS rc.open_interest (
+    oi_id               BIGSERIAL PRIMARY KEY,
+    symbol_id           BIGINT NOT NULL REFERENCES rc.symbols(symbol_id),
+    venue_id            BIGINT NOT NULL REFERENCES rc.venues(venue_id),
+    ts                  TIMESTAMPTZ NOT NULL,       -- snapshot timestamp (aligns with 8h funding windows)
+    oi_contracts        NUMERIC(30, 4),             -- OI in base-asset contracts (e.g. BTC)
+    oi_usd              NUMERIC(30, 4),             -- OI in USD notional
+    ingest_run_id       BIGINT REFERENCES rc.ingest_runs(ingest_run_id),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (symbol_id, venue_id, ts)
+);
+
+CREATE INDEX IF NOT EXISTS idx_open_interest_lookup
+    ON rc.open_interest (symbol_id, venue_id, ts DESC);
+
+CREATE TABLE IF NOT EXISTS rc.liquidations (
+    liq_id              BIGSERIAL PRIMARY KEY,
+    symbol_id           BIGINT NOT NULL REFERENCES rc.symbols(symbol_id),
+    venue_id            BIGINT NOT NULL REFERENCES rc.venues(venue_id),
+    ts                  TIMESTAMPTZ NOT NULL,       -- window end timestamp
+    window_minutes      INTEGER NOT NULL,           -- aggregation window (e.g. 60 = 1h)
+    long_liq_usd        NUMERIC(30, 4),             -- long-side liquidations in window (USD)
+    short_liq_usd       NUMERIC(30, 4),             -- short-side liquidations in window (USD)
+    ingest_run_id       BIGINT REFERENCES rc.ingest_runs(ingest_run_id),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (symbol_id, venue_id, ts, window_minutes)
+);
+
+CREATE INDEX IF NOT EXISTS idx_liquidations_lookup
+    ON rc.liquidations (symbol_id, venue_id, ts DESC);
+
+-- 11) Governance/audit event log
 CREATE TABLE IF NOT EXISTS rc.audit_events (
     audit_event_id           BIGSERIAL PRIMARY KEY,
     ts                       TIMESTAMPTZ NOT NULL DEFAULT NOW(),

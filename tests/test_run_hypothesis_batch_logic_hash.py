@@ -47,10 +47,27 @@ class RunHypothesisBatchLogicHashTests(unittest.TestCase):
                 out_dir.mkdir(parents=True, exist_ok=True)
 
                 def fake_exec(cmd):
-                    mode = cmd[cmd.index("--cost-mode") + 1]
                     out_path = Path(cmd[cmd.index("--output-json") + 1])
                     out_path.parent.mkdir(parents=True, exist_ok=True)
-                    out_path.write_text(json.dumps(self._runner_payload(mode)), encoding="utf-8")
+                    if "--all-modes" in cmd:
+                        # Combined JSON produced by --all-modes path.
+                        combined = {
+                            "baseline": {
+                                m: self._runner_payload(m)["baseline"][m]
+                                for m in ["gross", "bps8", "bps10"]
+                            },
+                            "wf_by_mode": {
+                                m: self._runner_payload(m)["wf"]
+                                for m in ["gross", "bps8", "bps10"]
+                            },
+                            "diagnostics_by_mode": {
+                                m: {} for m in ["gross", "bps8", "bps10"]
+                            },
+                        }
+                        out_path.write_text(json.dumps(combined), encoding="utf-8")
+                    else:
+                        mode = cmd[cmd.index("--cost-mode") + 1]
+                        out_path.write_text(json.dumps(self._runner_payload(mode)), encoding="utf-8")
                     return 0, "", ""
 
                 dataset_defaults = {

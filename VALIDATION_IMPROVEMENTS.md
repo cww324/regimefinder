@@ -240,6 +240,61 @@ A hypothesis that passes all enhanced gates with margin gets PASS. A hypothesis 
 
 ---
 
+## 9b. Recency Weighting in Bootstrap and WF
+
+### The Problem
+WF folds from 4 months ago receive equal weight to folds from last week in the aggregate mean. In crypto, older folds may reflect entirely different microstructure (pre- vs post-ETF, different volatility regime). Equally weighting all history can dilute or obscure the current signal quality.
+
+### Fix Option A: Require Recent Fold Pass
+Add a gate: the **2 most recent WF test folds must both be positive** for a PASS classification. A hypothesis that was positive 5 months ago but negative in the last 30 days should not get a PASS.
+
+```python
+# In classify_mode(), after computing positive_fold_pct:
+sorted_folds = sorted(wf_mode["folds"], key=lambda f: f["test_start"], reverse=True)
+recent_two = [f["mean"] for f in sorted_folds[:2] if f.get("n", 0) > 0]
+recent_both_positive = len(recent_two) == 2 and all(m > 0 for m in recent_two)
+# Require recent_both_positive=True for final PASS (not just BORDERLINE)
+```
+
+### Fix Option B: Exponential Decay Weighting in Bootstrap
+Weight recent trades more heavily in the bootstrap to reflect their greater relevance:
+
+```python
+def bootstrap_mean_stats_weighted(
+    values: np.ndarray,
+    timestamps: np.ndarray,  # unix timestamps of each trade
+    iters: int,
+    seed: int,
+    half_life_days: float = 60.0,
+    ci: float = 0.95,
+) -> dict:
+    x = np.asarray(values, dtype=float)
+    t = np.asarray(timestamps, dtype=float)
+    finite = np.isfinite(x)
+    x, t = x[finite], t[finite]
+    n = len(x)
+    if n == 0:
+        return {"mean_ci_low": 0.0, "mean_ci_high": 0.0, "p_mean_gt_0": 0.0}
+    # Exponential decay: trades from half_life_days ago count 50% as much
+    decay = np.log(2) / (half_life_days * 86400)
+    t_max = t.max()
+    weights = np.exp(-decay * (t_max - t))
+    weights /= weights.sum()
+    rng = np.random.default_rng(seed)
+    samples = rng.choice(x, size=(iters, n), replace=True, p=weights)
+    means = samples.mean(axis=1)
+    alpha = (1.0 - ci) / 2.0
+    return {
+        "mean_ci_low": float(np.quantile(means, alpha)),
+        "mean_ci_high": float(np.quantile(means, 1.0 - alpha)),
+        "p_mean_gt_0": float((means > 0).mean()),
+    }
+```
+
+**Recommendation:** Start with Option A (simpler, no interface change). Add Option B when data is extended to 12 months.
+
+---
+
 ## 10. Implementation Priority
 
 | Fix | Impact | Effort | Do When |
