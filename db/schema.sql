@@ -364,7 +364,24 @@ CREATE TABLE IF NOT EXISTS rc.liquidations (
 CREATE INDEX IF NOT EXISTS idx_liquidations_lookup
     ON rc.liquidations (symbol_id, venue_id, ts DESC);
 
--- 11) Governance/audit event log
+-- 11) ML regime labels (output of HMM regime discovery)
+CREATE TABLE IF NOT EXISTS rc.regime_labels (
+    label_id            BIGSERIAL PRIMARY KEY,
+    symbol              TEXT NOT NULL,              -- e.g. BTC-USD (denormalized for simplicity)
+    ts                  TIMESTAMPTZ NOT NULL,        -- bar timestamp (1h aligned)
+    timeframe           TEXT NOT NULL DEFAULT '1h',
+    state_id            SMALLINT NOT NULL,           -- raw HMM state (0, 1, 2)
+    regime_name         TEXT NOT NULL,               -- TRENDING / RANGING / VOLATILE
+    model_train_end     TIMESTAMPTZ,                 -- training cutoff for this label's model
+    run_date            DATE,                        -- when the discovery script was run
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (symbol, ts, timeframe, run_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_regime_labels_lookup
+    ON rc.regime_labels (symbol, ts DESC, timeframe);
+
+-- 12) Governance/audit event log
 CREATE TABLE IF NOT EXISTS rc.audit_events (
     audit_event_id           BIGSERIAL PRIMARY KEY,
     ts                       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
