@@ -952,6 +952,7 @@ hypotheses:
       classification_lock: PASS gross / PASS bps8 / PASS bps10
   allowed_variants: []
   status: frozen
+  signal_group: CA-4
 - id: H60
   family: cross_asset_regime
   description: Frozen H60 ETH-self slope flip trade.
@@ -973,6 +974,7 @@ hypotheses:
       classification_lock: PASS gross / PASS bps8 / PASS bps10
   allowed_variants: []
   status: frozen
+  signal_group: CA-3
 - id: H61
   family: cross_asset_regime
   description: Frozen H39 next-bar execution realism variant.
@@ -1037,6 +1039,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H64
   family: cross_asset_regime
   description: 'H60 horizon sensitivity swap: horizon=4.'
@@ -1057,6 +1060,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-3
 - id: H65
   family: cross_asset_regime
   description: 'H60 horizon sensitivity swap: horizon=8.'
@@ -1077,6 +1081,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H66
   family: cross_asset_regime
   description: H63 longer-lookback replication at 120 days.
@@ -1097,6 +1102,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H67
   family: cross_asset_regime
   description: H65 longer-lookback replication at 120 days.
@@ -1117,6 +1123,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H68
   family: cross_asset_regime
   description: H63 odd-day subsample replication.
@@ -1138,6 +1145,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H69
   family: cross_asset_regime
   description: H63 even-day subsample replication.
@@ -1159,6 +1167,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H70
   family: cross_asset_regime
   description: H65 odd-day subsample replication.
@@ -1180,6 +1189,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H71
   family: cross_asset_regime
   description: H65 even-day subsample replication.
@@ -1201,6 +1211,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H72
   family: cross_asset_regime
   description: H63 180-day replication control.
@@ -1222,6 +1233,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H73
   family: cross_asset_regime
   description: H65 180-day replication control.
@@ -1243,6 +1255,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H74
   family: cross_asset_regime
   description: H59 reference rerun at 120 days.
@@ -1263,6 +1276,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-4
 - id: H75
   family: cross_asset_regime
   description: H60 reference rerun at 120 days.
@@ -1283,6 +1297,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-3
 - id: H76
   family: cross_asset_regime
   description: H63 next-bar execution realism variant.
@@ -1306,6 +1321,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H77
   family: cross_asset_regime
   description: H65 next-bar execution realism variant.
@@ -1329,6 +1345,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H78
   family: cross_asset_regime
   description: H63 extra-cost stress replication.
@@ -1352,6 +1369,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2
 - id: H79
   family: cross_asset_regime
   description: H65 extra-cost stress replication.
@@ -1375,6 +1393,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1
 - id: H80
   family: cross_asset_regime
   description: H63 UTC window replication 00:00-08:00.
@@ -1417,6 +1436,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2 | ST
 - id: H82
   family: cross_asset_regime
   description: H63 UTC window replication 16:00-24:00.
@@ -1438,6 +1458,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-2 | ST
 - id: H83
   family: cross_asset_regime
   description: H65 UTC window replication 00:00-08:00.
@@ -1459,6 +1480,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1 | ST
 - id: H84
   family: cross_asset_regime
   description: H65 UTC window replication 08:00-16:00.
@@ -1480,6 +1502,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1 | ST
 - id: H85
   family: cross_asset_regime
   description: H65 UTC window replication 16:00-24:00.
@@ -1501,6 +1524,7 @@ hypotheses:
       tuning: forbidden
   allowed_variants: []
   status: planned
+  signal_group: CA-1 | ST
 - id: H86
   family: cross_asset_regime
   class: tradeable_hypothesis
@@ -2190,6 +2214,7 @@ hypotheses:
       require_sign_agreement: true
   allowed_variants: []
   status: planned
+  signal_group: CA-5
 - id: H100
   family: cross_asset_regime
   class: tradeable_hypothesis

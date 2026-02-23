@@ -1,7 +1,7 @@
 # AI_AGENT.md (compact handoff)
 ## Regime Crypto Bot — Current Operating Brief
 
-Last Updated: 2026-02-19 UTC (H86-H100 batch + paper-candidate promotion cycle completed)
+Last Updated: 2026-02-23 UTC (365d era: signal naming system, RF groundwork, multi-market docs)
 
 ## 1) Mission
 - Run strict, no-tuning hypothesis research and validate only with fixed OOS protocols.
@@ -11,16 +11,30 @@ Last Updated: 2026-02-19 UTC (H86-H100 batch + paper-candidate promotion cycle c
 ## 2) Canonical Files (Current Policy)
 1. `FINDINGS_SIMPLIFIED.md` (primary decision log)
 2. `FINDINGS_TECHNICAL.md` (commands, fold tables, CIs, reproducibility)
-3. `AI_AGENT.md` (this operating brief)
+3. `FINDINGS_365D.md` (365d era results, organized by signal family)
+4. `AI_AGENT.md` (this operating brief)
+
+Signal naming (365d era, 2026-02-23):
+5. `SIGNAL_REGISTRY.md` — human-facing registry of confirmed signals with shortcodes (CA-1, FR-1, etc.)
+6. `BEST_HYPOTHESES.md` — quick-reference table organized by signal shortcode
 
 Strategic guidance documents (read before starting new research cycles):
-4. `RESEARCH_ROADMAP.md` — new signal families, ML-assisted hypothesis generation, data extension priorities, H114+ roadmap
-5. `VALIDATION_IMPROVEMENTS.md` — gaps in current validation framework (FDR correction, permutation test, Sharpe gate, MAE gate, trade independence fix, hold-out OOS)
-6. `PERFORMANCE_OPTIMIZATION.md` — pipeline bottlenecks and fixes (vectorize pct_rank_last, single-process multi-mode, parallelization)
+7. `REGIME_FRAMEWORK.md` — three-layer hypothesis design, H124+ rules, regime taxonomy
+8. `RESEARCH_ROADMAP.md` — new signal families, ML-assisted hypothesis generation, data extension priorities
+9. `VALIDATION_IMPROVEMENTS.md` — gaps in current validation framework (FDR correction, permutation test, Sharpe gate, MAE gate)
+10. `PERFORMANCE_OPTIMIZATION.md` — pipeline bottlenecks and fixes
+11. `docs/rf_experiment_plan.md` — ML-assisted hypothesis discovery via XGBoost + SHAP walk-forward
+12. `docs/multi_market_expansion.md` — how to add new symbols, exchanges, or asset classes
+
+Signal naming rules:
+- **H-numbers** = experiment IDs. Every hypothesis gets one. Used in all code, YAML, and artifacts.
+- **Signal shortcodes** (CA-1, FR-1, etc.) = assigned only when a hypothesis PASSES. Organized in SIGNAL_REGISTRY.md.
+- Current confirmed signals: CA-1 through CA-5 (all cross_asset_regime family). No FR/VS/MR/CD confirmed yet.
+- Next hypothesis ID: H124.
 
 Note:
 - `FINDINGS.md` is treated as legacy/archive for now (do not require new updates there).
-- Before running H114+, read `RESEARCH_ROADMAP.md` for signal family guidance.
+- Before running H124+, read `REGIME_FRAMEWORK.md` for signal family design rules.
 - Before accepting a PASS classification, check `VALIDATION_IMPROVEMENTS.md` for gates not yet implemented.
 
 ## 3) Data/Environment

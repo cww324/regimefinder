@@ -2,103 +2,140 @@
 **Last Updated:** 2026-02-23
 **Dataset:** 365 days (Feb 2025 – Feb 2026), ~105k bars/symbol, 60/15/15 WF (~20 folds)
 
-Quick reference for the best confirmed hypotheses. Full results in `FINDINGS_365D.md`.
+Quick reference for confirmed signals. Organized by signal shortcode (CA-1, CA-2, etc.).
+Full experiment log in `FINDINGS_365D.md`. Signal naming rules in `SIGNAL_REGISTRY.md`.
 
 ---
 
-## Tier 1: Perfect (20/20 WF folds at both gross and bps8)
+## How to Read This
 
-| ID | Signal | gross mean/trade | WF gross | WF bps8 | Notes |
-|----|--------|-----------------|----------|---------|-------|
-| **H65** | ETH slope flip, horizon=8 | +0.34% | 20/20 | 20/20 | Core signal — best single hypothesis |
-| **H84** | H65, 08:00–16:00 UTC only | +0.38% | 20/20 | 20/20 | Strongest variant — EU/US overlap session |
-| **H67** | H65, 120d lookback replication | +0.34% | 20/20 | 20/20 | Confirms H65 not lookback-sensitive |
-| **H73** | H65, 180d lookback replication | +0.34% | 20/20 | 20/20 | Confirms H65 not lookback-sensitive |
-| **H77** | H65, next-bar execution realism | +0.34% | 20/20 | 20/20 | Survives 1-bar execution lag |
-| **H79** | H65, extra-cost stress | +0.34% | 20/20 | 20/20 | Survives higher cost assumptions |
-
-**What is H65?**
-ETH 1h EMA slope flip (direction change) as entry trigger. Trade ETH-USD or BTC-USD (depending on variant)
-at bar following slope flip, hold for 8 bars (40 minutes). The signal is: when ETH's hourly trend
-changes direction, continue in the direction of the new trend for ~40 minutes.
+- **Signal shortcodes** (CA-1, CA-2, ...) = the *core idea*. Assigned once a hypothesis passes.
+- **H-numbers** = the *experiment run*. Every test gets one, pass or fail.
+- Multiple H-numbers per signal = independent replications confirming the same edge.
 
 ---
 
-## Tier 2: Strong PASS (WF 19-20/20 gross, 15-19/20 bps8)
+## CA-1 — ETH Slope Flip, h=8 ★ ANCHOR SIGNAL
 
-| ID | Signal | gross mean/trade | WF gross | WF bps8 | Notes |
-|----|--------|-----------------|----------|---------|-------|
-| H60 | ETH slope flip, horizon=6 | +0.26% | 20/20 | 18/20 | Slightly shorter horizon than H65 |
-| H63 | BTC slope flip, horizon=8 | +0.21% | 20/20 | 19/20 | Same idea, BTC-side signal |
-| H76 | H63, next-bar execution realism | +0.21% | 20/20 | 19/20 | H63 survives 1-bar lag |
-| H78 | H63, extra-cost stress | +0.21% | 20/20 | 19/20 | H63 survives higher cost |
-| H66 | H63, 120d lookback replication | +0.21% | 20/20 | 19/20 | H63 confirmed |
-| H70 | H65, odd-day subsample | +0.34% | 20/20 | 19/20 | H65 subsample stability check |
-| H72 | H63, 180d replication control | +0.21% | 20/20 | 19/20 | H63 confirmed |
-| H83 | H65, 00:00–08:00 UTC | +0.27% | 20/20 | 18/20 | Asia session — better than expected |
-| H85 | H65, 16:00–24:00 UTC | +0.36% | 19/20 | 18/20 | US afternoon session strong |
-| H68 | H63, odd-day subsample | +0.22% | 19/20 | 19/20 | H63 subsample stability check |
-| H59 | BTC slope flip, horizon=6 | +0.16% | 20/20 | 16/20 | Baseline BTC variant |
-| H71 | H65, even-day subsample | +0.34% | 19/20 | 18/20 | H65 subsample stability check |
-| H75 | H60, 120d replication | +0.26% | 20/20 | 18/20 | H60 confirmed |
-| H64 | H60, horizon=4 | +0.17% | 20/20 | 18/20 | Shorter hold |
-| H81 | H63, 08:00–16:00 UTC | +0.23% | 20/20 | 17/20 | H63 EU/US window |
-| H82 | H63, 16:00–24:00 UTC | +0.22% | 20/20 | 15/20 | H63 US afternoon |
-| H74 | H59, 120d replication | +0.16% | 20/20 | 16/20 | H59 confirmed |
-| H69 | H63, even-day subsample | +0.20% | 20/20 | 16/20 | H63 subsample check |
+**What it is:** When ETH's 1h EMA20 slope changes direction, trade in the direction of the
+new trend for 8 bars (40 minutes). Strongest and most replicated signal in the portfolio.
+
+| H-number | Variant | gross mean/trade | WF gross | WF bps8 |
+|----------|---------|-----------------|----------|---------|
+| **H65** | Base signal — all hours, 365d | **+0.34%** | 20/20 | 20/20 |
+| H67 | 120d lookback replication | +0.34% | 20/20 | 20/20 |
+| H73 | 180d lookback replication | +0.34% | 20/20 | 20/20 |
+| H77 | Next-bar execution lag | +0.34% | 20/20 | 20/20 |
+| H79 | Extra-cost stress | +0.34% | 20/20 | 20/20 |
+| H70 | Odd-day subsample | +0.34% | 20/20 | 19/20 |
+| H71 | Even-day subsample | +0.34% | 19/20 | 18/20 |
+| **H84** | **08:00–16:00 UTC only** | **+0.38%** | 20/20 | 20/20 |
+| H83 | 00:00–08:00 UTC only | +0.27% | 20/20 | 18/20 |
+| H85 | 16:00–24:00 UTC only | +0.36% | 19/20 | 18/20 |
+
+**Key insight:** H65 is the anchor — works all hours, all lookback windows, next-bar execution,
+and higher cost stress. H84 (EU/US overlap, 08–16 UTC) is the strongest single variant at +0.38%.
 
 ---
 
-## Tier 3: PASS (borderline bps8 or smaller sample)
+## CA-2 — BTC Slope Flip, h=8
 
-| ID | Signal | gross mean/trade | WF gross | WF bps8 | Notes |
-|----|--------|-----------------|----------|---------|-------|
-| H99 | Session handoff (UTC open transitions) | +0.20% | 17/20 | 12/20 | Small n=70, marginal bps8 |
+**What it is:** Same logic as CA-1 but using BTC's 1h EMA20 slope. Slightly lower edge.
+
+| H-number | Variant | gross mean/trade | WF gross | WF bps8 |
+|----------|---------|-----------------|----------|---------|
+| **H63** | Base signal | **+0.21%** | 20/20 | 19/20 |
+| H66 | 120d lookback replication | +0.21% | 20/20 | 19/20 |
+| H72 | 180d lookback replication | +0.21% | 20/20 | 19/20 |
+| H76 | Next-bar execution lag | +0.21% | 20/20 | 19/20 |
+| H78 | Extra-cost stress | +0.21% | 20/20 | 19/20 |
+| H68 | Odd-day subsample | +0.22% | 19/20 | 19/20 |
+| H69 | Even-day subsample | +0.20% | 20/20 | 16/20 |
+| H81 | 08:00–16:00 UTC only | +0.23% | 20/20 | 17/20 |
+| H82 | 16:00–24:00 UTC only | +0.22% | 20/20 | 15/20 |
 
 ---
 
-## Tier 4: BORDERLINE (gross strong, bps8 marginal)
+## CA-3 — ETH Slope Flip, h=6
 
-| ID | Signal | gross mean/trade | WF gross | WF bps8 | Notes |
-|----|--------|-----------------|----------|---------|-------|
-| H39 | cross_asset_regime variant | — | 20/20 | 16/20 | bps10 likely fails |
-| H61 | cross_asset_regime variant | — | 20/20 | 13/20 | bps8 inconsistent |
+**What it is:** CA-1 with a shorter 6-bar (30 min) hold.
+
+| H-number | Variant | gross mean/trade | WF gross | WF bps8 |
+|----------|---------|-----------------|----------|---------|
+| **H60** | Base signal | **+0.26%** | 20/20 | 18/20 |
+| H75 | 120d lookback replication | +0.26% | 20/20 | 18/20 |
+| H64 | horizon=4 variant | +0.17% | 20/20 | 18/20 |
 
 ---
 
-## Signal in limbo (gross real, cost-constrained)
+## CA-4 — BTC Slope Flip, h=6
 
-| ID | Signal | Gross WF | bps8 WF | Issue | Next step |
-|----|--------|----------|---------|-------|-----------|
-| H32 | ETH 1h EMA slope regime gate | 12/14 | 8/14 | ~7 trades/day; each trade earns +0.074% but pays 0.080% cost | H124: tighter entry |
-| H87 | cross_asset_regime variant | 13/14 | 3/14 | Real gross, cost kills it | Reduce frequency |
-| H91 | cross_asset_regime variant | 13/14 | 5/14 | Real gross, cost kills it | Reduce frequency |
-| H97 | cross_asset_regime variant | 12/14 | 3/14 | Real gross, cost kills it | Reduce frequency |
+**What it is:** BTC slope flip with 6-bar (30 min) hold.
+
+| H-number | Variant | gross mean/trade | WF gross | WF bps8 |
+|----------|---------|-----------------|----------|---------|
+| **H59** | Base signal | **+0.16%** | 20/20 | 16/20 |
+| H74 | 120d lookback replication | +0.16% | 20/20 | 16/20 |
+
+---
+
+## CA-5 — Session Handoff
+
+**What it is:** Entry at UTC market-open transitions (small n, marginal bps8).
+
+| H-number | Variant | gross mean/trade | WF gross | WF bps8 |
+|----------|---------|-----------------|----------|---------|
+| H99 | Session handoff signal | +0.20% | 17/20 | 12/20 |
+
+---
+
+## Signal in Limbo (gross real, cost-constrained)
+
+These have confirmed gross alpha but cannot survive 8bps costs at current trade frequency.
+Not assigned a shortcode yet.
+
+| H-number | Idea | Gross WF | bps8 WF | Issue | Next step |
+|----------|------|----------|---------|-------|-----------|
+| H32 | ETH 1h EMA slope regime gate | 12/14 | 8/14 | ~7 trades/day, edge too thin for 8bps | H124: tighter entry threshold |
+| H87 | cross_asset_regime variant | 13/14 | 3/14 | Gross real, cost kills it | Reduce frequency |
+| H91 | cross_asset_regime variant | 13/14 | 5/14 | Gross real, cost kills it | Reduce frequency |
+| H97 | cross_asset_regime variant | 12/14 | 3/14 | Gross real, cost kills it | Reduce frequency |
+
+---
+
+## Borderline (gross passes, bps8 marginal)
+
+| H-number | Idea | WF gross | WF bps8 | Notes |
+|----------|------|----------|---------|-------|
+| H39 | cross_asset_regime variant | 20/20 | 16/20 | bps10 likely fails |
+| H61 | cross_asset_regime variant | 20/20 | 13/20 | bps8 inconsistent |
+
+---
+
+## Families with No Confirmed Signals
+
+| Family | H-numbers tested | Outcome |
+|--------|-----------------|---------|
+| FR (Funding Regime) | H121–H124 | H121–H123 FAIL; H124 pending |
+| VS (Volatility State) | H101–H110 | All FAIL (tested on 180d, worth 365d revisit) |
+| MR (Mean Reversion) | H15, H18, H22–H26 | INCONCLUSIVE (insufficient folds) |
+| CD (Cross-Exchange Divergence) | H102–H113 | FAIL (no second exchange data) |
 
 ---
 
 ## Key Observations
 
-1. **One signal family dominates.** All 25 PASSes are `cross_asset_regime` — ETH/BTC slope flip trades.
-   The signal is that an ETH hourly trend direction change predicts 40-minute continuation.
-
-2. **H65 is the anchor.** H84 has the highest mean (+0.38%) but is session-restricted (08:00–16:00 UTC).
-   H65 runs all hours and is fully replicated across lookback windows, execution lag, and cost stress.
-
-3. **Replication is solid.** H65 has 6 independent replications that all pass (H67, H73, H77, H79, H84, H85).
-   This is unusually robust for this research history.
-
-4. **H32 is not dead.** The gross signal is real (12/14 WF folds). It fails on cost at current frequency.
-   H124 will test a tighter entry threshold to fix this.
-
-5. **No short-side signals survive 365d.** H33 (short variant of H32) collapses on the full year.
-   All 25 PASSes are effectively long-biased. The 365d window (Feb 2025–Feb 2026) was a crypto bull run.
+1. **One signal family dominates.** All 25 confirmed PASSes are `cross_asset_regime` — ETH/BTC slope flip trades.
+2. **H65 is the anchor.** H84 has the highest per-trade return (+0.38%) but is session-restricted. H65 runs all hours and survives every replication test.
+3. **Replication is unusually solid.** CA-1 has 9 independent replications. CA-2 has 8. This level of robustness is rare.
+4. **No confirmed short-side signals.** All 25 PASSes are long-biased. The 365d window (Feb 2025–Feb 2026) was a bull run.
+5. **Next regime: RF discovery.** Use `docs/rf_experiment_plan.md` to systematically explore non-CA signal families.
 
 ---
 
 ## What to do next
 
-- Run **H124**: H32 logic with tighter spread threshold (≥0.97 instead of ≥0.90) to solve cost problem
-- Consider **portfolio construction** from H65 + H84 (session-filtered variant)
-- Run **RF feature importance** experiment on 365d feature matrix to generate new hypothesis candidates
-- See `REGIME_FRAMEWORK.md` for H124+ design rules
+- Run **H124**: CA+FR with tighter spread threshold (≥0.97) — target 1-2 trades/day
+- Run **RF experiment**: `docs/rf_experiment_plan.md` — let XGBoost find what we haven't tested
+- Consider **portfolio construction** combining H65 (all-hours) + H84 (session-filtered)
+- See `docs/multi_market_expansion.md` to add SOL-USD or a second exchange
