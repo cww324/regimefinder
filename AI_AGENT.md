@@ -51,11 +51,16 @@ Note:
 - H29: `FAIL` (frozen)
 - H30: `FAIL` (frozen)
 - H31: stats-only mapping logged
-- H32: frozen core candidate
-  - Baseline: `PASS gross`, `PASS 8 bps`, `PASS 10 bps`
-  - Replication interpretation: `PASS gross`, `BORDERLINE 8 bps`, `FAIL/NOT-ROBUST 10 bps`
-- H33 (symmetry): frozen `PASS gross / PASS 8 / PASS 10`
-- H32+H33 portfolio: frozen `PASS gross / PASS 8 / PASS 10`
+- H32: **RECLASSIFIED FAIL on 365d (2026-02-23)**
+  - 180d result: `PASS gross / PASS 8 bps / PASS 10 bps`
+  - 365d rerun: `PASS gross` (WF 12/14, P>0=1.000) but `FAIL bps8` (mean≈0, WF 8/14, P>0=0.54)
+  - Signal is real but per-trade edge (+0.074%) cannot absorb 8bps at current frequency
+  - Paper trading: UNDER REVIEW — signal exists, execution efficiency is the problem
+- H33 (symmetry): **RECLASSIFIED FAIL on 365d (2026-02-23)**
+  - 180d result: `PASS gross / PASS 8 / PASS 10`
+  - 365d rerun: gross WF 2/14, P>0=0.000 — short side only worked in narrow 180d window
+  - FROZEN as FAIL. Do not use.
+- H32+H33 portfolio: **UNDER REVIEW** — H33 dead, H32 cost-constrained
 - H34: `PASS gross / BORDERLINE 8 / FAIL 10` (frozen)
 - H35: stats-only decile maps logged (no trading logic)
 - H36: `PASS gross / BORDERLINE 8 / FAIL 10` (frozen)

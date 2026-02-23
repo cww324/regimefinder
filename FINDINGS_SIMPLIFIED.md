@@ -1,8 +1,17 @@
 # Findings Simplified
 Canonical truth = `results/runs` artifacts; `results/summary.json` and findings are derived.
 
-Last Updated: 2026-02-17
-Scope: BTC-USD, Coinbase, 5m, ~180 days
+Last Updated: 2026-02-23
+Scope: BTC-USD + ETH-USD, Coinbase, 5m
+
+---
+> **DATA ERA NOTE:** Results below H123 were produced on ~180-day datasets (≤2 WF folds in many cases).
+> Starting from H124 onward, the canonical dataset is 365 days (~14 WF folds). Results from the 180d
+> era carry higher false-positive risk due to insufficient fold count. See `FINDINGS_365D.md` for
+> the clean 365d-era results. See `REGIME_FRAMEWORK.md` for H124+ design rules.
+---
+
+<!-- === PRE-365D ERA (180d dataset, ≤11 WF folds, higher false-positive risk) === -->
 
 ## Completed Tests (Simple Status)
 1. Trend / Breakout drift: FAIL (no positive edge)
@@ -308,6 +317,25 @@ Data source: Hyperliquid public API (1h funding, 365 days). Infrastructure commi
 - H121: `FAIL` — extreme funding long fade. 365d rerun: 70 trades, gross mean=+0.00032, P>0=0.771, but WF only 3/11 folds positive. Signal is inconsistent — extreme funding crowding does not reliably predict short-term mean reversion at 5m/6-bar horizon. (180d: `results/runs/20260222T203728Z_H121.json`; 365d: `results/runs/20260222T205008Z_H121.json`)
 - H122: `FAIL` — funding sign flip momentum does not predict returns. Gross mean=-0.00038, P>0=0.08 (negative before costs). All modes FAIL. (artifact: `results/runs/20260222T203731Z_H122.json`)
 - H123: `FAIL` — H32 filtered by non-extreme funding (gate: funding_btc_pct < 0.85). **365-day rerun (2026-02-22):** Gross n=2006, mean=+0.00065, CI=[+0.00048,+0.00083], P>0=1.000. WF gross: 12/14 folds positive, mean=+0.00068, P>0=1.000. Signal has real gross alpha. FAIL due to cost: inherits H32's ~7 trades/day cadence — 8bps round-trip cost (+0.080%) exceeds gross edge (+0.065%) by 23%. bps8 mean=-0.00015, WF 4/14 folds positive. Diagnosis: funding filter improves quality but not enough to overcome cost drag at high frequency. **Next step: H124 — use funding filter with much tighter spread threshold to reduce to 1-2 trades/day.** (180d artifact: `results/runs/20260222T203735Z_H123.json`; 365d artifact: `results/runs/20260222T204904Z_H123.json`)
+
+<!-- === 365D ERA START (2026-02-23 — 365d dataset, ~14 WF folds, regime framework rules apply) === -->
+<!-- All H124+ results belong in FINDINGS_365D.md first, then summarized here. -->
+
+## 365d Rerun — Summary (2026-02-23)
+Full results in `FINDINGS_365D.md`. Key reclassifications on 365d data:
+
+**CONFIRMED PASS (365d, WF 20/20):** H59, H60, H63, H64, H65 — strongest survivors. H65 perfect 20/20 at both gross and bps8.
+
+**DOWNGRADED — FAIL on 365d (were PASS on 180d):**
+- H32: Gross real (WF 12/14, P>0=1.000) but bps8 cost-constrained (mean≈0, WF 8/14). Signal exists, trade frequency too high for 8bps edge. Paper trading status: UNDER REVIEW.
+- H33: Complete collapse on 365d (gross WF 2/14, P>0=0.000). Short-side only worked in narrow 180d window. FROZEN as FAIL.
+
+**DOWNGRADED — BORDERLINE (were PASS):** H39 (WF 20/20 gross but bps8 WF 16/20).
+
+**365d RERUN COMPLETE (all hypotheses):** Full results in `FINDINGS_365D.md`.
+
+365d PASS set (confirmed robust, WF 20/20 or near): H59, H60, H63, H64, H65, H66, H67, H68, H69, H70, H71, H72, H73, H74, H75, H76, H77, H78, H79, H81, H82, H83, H84, H85, H99.
+Notable perfects (20/20 gross AND bps8): H65, H67, H73, H77, H79, H84.
 
 - H15: `INCONCLUSIVE` (artifact: `results/runs/20260219T035146Z_H15.json`)
 - H18: `INCONCLUSIVE` (artifact: `results/runs/20260219T035159Z_H18.json`)
