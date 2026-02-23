@@ -23,37 +23,28 @@ That's slow and biased toward ideas we already had. RF on the full feature matri
 2. Surface feature interactions (AND conditions) we haven't thought to test
 3. Point toward regime families we haven't explored yet
 
+**RF runs AFTER HMM regime discovery.** The HMM regime label becomes a feature in the RF
+feature matrix, so RF can find signals that are regime-conditional (e.g., "spread_pct
+matters in TRENDING regime but not RANGING"). See `docs/hmm_regime_plan.md` for Stage 1.
+
 ---
 
-## Critical Design Decision: What to Include in the Feature Matrix
+## Feature Matrix Approach: Include Everything, Compare Afterward
 
-**The risk:** If we include `eth_slope_sign_1h` and `btc_slope_sign_1h` (our CA signal features),
-RF will almost certainly rediscover CA-1 as the top predictor — it already passes with 20/20 WF
-folds, so it dominates the target. We'd spend compute confirming what we already know.
+**Revised approach (2026-02-23):** Run RF on the **full feature matrix with no exclusions**,
+including CA slope features. RF does not know about our existing hypotheses — it just sees numbers.
+After the run, compare the top candidates against existing confirmed signals (CA-1 through CA-5).
 
-**Three options — pick one before building the script:**
+**Post-run comparison rule:**
+- If RF independently rediscovers a CA-family feature as top predictor → that is *confirmation*
+  that CA-1 is real (independent discovery). Skip it as a new candidate.
+- If RF finds something not in any existing signal family → genuine new candidate.
+- Do not formalize candidates that are > 0.4 correlated with existing PASS signal trade sequences.
 
-### Option A: Exclude slope features (recommended for new-regime discovery)
-Drop `eth_slope_sign_1h`, `btc_slope_sign_1h`, `eth_slope_stable_*`, `eth_above_ema20_1h`
-from the feature matrix entirely. Force RF to find predictive power elsewhere.
-- **Pro:** Guaranteed to find non-CA signals
-- **Con:** May miss CA-enhancement signals (e.g. "CA-1 only when RV is low")
-
-### Option B: Include everything, filter output by correlation with CA-1
-Run RF with all features. After extracting candidates, compute pairwise correlation of each
-candidate signal's trade sequence with CA-1. Only formalize candidates where correlation < 0.3.
-- **Pro:** Finds both new signals AND CA enhancements in one run
-- **Con:** More post-processing work
-
-### Option C: Residual prediction (most rigorous)
-Regress CA-1 signal out of forward returns, run RF on the residual. Whatever RF finds is
-definitionally orthogonal to CA-1.
-- **Pro:** Guaranteed independence from existing edge
-- **Con:** More complex implementation
-
-**Recommendation:** Run Option A first (1-2 hours), see what comes up. If nothing interesting
-emerges, try Option B. Option C is the right next step if we want to explicitly build a
-portfolio layer on top of CA-1.
+This is cleaner than pre-excluding features because:
+1. We don't bias the search before it starts
+2. If RF rediscovers CA-1, that's valuable information (strengthens confidence)
+3. The comparison step is explicit and auditable
 
 ---
 

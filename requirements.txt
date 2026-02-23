@@ -7,3 +7,7 @@ PyJWT==2.8.0
 cryptography==42.0.5
 rich==13.7.1
 psycopg[binary]
+hmmlearn>=0.3
+xgboost>=2.0
+shap>=0.43
+scikit-learn>=1.3

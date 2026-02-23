@@ -102,14 +102,40 @@ Before writing code, estimate trade frequency at Layer 3:
 
 Random Forest and other ML tools are **hypothesis generators**, not deployed models.
 
-### Correct Use
+### Two-Stage ML Pipeline (Canonical Approach)
+
 ```
-1. Build feature matrix from rc.features (point-in-time, no lookahead)
-2. Target: sign(fwd_r at h=6) or Sharpe of next 6-bar trade
-3. Walk-forward RF: train 90d, extract SHAP on 30d test, repeat
-4. Read SHAP: look for consistent "Feature A > X AND Feature B in range Y" patterns
-5. Formalize as explicit rule → assign new H-ID → run through standard gate pipeline
+Stage 1: HMM REGIME DISCOVERY (unsupervised)
+  - Aggregate 5m bars to 1h
+  - Fit GaussianHMM(n_components=3) on: rv_1h, er20_1h, atr_pct_1h, funding_pct_1h
+  - Walk-forward: train 90d, label next 30d, repeat
+  - Output: regime label (0/1/2) for every 1h bar → map back to 5m bars
+  - Label states by examining mean RV + return direction in each state
+  - See: docs/hmm_regime_plan.md
+
+         ↓ (regime labels become features for Stage 2)
+
+Stage 2: RF SIGNAL DISCOVERY (supervised)
+  - Full feature matrix — no pre-exclusions (do NOT exclude CA slope features)
+  - Include HMM regime label as a feature
+  - Target: sign(fwd_r at h=horizon) — horizon NOT fixed, see rule below
+  - Walk-forward RF: train 90d, extract SHAP on 30d test, repeat
+  - After run: compare top candidates to existing signals (CA-1 through CA-5)
+    → if candidate maps to existing signal family, skip it
+    → if genuinely new territory, formalize as hypothesis
+  - See: docs/rf_experiment_plan.md
 ```
+
+### Horizon Pre-Commit Rule (Critical — prevents 8-bar mining)
+
+**Do NOT fix horizon=8 for all hypotheses.** The 8-bar assumption came from CA-1 and has been applied to every subsequent hypothesis — this is a form of data mining on the horizon parameter.
+
+**Pre-commit rule:** Before running any hypothesis, declare the horizon based on the hypothesis type:
+- Mean-reversion signal → horizon = 4–6 bars (20–30 min)
+- Trend-following / momentum signal → horizon = 16–24 bars (80–120 min)
+- Cross-asset divergence signal → horizon = 8–12 bars (40–60 min)
+
+Choose the horizon that matches the economic logic of the signal. Write it in the hypothesis spec before looking at any results. Do not test multiple horizons and pick the best one — that is in-sample tuning.
 
 ### Never Deploy RF Output Directly
 - RF importance/SHAP output → propose hypothesis rule → validate with WF+bootstrap
@@ -118,11 +144,14 @@ Random Forest and other ML tools are **hypothesis generators**, not deployed mod
 
 ### HMM Regime Detection
 When using Hidden Markov Model for Layer 1 regime:
-- Fit `hmmlearn.GaussianHMM(n_components=3)` on rolling RV + |return| features
+- Aggregate 5m → 1h bars before fitting (do NOT run HMM on raw 5m bars)
+- 1h granularity finds multi-day macro regimes; 5m finds only intraday session effects
+- Fit `hmmlearn.GaussianHMM(n_components=3)` on: rv_1h, er20_1h, atr_pct_1h, funding_pct_1h
 - Train window: 90 days, predict current state
 - Label states *after* fitting by examining mean RV in each state (low/med/high)
 - Use decoded state label as Layer 1 regime gate
 - Must be retrained walk-forward — never fit on OOS period
+- 365d data limitation: all regimes discovered are bull-market variants (Feb 2025 – Feb 2026 was net positive). Any strategy built on these labels is bull-market biased until tested on older data.
 
 ### Isolation Forest for Anomaly Gating
 - Anomaly score > 0.7 → unusual bar → skip entry (Layer 3 veto)
