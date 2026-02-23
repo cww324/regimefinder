@@ -102,9 +102,12 @@ def load_features(days: int, horizon: int, dsn: str) -> pd.DataFrame:
 
     # Forward return target
     x["fwd_r_h"] = x["close_btc"].shift(-horizon) / x["close_btc"] - 1.0
-    x["target"]  = np.sign(x["fwd_r_h"]).astype(int)
 
-    # Drop flat bars and NaN targets
+    # Explicitly drop NaN targets before sign/cast (last `horizon` bars will be NaN)
+    x = x.dropna(subset=["fwd_r_h"]).copy()
+    x["target"] = np.sign(x["fwd_r_h"]).astype(int)
+
+    # Drop flat bars (target == 0)
     x = x[x["target"] != 0].copy()
 
     # Keep only columns we need
