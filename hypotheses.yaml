@@ -5545,3 +5545,104 @@ hypotheses:
     P>0=1.000, WF+ 17/18, bps8_P>0=1.000. Best single VS variant: 45bps at h=12+p85.
     Tighter volume filter selects highest-conviction flips which sustain for 60 min."
   source: Robustness check for VS-2 (H167). Volume threshold sensitivity (p85).
+
+- id: H174
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: H141 revisit — loosen extreme funding threshold from p85 to p80 to get
+    more trades. Same mechanism — extreme crowded longs + ETH slope flip DOWN → SHORT.
+    Pre-committed horizon h=8 (direct comparison to H141).
+  rationale: H141 (p85 threshold) produced only n=16 trades in 365d — insufficient
+    to confirm or reject. The mechanism is sound (crowded longs + reversal = amplified
+    DOWN move). Loosening to p80 should roughly double trade count while preserving
+    the core economics. Pre-committed horizon h=8 to match H141 exactly.
+  WHY: Resolve H141 INCONCLUSIVE by increasing sample size. p80 is the standard high-percentile
+    threshold (matching VS-1 volume gate approach). If this passes, h=12 variant (H175)
+    is the natural next test.
+  RULES:
+  - Enter SHORT when funding_btc_pct >= 0.80 AND eth_slope_sign_1h flips from +1 to -1.
+  - Event-triggered (dedup gap = horizon bars). Signal = -1.0 (SHORT only).
+  - Horizon = 8 bars (40 min). Pre-committed.
+  FAILURE_CONDITIONS:
+  - p80 is a less extreme filter than p85 — may dilute the crowding signal with
+    non-extreme funding bars where forced unwind is weaker.
+  - If gross is ~17bps (same as H141) it means p80 adds marginal trades with same
+    quality. If gross drops significantly, p80 includes too many noise events.
+  entry_rules:
+  - Short when funding_btc_pct >= 0.80 AND eth_slope flips from +1 to -1.
+  - Signal = -1.0. Event-triggered with dedup gap = horizon.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates via Hyperliquid
+  - eth_slope_sign_1h from load_frame() 1h feature set
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      funding_btc_pct_min: 0.80
+      slope_direction: down_flip
+      direction: short
+  allowed_variants: []
+  status: INCONCLUSIVE
+  decision_date: "2026-02-24"
+  decision_notes: "INCONCLUSIVE (n=25, too few trades). runner gross=20.10bps P>0=0.983,
+    WF+ gross=9.41bps P>0=0.895, WF bps8=1.41bps P>0=0.579. WF fold detail: 9/15
+    folds have ZERO trades, only 3/15 folds positive (20% WF+). p80 added ~9 trades
+    vs H141 (25 vs 16) and confirmed the gross signal is real (P>0 improved from
+    0.863 to 0.983), but still too few events per year for reliable WF statistics.
+    The FR (extreme funding + slope flip) mechanism fires ~1x/month — insufficient
+    for validation on 365d data. Needs 2+ years of data or a looser threshold (p75)
+    or multi-asset combination (BTC+ETH funding both extreme). Do NOT iterate further
+    without new data or fundamentally different approach."
+  source: H141 revisit. Anchor test for FR family at p80 threshold.
+
+- id: H175
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: H174 at longer horizon — extreme crowded longs (p80) + ETH slope flip
+    DOWN → SHORT, held for 12 bars (60 min). Tests whether the forced-unwind momentum
+    sustains for 60 min as VS-2 showed for volume-gated flips.
+  rationale: VS-2 (volume-gated slope flip, h=12) outperformed VS-1 (h=8) by ~12bps.
+    The same principle may apply here — when a funding-crowded market reverses, the
+    forced unwind takes 60+ min as leveraged longs are systematically liquidated.
+    Pre-committed horizon h=12 before running, justified by VS-2 evidence.
+  WHY: If H174 (p80, h=8) produces enough trades and a positive gross signal, H175
+    tests whether extending the hold from 40 to 60 min captures more of the forced-
+    unwind move. Batch with H174 since both are pre-committed.
+  RULES:
+  - Enter SHORT when funding_btc_pct >= 0.80 AND eth_slope_sign_1h flips from +1 to -1.
+  - Event-triggered (dedup gap = 12 bars). Signal = -1.0 (SHORT only).
+  - Horizon = 12 bars (60 min). Pre-committed (motivated by VS-2 pattern).
+  FAILURE_CONDITIONS:
+  - Forced-unwind momentum from funding crowding may be faster than volume momentum
+    (funding liquidations concentrate in first few bars, not sustained for 60 min).
+  - Lower n than CA-1 means more variance — h=12 may not meaningfully differ from h=8.
+  entry_rules:
+  - Short when funding_btc_pct >= 0.80 AND eth_slope flips from +1 to -1.
+  - Signal = -1.0. Event-triggered with dedup gap = horizon.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates via Hyperliquid
+  - eth_slope_sign_1h from load_frame() 1h feature set
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      funding_btc_pct_min: 0.80
+      slope_direction: down_flip
+      direction: short
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-24"
+  decision_notes: "FAIL (WF collapses at h=12). n=25, runner gross=20.23bps P>0=0.932,
+    WF gross=0.20bps P>0=0.531, WF bps8=-7.80bps P>0=0.238. Unlike VS-2 (where h=12
+    significantly improved edge vs h=8), the forced-unwind mechanism from funding
+    crowding does NOT sustain at 60 min. The momentum is front-loaded — if it exists,
+    it happens in the first 40 min (h=8), not later. h=12 adds noise and loses WF
+    consistency. Confirmed: this mechanism is fast (not sustained). Do not test h>8
+    for FR signals."
+  source: H175 = H174 at h=12. Pre-committed horizon motivated by VS-2 pattern.

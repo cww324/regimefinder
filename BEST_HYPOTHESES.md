@@ -139,7 +139,7 @@ Not assigned a shortcode yet.
 
 | Family | H-numbers tested | Outcome |
 |--------|-----------------|---------|
-| FR (Funding Regime) | H121–H144 | All FAIL/INCONCLUSIVE. H141 (n=16, 17bps) is interesting but insufficient data. |
+| FR (Funding Regime) | H121–H144, H174–H175 | All FAIL/INCONCLUSIVE. H174 (p80, n=25, 20bps, P>0=0.983) is the strongest FR signal yet — mechanism real, but fires ~1×/month, too rare for 365d WF. Needs 2+ years or multi-asset funding. H175 (h=12) FAIL — forced unwind doesn't sustain 60 min. |
 | MR (Mean Reversion) | H15, H18, H22–H26 | INCONCLUSIVE (insufficient folds) |
 | CD (Cross-Exchange Divergence) | H102–H113 | FAIL (no second exchange data) |
 
@@ -152,7 +152,7 @@ Not assigned a shortcode yet.
 3. **H145 is the VS anchor.** High-volume slope flips average 26bps — ~3× unfiltered CA-1.
 4. **No confirmed short-side signals.** The 365d window (Feb 2025–Feb 2026) was a bull run.
 5. **FR signals cost-constrained.** Every funding rate signal tested has real gross alpha but can't clear 8bps cost gate.
-6. **H141 concept promising.** Extreme funding (≥p85) + slope flip produced 17.64bps in only 16 trades — too few to confirm but mechanism is sound.
+6. **FR mechanism real but rare.** H174 (p80 threshold): 20bps gross, P>0=0.983 — mechanism confirmed. But ~25 trades/year (1×/month), 9/15 WF folds empty. Needs 2+ years of data or multi-asset funding combination to validate.
 
 ---
 
@@ -189,6 +189,18 @@ Both volume threshold and hold horizon independently add edge and compound toget
 
 ## What to do next
 
-1. **H141 revisit**: loosen funding threshold from p85 to p80 to get more trades (pre-commit threshold first)
-2. **OI/liquidations data**: backfill rc.open_interest and rc.liquidations to unlock H148-H156
-3. **Portfolio construction**: combine CA-1 (H65, all-hours) + VS-2 (H167/H173, complementary timing)
+1. ~~H141 revisit~~ **DONE** — H174 (p80): 20bps, P>0=0.983 but INCONCLUSIVE (n=25, 1×/month). FR mechanism is real but needs 2+ years of data. **Blocked on data.**
+2. **OI/liquidations data**: backfill rc.open_interest and rc.liquidations to unlock H148-H156 (new hypothesis family)
+3. **Portfolio construction**: Test CA-1 + VS-2 individually in live paper trade first, then combine. See below.
+
+## Paper Trading Roadmap
+
+Individual signals must be validated live before combining into a portfolio:
+
+| Stage | Signal | Status | Notes |
+|-------|--------|--------|-------|
+| 1 | CA-1 (H65, all-hours) | TODO | Baseline anchor — all hours, h=8 |
+| 1 | VS-2 (H173, p85 vol, h=12) | TODO | Best single variant — highest gross |
+| 2 | CA-1 + VS-2 portfolio | TODO | Blocked on Stage 1 completion |
+
+**Why individual first:** Backtests can't model fill quality, latency, or queue position. With 8bps cost gate, slippage matters. Individual paper trading also detects regime change (365d was a bull run) before it corrupts portfolio-level P&L.

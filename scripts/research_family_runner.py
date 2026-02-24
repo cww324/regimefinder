@@ -94,7 +94,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     "volatility_state": {"H101", "H102", "H103", "H104", "H112", "H128", "H129", "H133", "H134", "H138"},
     "efficiency_mean_reversion": {"H105", "H106", "H107"},
     "cross_asset_divergence": {"H108", "H109", "H110", "H111"},
-    "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144"},
+    "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144", "H174", "H175"},
     "momentum": {"H125"},
     "cross_asset": {"H126"},
     "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163",
@@ -1207,6 +1207,20 @@ def build_signal(
             eth_sign_144 = x["eth_slope_sign_1h"]
             slope_flip_down = eth_sign_144.eq(-1) & eth_sign_144.shift(1).eq(1)
             candidate = slope_flip_down & sustained
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H174", "H175"}:
+            # H141 revisit: loosen funding threshold from p85 → p80 to get more trades.
+            # Same mechanism: crowded longs (funding >= p80) + ETH slope flip DOWN → SHORT.
+            # H174 = h=8 (direct comparison to H141). H175 = h=12 (VS-2 showed sustained momentum).
+            eth_sign_174 = x["eth_slope_sign_1h"]
+            slope_flip_down = eth_sign_174.eq(-1) & eth_sign_174.shift(1).eq(1)
+            crowded = f_pct.ge(0.80)
+            candidate = slope_flip_down & crowded
             idx = dedup_idx(candidate, gap=int(horizon))
             out = np.zeros(len(x), dtype=float)
             if idx:

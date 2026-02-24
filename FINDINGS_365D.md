@@ -108,8 +108,10 @@ Organized by regime family. All results use 365d dataset and 60/15/15 WF.
 | H142 | funding_spread_pct ≥ 0.80 → SHORT | 2400 | 6.6 | -0.10 | 0.443 | 5/18 | 0.000 | FAIL | No gross edge |
 | H143 | funding_sign = slope_sign → direction | 6821 | 18.7 | 1.63 | 1.000 | 16/20 | 0.000 | FAIL | Cost-constrained |
 | H144 | sustained funding 3h + slope flip → SHORT | 11 | 0.03 | 4.94 | 0.543 | 0/5 | 0.387 | INCONCLUSIVE | n=11 too few |
+| H174 | funding_btc_pct ≥ 0.80 + slope flip → SHORT, h=8 | 25 | 0.07 | 20.10 | 0.983 | 3/15 | 0.579 | INCONCLUSIVE | 9/15 WF folds empty; fires ~1×/month |
+| H175 | funding_btc_pct ≥ 0.80 + slope flip → SHORT, h=12 | 25 | 0.07 | 20.23 | 0.932 | — | 0.238 | FAIL | WF gross collapses (P>0=0.531); h=12 does not help FR |
 
-**FR Family Lesson**: Funding rate signals consistently hit a cost ceiling. No standalone FR signal has cleared 8bps in 365d testing. H141 is interesting (17bps gross) but statistically inconclusive.
+**FR Family Lesson (updated 2026-02-24)**: The extreme-funding + slope-flip mechanism (H141/H174) has confirmed gross alpha — P>0=0.983 at p80 threshold is one of the strongest signal probabilities in the research. But the signal fires only ~1×/month (25 trades/year). 9/15 WF folds have zero trades, making WF+ statistics unreliable. The FR family needs 2+ years of data or a multi-asset approach (combine BTC+ETH funding signals) to generate enough events for statistical validation. Do not iterate thresholds further — the data constraint is the binding problem.
 
 ---
 
