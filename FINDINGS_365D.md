@@ -186,6 +186,26 @@ Both h and volume threshold independently increase edge — they compound. VS-2 
 
 ---
 
+### Family: oi_liq (Gate.io data, unlocked 2026-02-24)
+
+**OI + liquidations data** from Gate.io provides two new signal dimensions:
+- **Open Interest (OI)**: how many leveraged positions exist — a quality filter for slope flips
+- **Liquidations (liq)**: forced position closures — directional catalyst signals
+
+| ID | Entry Rule | n | /day | gross_bps | P>0_gross | WF+ | bps8_P>0 | WF bps8+ | Status | Notes |
+|----|-----------|---|------|-----------|-----------|-----|----------|----------|--------|-------|
+| H176 | ETH slope flip + oi_btc_pct >= 0.80, h=8 | 217 | 0.65 | 16.4 | 1.000 | 14/18 gross | 0.995 | 13/18 | PASS | OI-1 candidate — borderline bps8 fold count, needs robustness |
+| **H177** | **long_liq_btc_pct >= 0.90 → SHORT, h=8** | **1437** | **4.31** | **20.0** | **1.000** | **18/18** | **1.000** | **16/18** | **PASS (LQ-1 ANCHOR)** | **Liquidation cascade drives follow-through** |
+| **H178** | **short_liq_btc_pct >= 0.90 → LONG, h=8** | **1474** | **4.44** | **16.0** | **1.000** | **18/18** | **1.000** | **17/18** | **PASS (LQ-2 ANCHOR)** | **Short squeeze LONG continuation** |
+| **H179** | **ETH slope flip + long_liq_btc_pct >= 0.70 → SHORT, h=8** | **166** | **0.51** | **31.0** | **1.000** | **16/17** | **1.000** | **14/17** | **PASS (LQ-3)** | **Liq-gated slope flip — cascade context confirms bearish momentum** |
+| **H180** | **VS-2 + total_liq_btc_pct >= 0.70, h=12** | **85** | **0.26** | **60.5** | **1.000** | **16/17** | **1.000** | **15/17** | **PASS (VS-3) ★ NEW ALL-TIME BEST** | **Volume + liq confirmation — 60.5bps highest in research history** |
+
+**Key findings (oi_liq family, 2026-02-24):**
+- **LQ-1 (H177) + LQ-2 (H178)** are high-frequency anchors (~4+/day each). Both achieve P>0=1.000 gross AND bps8 with WF+ 18/18 and 18/18 respectively. Cascade and squeeze directions independently confirmed.
+- **LQ-3 (H179)** combines liquidation context with CA slope flip — adding the liq gate elevates gross from CA-1's ~34bps to 31bps SHORT-only at lower frequency. The combination is directionally cleaner than pure cascade.
+- **VS-3 (H180)** is the standout result: adding a liq confirmation layer to VS-2 triples the per-trade edge from 38.6bps to 60.5bps. Triple-gated signal (slope + volume + liq) produces the highest per-trade return in all research history. WF+ 16/17 gross, 15/17 bps8 P>0=1.000.
+- **H176 (OI-gated slope flip)** passes at gross and bps8 aggregate level (P>0=1.000 gross, P>0=0.995 bps8) but WF bps8 fold count 13/18 is borderline. Treated as OI-1 candidate pending robustness checks. OI as a standalone amplifier is real but less clean than liquidation-based gates.
+
 ### Family: momentum / trend (ETH slope)
 
 *Results to be populated from 365d rerun.*

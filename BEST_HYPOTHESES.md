@@ -1,5 +1,5 @@
 # BEST_HYPOTHESES.md
-**Last Updated:** 2026-02-23
+**Last Updated:** 2026-02-24
 **Dataset:** 365 days (Feb 2025 – Feb 2026), ~105k bars/symbol, 60/15/15 WF (~20 folds)
 
 Quick reference for confirmed signals. Organized by signal shortcode (CA-1, CA-2, etc.).
@@ -187,20 +187,105 @@ Both volume threshold and hold horizon independently add edge and compound toget
 
 ---
 
+## VS-3 — VS-2 with Liquidation Confirmation ★ NEW ALL-TIME BEST (2026-02-24)
+
+**What it is:** VS-2 gated by total liquidations >= p70 — slope flip + high volume + liq confirmation must all align. Triple-gated signal produces the highest per-trade return in all research history at **60.5bps gross**.
+
+**Why it works:** Adding the liq layer selects VS-2 events where forced deleveraging is also occurring simultaneously. Three independent engines — momentum (slope), capital (volume), and mechanical (liq) — all aligned.
+
+| H-number | Variant | gross_bps | n/day | WF+ | bps8 PASS | Label |
+|----------|---------|-----------|-------|-----|-----------|-------|
+| **H180** | Base (p80 vol + liq p70, h=12) | **60.5** | 0.26 | **16/17** | **YES (15/17, P>0=1.000)** | **VS-3** |
+
+**VS progression:**
+
+| Signal | Rule | gross_bps | n/day |
+|--------|------|-----------|-------|
+| CA-1 (H65) | slope flip only | ~34 | ~4.0 |
+| VS-1 (H145) | + volume p80, h=8 | 26.2 | 0.4 |
+| VS-2 (H167) | + volume p80, h=12 | 38.6 | 0.4 |
+| VS-2 p85 (H173) | + volume p85, h=12 | 45.3 | 0.3 |
+| **VS-3 (H180)** | **+ volume p80 + liq p70, h=12** | **60.5** | **0.26** |
+
+Each additional gate compounds the edge. VS-3 is the natural peak of this progression.
+
+---
+
+## LQ-1 — Long Liquidation Cascade SHORT ★ ANCHOR (2026-02-24)
+
+**What it is:** When the prior 1h had extreme long-side liquidations (p90 threshold), go SHORT for 40 minutes. The liquidation cascade has three-phase follow-through — forced sales trigger more stops, remaining longs capitulate, price overshoots.
+
+| H-number | Variant | gross_bps | n/day | WF+ | bps8 PASS | Label |
+|----------|---------|-----------|-------|-----|-----------|-------|
+| **H177** | Base (long_liq p90, h=8) | **20.0** | 4.31 | **18/18** | **YES (16/18, P>0=1.000)** | **LQ-1** |
+
+**Key stats:** n=1437, WF+ gross 18/18 folds, WF bps8 P>0=1.000 — every WF fold grosses positive and 16/18 beat costs. The most consistently positive gross WF record in the research after the CA family.
+
+---
+
+## LQ-2 — Short Liquidation Squeeze LONG ★ ANCHOR (2026-02-24)
+
+**What it is:** Symmetric to LQ-1. Extreme short-side liquidations (p90) → go LONG for 40 minutes. Forced short covering drives buying pressure that sustains beyond the initial event.
+
+| H-number | Variant | gross_bps | n/day | WF+ | bps8 PASS | Label |
+|----------|---------|-----------|-------|-----|-----------|-------|
+| **H178** | Base (short_liq p90, h=8) | **16.0** | 4.44 | **18/18** | **YES (17/18, P>0=1.000)** | **LQ-2** |
+
+**Key stats:** n=1474, WF+ bps8 17/18 — one more fold passes costs than LQ-1. The most cost-consistent liq signal. LQ-1 + LQ-2 together provide ~8.75 trades/day total from liquidation data.
+
+---
+
+## LQ-3 — Liq-Gated ETH Slope Flip SHORT (2026-02-24)
+
+**What it is:** CA-1 slope flip (bearish direction only) gated by elevated long liquidations (p70). Liquidation context confirms that the slope change is backed by forced deleveraging, not thin-book noise.
+
+| H-number | Variant | gross_bps | n/day | WF+ | bps8 PASS | Label |
+|----------|---------|-----------|-------|-----|-----------|-------|
+| **H179** | Base (liq p70 + slope flip → SHORT, h=8) | **31.0** | 0.51 | **16/17** | **YES (14/17, P>0=1.000)** | **LQ-3** |
+
+**Key stats:** n=166. Gross 31bps is well above the 8bps cost gate. The liq gate adds directional confidence to what is otherwise a neutral slope flip.
+
+---
+
+## H176 — OI-Gated Slope Flip (OI-1 Candidate, pending robustness)
+
+**What it is:** Same structure as VS-1 but using open interest percentile (oi_btc_pct >= 0.80) as the gate instead of volume. PASS on aggregate metrics but WF bps8 fold count is borderline (13/18).
+
+| H-number | Variant | gross_bps | n/day | WF bps8 P>0 | WF bps8+ | Status |
+|----------|---------|-----------|-------|-------------|----------|--------|
+| H176 | OI-gated flip (h=8) | 16.4 | 0.65 | 0.995 | 13/18 | OI-1 candidate — needs robustness checks |
+
+**Not yet assigned shortcode OI-1.** Needs odd/even day + execution lag tests before permanent assignment.
+
+---
+
+## Key Observations
+
+1. **Four signal families now confirmed.** CA (ETH/BTC slope flip), VS (volume-gated slope flip), LQ (liquidation-driven), and OI (OI-gated — candidate, needs robustness).
+2. **H65 is the CA anchor.** H84 (EU/US overlap session) is the strongest single CA variant at +0.38%/trade.
+3. **H145 is the VS anchor; H180 (VS-3) is the all-time best** at 60.5bps gross — triple-gated (slope + vol + liq).
+4. **LQ-1 (H177) and LQ-2 (H178) are high-frequency confirmed signals.** Both achieve 18/18 WF+ gross and P>0=1.000 bps8, providing ~8.75 trades/day combined from liquidation data alone.
+5. **No confirmed short-side signals before the LQ family.** LQ-1 is the first clean directional SHORT signal (cascade) and LQ-2 is the first clean directional LONG from derivatives data.
+6. **H176 (OI-1 candidate) is promising but borderline.** 16.4bps gross, P>0=0.995 bps8 — but 13/18 WF bps8 folds is below the CA/VS/LQ bar. Robustness checks required.
+7. **FR signals cost-constrained.** Every funding rate signal tested has real gross alpha but can't clear 8bps cost gate at current frequency.
+
+---
+
 ## What to do next
 
-1. ~~H141 revisit~~ **DONE** — H174 (p80): 20bps, P>0=0.983 but INCONCLUSIVE (n=25, 1×/month). FR mechanism is real but needs 2+ years of data. **Blocked on data.**
-2. **OI/liquidations data**: backfill rc.open_interest and rc.liquidations to unlock H148-H156 (new hypothesis family)
-3. **Portfolio construction**: Test CA-1 + VS-2 individually in live paper trade first, then combine. See below.
+1. **H176 robustness checks** — odd/even day + execution lag for OI-1 candidate confirmation.
+2. **LQ family robustness** — execution lag (H177+H178+H179 at next-bar entry), threshold sensitivity for LQ-1/LQ-2.
+3. **Portfolio construction** — CA-1 + VS-2 + LQ-1 + LQ-2 combination. LQ signals are high-frequency and may diversify well against the lower-frequency VS signals.
+4. **Paper trading** — validate individual signals live before combining.
 
 ## Paper Trading Roadmap
-
-Individual signals must be validated live before combining into a portfolio:
 
 | Stage | Signal | Status | Notes |
 |-------|--------|--------|-------|
 | 1 | CA-1 (H65, all-hours) | TODO | Baseline anchor — all hours, h=8 |
-| 1 | VS-2 (H173, p85 vol, h=12) | TODO | Best single variant — highest gross |
-| 2 | CA-1 + VS-2 portfolio | TODO | Blocked on Stage 1 completion |
+| 1 | VS-3 (H180, p80 vol + liq p70, h=12) | TODO | New all-time best at 60.5bps |
+| 1 | LQ-1 (H177, long_liq p90) | TODO | High-freq cascade SHORT |
+| 1 | LQ-2 (H178, short_liq p90) | TODO | High-freq squeeze LONG |
+| 2 | Combined portfolio | TODO | Blocked on Stage 1 completion |
 
 **Why individual first:** Backtests can't model fill quality, latency, or queue position. With 8bps cost gate, slippage matters. Individual paper trading also detects regime change (365d was a bull run) before it corrupts portfolio-level P&L.

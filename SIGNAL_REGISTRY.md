@@ -1,5 +1,5 @@
 # SIGNAL_REGISTRY.md
-**Last Updated:** 2026-02-23
+**Last Updated:** 2026-02-24
 **Purpose:** Human-readable registry of confirmed signals. H-numbers remain the canonical pipeline IDs.
 Only hypotheses that PASS the full validation gate (gross + bps8, WF 20/20 or near) earn a signal shortcode.
 
@@ -22,6 +22,8 @@ Only hypotheses that PASS the full validation gate (gross + bps8, WF 20/20 or ne
 | `MS` | Microstructure | Intraday order flow, VWAP deviations, bar structure |
 | `ST` | Session/Time | UTC session effects, day-of-week, open/close transitions |
 | `CD` | Cross-exchange Divergence | Coinbase vs Binance price leadership |
+| `LQ` | Liquidation | Forced position closures (cascades + squeezes), Gate.io data |
+| `OI` | Open Interest | Leveraged positioning levels, OI-gated slope flips |
 
 **Multi-regime hypotheses** use a primary label + secondary tag:
 - `CA-1` = core ETH slope flip, no filter
@@ -161,7 +163,20 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 | H172 | p75 vol | 39.88 | 17/18 | PASS | 0.5 | VS-2 replication |
 | H173 | p85 vol | **45.29** | 17/18 | PASS | 0.3 | VS-2 replication |
 
-**All 5 robustness checks pass.** VS-2 at p85 (H173) is the highest-performing single variant in all research: **45bps gross, WF+ 17/18, bps8 P>0=1.000**.
+**All 5 robustness checks pass.** VS-2 at p85 (H173) was the highest-performing single variant in all research at 45bps gross — now surpassed by VS-3 (H180) at 60.5bps.
+
+---
+
+#### VS-3 — VS-2 with Liquidation Confirmation ★ NEW ALL-TIME BEST (2026-02-24)
+**What it is:** VS-2 (volume p80 + ETH slope flip, h=12) additionally gated by total liquidations >= p70. All three conditions must align — slope flip, high volume, AND elevated liquidation activity — selecting the highest-conviction momentum entries.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| **H180** | Base (vol p80 + liq p70, h=12) | **60.5** | 16/17 | **PASS (15/17, P>0=1.000)** | 0.26 | **VS-3** |
+
+**Why it works:** Adding the liq confirmation layer filters VS-2 entries to those where forced liquidations are also occurring simultaneously. This selects the highest-conviction momentum events — where price momentum (slope), capital flows (volume), and mechanical deleveraging (liq) all align. The triple-gated signal has the highest gross return per trade in all research history.
+
+**Trade-off:** Lower frequency (0.26/day vs 0.4/day for VS-2). At ~85 trades/year and ~5 trades/fold, WF statistics are still meaningful but fold-level variance is elevated.
 
 ---
 
@@ -174,6 +189,53 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 - H168 (ETH vol gate): BORDERLINE (24.46bps, WF 14/18)
 
 Session filtering on VS signals leaves too few trades per fold for reliable WF assessment. All-hours VS is already highly robust.
+
+---
+
+### Liquidation (LQ) — NEW 2026-02-24
+
+**What it is:** Signals based on forced position liquidations from Gate.io. Extreme liquidation events create directional price pressure that persists for 40+ minutes — cascade (long liq → SHORT continuation) and squeeze (short liq → LONG continuation).
+
+#### LQ-1 — Long Liquidation Cascade SHORT ★ ANCHOR
+**What it is:** When the prior 1h had extreme long-side liquidations (p90 threshold), go SHORT for 40 minutes. Cascade follow-through from forced selling.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| **H177** | Base (long_liq_btc_pct >= 0.90, h=8) | **20.0** | **18/18** | **PASS (16/18, P>0=1.000)** | 4.31 | **LQ-1** |
+
+**Why it works:** Extreme long liquidations are mechanical — margin systems force position closure regardless of price. Top-10% liq hours represent genuine deleveraging events with three-phase continuation: initial cascade → more stops triggered → price discovery overshoot.
+
+---
+
+#### LQ-2 — Short Liquidation Squeeze LONG ★ ANCHOR
+**What it is:** When the prior 1h had extreme short-side liquidations (p90 threshold), go LONG for 40 minutes. Forced short covering creates sustained buying pressure.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| **H178** | Base (short_liq_btc_pct >= 0.90, h=8) | **16.0** | **18/18** | **PASS (17/18, P>0=1.000)** | 4.44 | **LQ-2** |
+
+**Why it works:** Symmetric to LQ-1. Short squeeze buying pressure can propagate through voluntary capitulation and new longs piling on after the forced covering. 17/18 WF bps8 folds positive makes this the most consistent liq signal at cost.
+
+---
+
+#### LQ-3 — Liq-Gated ETH Slope Flip SHORT
+**What it is:** ETH slope flips to bearish (CA-1 trigger) AND long liquidations are elevated (>= p70). The liquidation context confirms that the slope change has deleveraging pressure behind it, not just noise.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| **H179** | Base (liq p70 gate + slope flip → SHORT, h=8) | **31.0** | **16/17** | **PASS (14/17, P>0=1.000)** | 0.51 | **LQ-3** |
+
+**Why it works:** The CA slope flip (CA-1) fires ~4/day. The p70 liq gate selects the subset where forced liquidations are also present — adding a second independent bearish mechanism to the momentum signal.
+
+---
+
+### Open Interest (OI) — CANDIDATE (needs robustness checks)
+
+| H-number | Idea | Status | Notes |
+|----------|------|--------|-------|
+| H176 | OI-gated ETH slope flip (oi_btc_pct >= 0.80, h=8) | PASS (OI-1 candidate) | n=217, 16.4bps gross P>0=1.000, WF bps8=7.1bps P>0=0.995 — but 13/18 WF bps8 folds borderline. Needs robustness checks before permanent shortcode assignment. |
+
+*First confirmed OI hypothesis will be labeled **OI-1**. H176 is the leading candidate but robustness validation still required.*
 
 ---
 

@@ -30,6 +30,7 @@ SUPPORTED_FAMILIES = {
     "momentum",
     "cross_asset",
     "volume_state",
+    "oi_liq",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -105,6 +106,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163",
                      "H164", "H165", "H166", "H167", "H168",
                      "H169", "H170", "H171", "H172", "H173"},
+    "oi_liq": {"H176", "H177", "H178", "H179", "H180"},
 }
 
 
@@ -1452,6 +1454,87 @@ def build_signal(
             ranging = x.get("hmm_regime", pd.Series("", index=x.index)).eq("RANGING")
             mask = x["atr14_pct_eth"].le(0.30) & x["funding_btc_pct"].le(0.30) & ranging
             return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
+
+    if family == "oi_liq":
+        require_columns(
+            x, hypothesis_id,
+            ["oi_btc_pct", "long_liq_btc_pct", "short_liq_btc_pct", "total_liq_btc_pct"],
+        )
+        oi_pct = x["oi_btc_pct"]
+        long_liq_pct = x["long_liq_btc_pct"]
+        short_liq_pct = x["short_liq_btc_pct"]
+        total_liq_pct = x["total_liq_btc_pct"]
+        eth_sign = x["eth_slope_sign_1h"]
+        vol_pct = x["volume_btc_pct"]
+
+        if hypothesis_id == "H176":
+            # OI-gated ETH slope flip — same structure as VS-1 but using OI as the quality gate.
+            # High OI means many leveraged positions. A slope flip when OI is elevated forces
+            # more of those positions to close, amplifying the move.
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_oi = oi_pct.ge(0.80)
+            candidate = slope_flip & high_oi
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H177":
+            # Long liquidation cascade → SHORT continuation.
+            # Extreme long-side liquidations (prior 1h) signal a sharp down move.
+            # Theory: cascade liquidations tend to have follow-through as margin calls ripple.
+            condition = long_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H178":
+            # Short liquidation squeeze → LONG continuation.
+            # Extreme short-side liquidations (prior 1h) signal a sharp up move.
+            # Theory: forced short covering creates sustained buying pressure.
+            condition = short_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H179":
+            # Liquidation-gated slope flip → SHORT.
+            # Long liquidations elevated (≥p70) AND ETH slope flips DOWN.
+            # When the recent hour had heavy long liquidations AND momentum just turned negative,
+            # the move is likely to continue (cascade + trend confirmation).
+            slope_flip_down = eth_sign.eq(-1) & eth_sign.shift(1).eq(1)
+            high_long_liq = long_liq_pct.ge(0.70)
+            candidate = slope_flip_down & high_long_liq
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H180":
+            # VS-2 + liquidation confirmation gate.
+            # Volume-gated slope flip (VS-2 mechanism) PLUS elevated total liquidations.
+            # Theory: VS-2 already selects high-conviction flips; adding liq confirmation
+            # filters to only those where leveraged money is being forced out — the
+            # highest-quality subset.
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            liq_active = total_liq_pct.ge(0.70)
+            candidate = slope_flip & high_vol & liq_active
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
 
     raise ValueError(
         f"Unsupported hypothesis/family route: {hypothesis_id} ({family}). "

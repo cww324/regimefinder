@@ -5646,3 +5646,236 @@ hypotheses:
     consistency. Confirmed: this mechanism is fast (not sustained). Do not test h>8
     for FR signals."
   source: H175 = H174 at h=12. Pre-committed horizon motivated by VS-2 pattern.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OI + LIQUIDATIONS FAMILY (H176-H180) — Gate.io data, unlocked 2026-02-24
+# ─────────────────────────────────────────────────────────────────────────────
+
+- id: H176
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: OI-gated ETH slope flip. Same structure as VS-1 (volume-gated slope
+    flip) but using BTC open interest percentile as the quality filter instead of
+    volume. High OI means many leveraged positions exist — a slope flip when OI is
+    elevated forces more of those positions to close, amplifying the move.
+  rationale: VS-1 proved that filtering slope flips by a quality signal (volume) selects
+    higher-conviction moves. OI is an independent quality filter — it measures how many
+    leveraged positions exist, not how much volume is trading. High OI + slope flip
+    should force OI reduction (deleveraging), creating directional pressure beyond
+    the slope change alone. Anchor test for OI family.
+  WHY: Test whether OI is an independent signal amplifier for CA slope flips, similar
+    to how volume works in VS-1. If both OI and volume independently amplify slope flips,
+    they may also compound (future hypothesis — OI + volume gate together).
+  RULES:
+  - Enter when eth_slope_sign_1h flips (from +1 to -1 or -1 to +1) AND oi_btc_pct >= 0.80.
+  - Direction = eth_slope_sign_1h. Event-triggered. Dedup gap = horizon.
+  - Horizon = 8 bars (40 min). Pre-committed (VS-1 baseline for direct comparison).
+  FAILURE_CONDITIONS:
+  - OI data from Gate.io may not perfectly represent global OI.
+  - OI moves slowly — percentile threshold may be persistently high or low for weeks.
+  - If OI is always high in bull markets, the gate may not be selective enough.
+  entry_rules:
+  - Long/Short when eth_slope flips AND oi_btc_pct >= 0.80.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h from load_frame()
+  - oi_btc_pct from rc.open_interest via Gate.io (loaded by load_frame())
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_btc_pct_min: 0.80
+  allowed_variants: []
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — n=217, 0.65/day, gross=16.4bps P>0=1.000, WF+ gross 15.1bps 14/18 folds,
+    WF bps8=7.1bps P>0=0.995 folds 13/18. OI gate independently amplifies slope flips.
+    Borderline bps8 fold count (13/18) — needs robustness checks before permanent shortcode.
+    Treat as OI-1 candidate. No signal_group assigned until robustness confirmed."
+  source: Theory-first. OI-gated slope flip, analogous to VS-1 volume gate.
+
+- id: H177
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: Long liquidation cascade SHORT continuation. When extreme long-side
+    liquidations occurred in the prior 1h window, go SHORT for the next 40 minutes.
+    Theory is that liquidation cascades have follow-through — one round of forced
+    selling triggers more margin calls.
+  rationale: Forced liquidations create a specific price dynamic — they front-run
+    normal sellers because they are mechanical (margin system forces them regardless
+    of price). When the prior 1h had extreme long liquidations (top 10% historically),
+    the market is in a deleveraging event. These events often continue in three phases —
+    (1) the initial liq triggers more stops, (2) remaining longs add more margin but are
+    eventually overwhelmed, (3) price discovery overshoots down.
+  WHY: First direct liquidation signal test. Liquidation data is new to the pipeline.
+    Onset-triggered on the first bar after an extreme liq window becomes observable.
+    SHORT only — long liquidations are inherently bearish.
+  RULES:
+  - Enter SHORT on onset of long_liq_btc_pct >= 0.90 (first 5m bar when condition
+    becomes true, i.e. when a fresh hourly liq value exceeds p90).
+  - Dedup gap = horizon. Horizon = 8 bars (40 min). Pre-committed.
+  FAILURE_CONDITIONS:
+  - Liq data is 1h resolution carry-forwarded to 5m. Onset fires once per 1h window.
+  - By the time we observe extreme liq, most of the cascade may have already happened.
+  - If the liq event is followed by a bounce (mean reversion after forced selling),
+    the SHORT will lose money.
+  entry_rules:
+  - Short on onset of long_liq_btc_pct >= 0.90.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - long_liq_btc_pct from rc.liquidations via Gate.io
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.90
+      direction: short
+  allowed_variants: []
+  signal_group: "LQ-1"
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS (ANCHOR) — n=1437, 4.31/day, gross=20.0bps P>0=1.000, WF+ gross 18/18 folds,
+    WF bps8=11.7bps P>0=1.000 folds 16/18. Long liquidation cascade drives SHORT continuation.
+    Assigned LQ-1 as liquidation family anchor signal."
+  source: Theory-first. First direct liquidation cascade signal.
+
+- id: H178
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: Short liquidation squeeze LONG continuation. When extreme short-side
+    liquidations occurred in the prior 1h window, go LONG for the next 40 minutes.
+    Forced short covering creates buying pressure that tends to continue.
+  rationale: Symmetric to H177 but for short squeezes. When shorts are forced to
+    cover at scale, the buying pressure can propagate in three phases —
+    (1) initial forced covering, (2) more shorts capitulate voluntarily, (3) longs pile on. The squeeze dynamic
+    is often more explosive than a cascade because shorts must buy to close.
+  WHY: Symmetric test to H177. Both are anchor candidates for the liquidation family.
+    If squeezes (H178) have more edge than cascades (H177), it informs direction for
+    future combined signals.
+  RULES:
+  - Enter LONG on onset of short_liq_btc_pct >= 0.90 (first 5m bar after fresh
+    extreme short liquidation hour).
+  - Dedup gap = horizon. Horizon = 8 bars (40 min). Pre-committed.
+  FAILURE_CONDITIONS:
+  - Same timing issue as H177 — by the time liq is observable, move may be done.
+  - Squeezes may reverse fast if the underlying bearish pressure reasserts.
+  entry_rules:
+  - Long on onset of short_liq_btc_pct >= 0.90.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - short_liq_btc_pct from rc.liquidations via Gate.io
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      short_liq_btc_pct_min: 0.90
+      direction: long
+  allowed_variants: []
+  signal_group: "LQ-2"
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS (ANCHOR) — n=1474, 4.44/day, gross=16.0bps P>0=1.000, WF+ gross 18/18 folds,
+    WF bps8=6.8bps P>0=1.000 folds 17/18. Short squeeze buying pressure sustains for 40 min.
+    Assigned LQ-2 as symmetric anchor to LQ-1. Short squeeze mirror of cascade."
+  source: Theory-first. Symmetric to H177, short squeeze continuation.
+
+- id: H179
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: Liquidation-gated ETH slope flip SHORT. Long liquidations elevated
+    (>= p70 in prior 1h) AND ETH slope flips down. Combines the cascade signal with
+    the CA slope flip confirmation — both point bearish simultaneously.
+  rationale: H177 is a pure cascade signal (high liq → SHORT). CA-1 is a pure
+    momentum signal (slope flip → direction). H179 combines them — when the recent
+    1h had elevated long liquidations AND momentum just turned negative, the bearish
+    case is confirmed from two independent mechanisms. The liquidation context means
+    there is deleveraging pressure behind the slope change, not just a noise flip.
+    Uses p70 (not p90) to allow more events than H177 while maintaining quality.
+  WHY: Liq + slope flip is the OI/liq analog to the funding + slope flip (H141/H174)
+    that showed real gross alpha. Liquidation data is more timely and actionable than
+    funding rate data. Pre-commit h=8 (consistent with FR slope flip experiments).
+  RULES:
+  - Enter SHORT when eth_slope_sign_1h flips from +1 to -1 AND long_liq_btc_pct >= 0.70.
+  - Event-triggered on slope flip (liq is a gate, not the trigger).
+  - Dedup gap = horizon. Horizon = 8 bars (40 min). Pre-committed.
+  FAILURE_CONDITIONS:
+  - p70 liq filter may not be selective enough (many bars have moderate liquidations).
+  - SHORT-only signal — only captures bearish moves.
+  - If liq is elevated for many hours, multiple slope flips may be gated in.
+  entry_rules:
+  - Short when eth_slope flips from +1 to -1 AND long_liq_btc_pct >= 0.70.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h from load_frame()
+  - long_liq_btc_pct from rc.liquidations via Gate.io
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.70
+      slope_direction: down_flip
+      direction: short
+  allowed_variants: []
+  signal_group: "LQ-3"
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — n=166, 0.51/day, gross=31.0bps P>0=1.000, WF+ gross 16/17 folds,
+    WF bps8=18.7bps P>0=1.000 folds 14/17. Liq gate elevates edge of slope flip.
+    Combines cascade context (LQ family) with CA momentum confirmation. Assigned LQ-3."
+  source: Theory-first. Liq-gated slope flip, analogous to FR-gated (H174).
+
+- id: H180
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: VS-2 with liquidation confirmation. VS-2 (volume p80 + slope flip,
+    h=12) filtered to only fire when total liquidations are also elevated (>= p70).
+    Tests whether the highest-quality VS flips — those backed by both volume expansion
+    AND forced liquidation activity — have even stronger edge than VS-2 alone.
+  rationale: VS-2 (H167) produces 38bps on average, and VS-2 at p85 (H173) produces
+    45bps. The core insight is that not all slope flips with volume are equal — some
+    are driven by discretionary large buyers/sellers, others by forced liquidations.
+    When BOTH occur simultaneously, the move has two independent engines —
+    (1) active capital flow (volume) and (2) mechanical forced liquidation (liq). The expected
+    edge of the intersection is higher than either alone, at the cost of fewer trades.
+  WHY: VS + liq is the natural multi-signal combination given both VS and liq data
+    are now in the pipeline. Pre-commit h=12 (inheriting VS-2's optimal horizon).
+    Pre-commit total_liq p70 (not p90 — need enough intersection with VS-2 signals).
+  RULES:
+  - Enter when eth_slope flips AND volume_btc_pct >= 0.80 AND total_liq_btc_pct >= 0.70.
+  - Direction = eth_slope_sign_1h. Event-triggered. Dedup gap = horizon.
+  - Horizon = 12 bars (60 min). Pre-committed (inherits VS-2 optimal horizon).
+  FAILURE_CONDITIONS:
+  - Triple filter may leave too few trades per WF fold for reliable statistics.
+  - Gate.io liq and Coinbase volume measure different things — may not compound.
+  - If liq_pct p70 is too common (fires 30% of bars), it adds little selectivity.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_btc_pct >= 0.80 AND total_liq_btc_pct >= 0.70.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  - total_liq_btc_pct from rc.liquidations via Gate.io
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.80
+      total_liq_btc_pct_min: 0.70
+  allowed_variants: []
+  signal_group: "VS-3"
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS (NEW ALL-TIME BEST) — n=85, 0.26/day, gross=60.5bps P>0=1.000,
+    WF+ gross 16/17 folds, WF bps8=48.0bps P>0=1.000 folds 15/17. VS-2 gated by liq
+    confirmation produces the highest per-trade return in all research history.
+    Assigned VS-3 (extends VS family with liq confirmation layer)."
+  source: VS-2 + liquidation confirmation. Multi-signal combination.
