@@ -76,7 +76,7 @@ def load_funding_rates_last_days(
 def load_open_interest_last_days(
     dsn: str,
     days: int,
-    venue_code: str = "hyperliquid",
+    venue_code: str = "gate_futures",
 ) -> pd.DataFrame:
     """
     Load BTC and ETH open interest snapshots for the last `days` days.
@@ -118,6 +118,57 @@ def load_open_interest_last_days(
         df["dt"] = pd.to_datetime(df["dt"], utc=True)
         for col in ["oi_contracts_btc", "oi_usd_btc", "oi_contracts_eth", "oi_usd_eth"]:
             df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    return df
+
+
+def load_liquidations_last_days(
+    dsn: str,
+    days: int,
+    venue_code: str = "gate_futures",
+) -> pd.DataFrame:
+    """
+    Load BTC and ETH hourly liquidation volumes for the last `days` days.
+
+    Returns a DataFrame with columns:
+        dt              TIMESTAMPTZ-aware datetime (1h window end)
+        long_liq_usd_btc  float  (USD value of long-side liquidations in the 1h window)
+        short_liq_usd_btc float
+        long_liq_usd_eth  float
+        short_liq_usd_eth float
+
+    Sorted ascending by dt.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=int(days))
+
+    with rc.connect(dsn) as conn:
+        q = """
+            SELECT
+                lb.ts                              AS dt,
+                lb.long_liq_usd::double precision  AS long_liq_usd_btc,
+                lb.short_liq_usd::double precision AS short_liq_usd_btc,
+                le.long_liq_usd::double precision  AS long_liq_usd_eth,
+                le.short_liq_usd::double precision AS short_liq_usd_eth
+            FROM rc.liquidations lb
+            JOIN rc.symbols sb ON sb.symbol_id = lb.symbol_id
+            JOIN rc.venues vb  ON vb.venue_id  = lb.venue_id
+            JOIN rc.liquidations le ON le.ts = lb.ts AND le.venue_id = lb.venue_id
+                                    AND le.window_minutes = lb.window_minutes
+            JOIN rc.symbols se ON se.symbol_id = le.symbol_id
+            WHERE vb.venue_code = %s
+              AND sb.symbol_code = 'BTC'
+              AND se.symbol_code = 'ETH'
+              AND lb.window_minutes = 60
+              AND lb.ts >= %s
+            ORDER BY lb.ts
+        """
+        cols = ["dt", "long_liq_usd_btc", "short_liq_usd_btc", "long_liq_usd_eth", "short_liq_usd_eth"]
+        df = _fetch_df(conn, q, (venue_code, cutoff), cols)
+
+    if not df.empty:
+        df["dt"] = pd.to_datetime(df["dt"], utc=True)
+        for col in cols[1:]:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
 
     return df
 
@@ -234,5 +285,26 @@ def compute_funding_features(deriv: pd.DataFrame, window_bars: int = 8640) -> pd
     # Positive = ETH more leveraged than BTC (per rolling history).
     if "oi_btc_pct" in deriv.columns and "oi_eth_pct" in deriv.columns:
         deriv["oi_spread_pct"] = deriv["oi_eth_pct"] - deriv["oi_btc_pct"]
+
+    # Liquidation features (populated when long_liq_usd_btc etc. are present)
+    for asset in ("btc", "eth"):
+        long_col = f"long_liq_usd_{asset}"
+        short_col = f"short_liq_usd_{asset}"
+        if long_col not in deriv.columns or short_col not in deriv.columns:
+            continue
+
+        long_liq = deriv[long_col].fillna(0.0)
+        short_liq = deriv[short_col].fillna(0.0)
+        total_liq = long_liq + short_liq
+
+        # Rolling percentile ranks of each side and total
+        deriv[f"long_liq_{asset}_pct"] = long_liq.rolling(w).rank(pct=True)
+        deriv[f"short_liq_{asset}_pct"] = short_liq.rolling(w).rank(pct=True)
+        deriv[f"total_liq_{asset}_pct"] = total_liq.rolling(w).rank(pct=True)
+
+        # Liquidation imbalance: fraction of total that is long-side (>0.5 = longs dominate)
+        # When longs dominate liquidations, price is falling (liquidations amplify moves).
+        denom = total_liq.where(total_liq > 0, other=np.nan)
+        deriv[f"liq_imbalance_{asset}"] = long_liq / denom  # NaN when no liquidations
 
     return deriv

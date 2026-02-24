@@ -9,7 +9,12 @@ import pandas as pd
 import yaml
 
 from app.db.market_data import load_btc_eth_merged_last_days
-from app.db.derivatives import load_funding_rates_last_days, compute_funding_features
+from app.db.derivatives import (
+    load_funding_rates_last_days,
+    load_open_interest_last_days,
+    load_liquidations_last_days,
+    compute_funding_features,
+)
 
 
 SUPPORTED_FAMILIES = {
@@ -485,8 +490,33 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
                     direction="backward",
                 )
                 x = compute_funding_features(x)
+
+                # Open interest (Gate.io, 1h resolution)
+                oi = load_open_interest_last_days(dsn=dsn, days=days)
+                if not oi.empty:
+                    oi["dt"] = oi["dt"].dt.as_unit("us")
+                    x = pd.merge_asof(
+                        x.sort_values("dt"),
+                        oi.sort_values("dt"),
+                        on="dt",
+                        direction="backward",
+                    )
+                    x = compute_funding_features(x)  # picks up oi_* cols if present
+
+                # Liquidations (Gate.io, 1h windows)
+                liq = load_liquidations_last_days(dsn=dsn, days=days)
+                if not liq.empty:
+                    liq["dt"] = liq["dt"].dt.as_unit("us")
+                    x = pd.merge_asof(
+                        x.sort_values("dt"),
+                        liq.sort_values("dt"),
+                        on="dt",
+                        direction="backward",
+                    )
+                    x = compute_funding_features(x)  # picks up liq_* cols if present
+
         except Exception:
-            pass  # funding data unavailable — non-funding families continue normally
+            pass  # derivatives data unavailable — non-derivatives families continue normally
     x["dist_to_vwap48"] = x["dist_to_vwap48_btc"]
     x["dist_to_vwap48_z"] = x["dist_to_vwap48_z_btc"]
     x["abs_vwap_dist_pct"] = x["abs_vwap_dist_pct_btc"]
