@@ -173,6 +173,7 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 | H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
 |----------|---------|-----------|----------|---------|-------|-------|
 | **H180** | Base (vol p80 + liq p70, h=12) | **60.5** | 16/17 | **PASS (15/17, P>0=1.000)** | 0.26 | **VS-3** |
+| H187 | 1-bar execution lag | 54.1 | 16/17 | PASS (15/17, 45.1bps mean) | 0.26 | VS-3 replication — execution realistic ✓ |
 
 **Why it works:** Adding the liq confirmation layer filters VS-2 entries to those where forced liquidations are also occurring simultaneously. This selects the highest-conviction momentum events — where price momentum (slope), capital flows (volume), and mechanical deleveraging (liq) all align. The triple-gated signal has the highest gross return per trade in all research history.
 
@@ -202,6 +203,7 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 | H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
 |----------|---------|-----------|----------|---------|-------|-------|
 | **H177** | Base (long_liq_btc_pct >= 0.90, h=8) | **20.0** | **18/18** | **PASS (16/18, P>0=1.000)** | 4.31 | **LQ-1** |
+| H184 | 1-bar execution lag | 18.1 | 18/18 | PASS (14/18, 9.9bps mean) | 4.31 | LQ-1 replication — execution realistic ✓ |
 
 **Why it works:** Extreme long liquidations are mechanical — margin systems force position closure regardless of price. Top-10% liq hours represent genuine deleveraging events with three-phase continuation: initial cascade → more stops triggered → price discovery overshoot.
 
@@ -213,6 +215,7 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 | H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
 |----------|---------|-----------|----------|---------|-------|-------|
 | **H178** | Base (short_liq_btc_pct >= 0.90, h=8) | **16.0** | **18/18** | **PASS (17/18, P>0=1.000)** | 4.44 | **LQ-2** |
+| H185 | 1-bar execution lag | 13.7 | 18/18 | BORDERLINE (16/18, 4.7bps mean) | 4.44 | LQ-2 replication — deployable with fill quality awareness |
 
 **Why it works:** Symmetric to LQ-1. Short squeeze buying pressure can propagate through voluntary capitulation and new longs piling on after the forced covering. 17/18 WF bps8 folds positive makes this the most consistent liq signal at cost.
 
@@ -224,18 +227,24 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 | H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
 |----------|---------|-----------|----------|---------|-------|-------|
 | **H179** | Base (liq p70 gate + slope flip → SHORT, h=8) | **31.0** | **16/17** | **PASS (14/17, P>0=1.000)** | 0.51 | **LQ-3** |
+| H186 | 1-bar execution lag | 31.3 | 17/17 | PASS (15/17, 20.9bps mean) | 0.51 | LQ-3 replication — execution realistic ✓ |
 
 **Why it works:** The CA slope flip (CA-1) fires ~4/day. The p70 liq gate selects the subset where forced liquidations are also present — adding a second independent bearish mechanism to the momentum signal.
 
 ---
 
-### Open Interest (OI) — CANDIDATE (needs robustness checks)
+### Open Interest (OI) — shortcode NOT assigned — robustness failed
 
 | H-number | Idea | Status | Notes |
 |----------|------|--------|-------|
-| H176 | OI-gated ETH slope flip (oi_btc_pct >= 0.80, h=8) | PASS (OI-1 candidate) | n=217, 16.4bps gross P>0=1.000, WF bps8=7.1bps P>0=0.995 — but 13/18 WF bps8 folds borderline. Needs robustness checks before permanent shortcode assignment. |
+| H176 | OI-gated ETH slope flip (oi_btc_pct >= 0.80, h=8) | PASS gross / FAIL robustness | n=217, 16.4bps gross P>0=1.000, WF bps8=7.1bps P>0=0.995 — 13/18 WF bps8 folds borderline |
+| H181 | H176 odd-day subsample | BORDERLINE | 113 trades, 17.1bps gross, 11/18 bps8 folds |
+| H182 | H176 even-day subsample | FAIL | 104 trades, 15.6bps gross, **5/18 bps8 folds** — edge collapses on even days |
+| H183 | H176 1-bar execution lag | BORDERLINE | 217 trades, 14.9bps gross, 9/18 bps8 folds — cost-constrained at lag |
 
-*First confirmed OI hypothesis will be labeled **OI-1**. H176 is the leading candidate but robustness validation still required.*
+**OI-1 shortcode NOT assigned.** H182 (even-day) failed badly (5/18 bps8 folds), revealing day-asymmetric edge. H183 (lag) borderline. H176 has real gross alpha but is not cost-reliably exploitable. Do not iterate OI thresholds further without longer data (2+ years).
+
+*OI-1 label is reserved but blocked. Will require 2+ years of data or a multi-asset OI combination before the signal can be reliably validated.*
 
 ---
 

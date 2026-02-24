@@ -255,7 +255,7 @@ Each additional gate compounds the edge. VS-3 is the natural peak of this progre
 |----------|---------|-----------|-------|-------------|----------|--------|
 | H176 | OI-gated flip (h=8) | 16.4 | 0.65 | 0.995 | 13/18 | OI-1 candidate — needs robustness checks |
 
-**Not yet assigned shortcode OI-1.** Needs odd/even day + execution lag tests before permanent assignment.
+**OI-1 shortcode NOT assigned.** H181-H183 robustness checks revealed day-asymmetric edge: H182 (even-day) failed badly (5/18 bps8 folds). H183 (lag) borderline. H176 has real gross alpha but is not cost-reliably exploitable. Do not iterate OI thresholds further without longer data.
 
 ---
 
@@ -266,26 +266,30 @@ Each additional gate compounds the edge. VS-3 is the natural peak of this progre
 3. **H145 is the VS anchor; H180 (VS-3) is the all-time best** at 60.5bps gross — triple-gated (slope + vol + liq).
 4. **LQ-1 (H177) and LQ-2 (H178) are high-frequency confirmed signals.** Both achieve 18/18 WF+ gross and P>0=1.000 bps8, providing ~8.75 trades/day combined from liquidation data alone.
 5. **No confirmed short-side signals before the LQ family.** LQ-1 is the first clean directional SHORT signal (cascade) and LQ-2 is the first clean directional LONG from derivatives data.
-6. **H176 (OI-1 candidate) is promising but borderline.** 16.4bps gross, P>0=0.995 bps8 — but 13/18 WF bps8 folds is below the CA/VS/LQ bar. Robustness checks required.
+6. **H176 (OI-1 candidate) failed robustness.** Even-day split failed (5/18 bps8 folds), lag borderline. OI-1 shortcode NOT assigned. Gross edge is real but day-asymmetric and cost-constrained.
 7. **FR signals cost-constrained.** Every funding rate signal tested has real gross alpha but can't clear 8bps cost gate at current frequency.
 
 ---
 
 ## What to do next
 
-1. **H176 robustness checks** — odd/even day + execution lag for OI-1 candidate confirmation.
-2. **LQ family robustness** — execution lag (H177+H178+H179 at next-bar entry), threshold sensitivity for LQ-1/LQ-2.
-3. **Portfolio construction** — CA-1 + VS-2 + LQ-1 + LQ-2 combination. LQ signals are high-frequency and may diversify well against the lower-frequency VS signals.
-4. **Paper trading** — validate individual signals live before combining.
+1. **Paper trader — next priority.** All signals execution-confirmed. Build AWS/EC2 paper trader with Coinbase (5m candle) + Gate.io (hourly liq) polling. SQLite for state. Telegram alerts. Individual signals first, portfolio second.
+2. **New hypothesis generation (H188+).** LQ family extensions (ETH liq variants, liq imbalance, higher horizons), OI+liq combined gate, liq threshold sensitivity (p80/p95).
+3. **VS-3 lag test complete — all priority signals paper trade ready:**
+   - VS-3 (H180): 54bps lag-adjusted ✓
+   - LQ-1 (H177): 18bps lag-adjusted ✓
+   - LQ-2 (H178): 14bps lag-adjusted (borderline) ✓
+   - LQ-3 (H179): 31bps lag-adjusted ✓
 
 ## Paper Trading Roadmap
 
-| Stage | Signal | Status | Notes |
-|-------|--------|--------|-------|
-| 1 | CA-1 (H65, all-hours) | TODO | Baseline anchor — all hours, h=8 |
-| 1 | VS-3 (H180, p80 vol + liq p70, h=12) | TODO | New all-time best at 60.5bps |
-| 1 | LQ-1 (H177, long_liq p90) | TODO | High-freq cascade SHORT |
-| 1 | LQ-2 (H178, short_liq p90) | TODO | High-freq squeeze LONG |
-| 2 | Combined portfolio | TODO | Blocked on Stage 1 completion |
+| Stage | Signal | Lag-adj bps | Status | Notes |
+|-------|--------|-------------|--------|-------|
+| 1 | CA-1 (H65) | ~26bps | Execution confirmed (H161) — ready | Baseline anchor |
+| 1 | VS-3 (H180) | ~54bps | Execution confirmed (H187) — ready | All-time best |
+| 1 | LQ-1 (H177) | ~18bps | Execution confirmed (H184) — ready | High-freq cascade SHORT |
+| 1 | LQ-2 (H178) | ~14bps | Execution confirmed (H185, borderline) — ready | Short squeeze LONG |
+| 1 | LQ-3 (H179) | ~31bps | Execution confirmed (H186) — ready | Liq-gated slope flip SHORT |
+| 2 | Combined portfolio | — | Blocked on Stage 1 | TBD |
 
 **Why individual first:** Backtests can't model fill quality, latency, or queue position. With 8bps cost gate, slippage matters. Individual paper trading also detects regime change (365d was a bull run) before it corrupts portfolio-level P&L.

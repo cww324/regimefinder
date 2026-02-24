@@ -130,6 +130,36 @@ For each anchor candidate above:
 
 ---
 
+## 8. New Hypothesis Backlog — H188+ (LQ/OI Extensions)
+
+Priority order based on expected edge and data readiness:
+
+### LQ Family Extensions (high priority — data already loaded)
+- **H188**: LQ-1 at p80 threshold (long_liq_btc_pct >= 0.80). More frequent (~8/day), test if edge holds at lower bar. Pre-commit horizon=8.
+- **H189**: LQ-1 at p95 threshold. Rarer (~2/day), expect higher per-trade edge. Pre-commit horizon=8.
+- **H190**: LQ-2 at p80 (short_liq_btc_pct >= 0.80). Frequency/edge tradeoff for LONG squeeze.
+- **H191**: LQ-1 at h=12 (hold 60 min instead of 40 min). Test if cascade sustains longer.
+- **H192**: LQ-2 at h=12. Test if squeeze sustains longer.
+- **H193**: ETH liq variant — long_liq_eth_pct >= 0.90 → SHORT. Is ETH liq independently predictive?
+- **H194**: ETH liq variant — short_liq_eth_pct >= 0.90 → LONG.
+- **H195**: Liq imbalance — liq_imbalance_btc >= 0.80 (long-side dominant) → SHORT. Tests whether imbalance ratio adds over raw magnitude.
+- **H196**: Combined BTC+ETH liq — long_liq_btc_pct >= 0.90 AND long_liq_eth_pct >= 0.70 → SHORT. Both markets liquidating simultaneously = stronger signal?
+
+### OI + Liq Combined (medium priority)
+- **H197**: H176 variant + liq confirmation. OI >= p80 AND total_liq >= p70 AND slope flip. Addresses H176's weakness (day-asymmetric edge) by requiring liq confirmation. Expect similar to LQ-3 structure.
+
+### LQ Threshold Sensitivity (after H188-H192 anchors run)
+- Test p75, p80, p85, p90, p95 for LQ-1 and LQ-2 to build the frequency/edge curve.
+- Pre-commit to not testing more than 3 variants.
+
+### Design Rules for LQ Extensions
+- Always pre-commit horizon before running
+- Default horizon: 8 bars (LQ-1/LQ-2 anchor). Justify h=12 independently (H191/H192)
+- Frequency floor: need at least 30 trades in worst WF fold (means ~2+/day minimum)
+- For ETH liq variants: expect lower frequency than BTC (ETH liq < BTC liq in USD terms)
+
+---
+
 ## 6. Things NOT to Do (Guardrails)
 
 - Do not generate hypotheses from RF on the same data used for validation
