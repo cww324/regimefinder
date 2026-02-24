@@ -3762,4 +3762,1446 @@ hypotheses:
   prerequisites:
   - rc.funding_rates populated via scripts/backfill_derivatives.py
   - funding_regime family added to research_family_runner.py SUPPORTED_FAMILIES
-  - load_frame() extended with app/db/derivatives.py merge_asof join
+- id: H124
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: H32 core logic with ultra-tight spread threshold — targeting 1-2 trades/day
+    to clear 8bps cost gate.
+  rationale: H123 (H32 + funding ceiling) confirmed gross edge (P>0=1.000, WF 12/14)
+    but failed cost gate at ~7 trades/day. The spread_pct < 0.10 threshold is too
+    permissive — it fires on moderately tight spreads that lack the edge needed to
+    cover 8bps. Restricting to spread_pct in the bottom 3rd rolling percentile (approximately
+    < 0.03-0.05) targets only the most extreme ETH-BTC convergence events, reducing
+    frequency to ~1-2 trades/day where per-trade gross edge should be sufficient.
+  WHY: Test whether the H32 signal survives costs when restricted to only the most
+    extreme spread compression events.
+  RULES:
+  - Apply exact H32 entry logic — ETH 1h slope sign direction.
+  - Require spread_pct >= 0.97 (long) or spread_pct <= 0.03 (short) — extreme tail only.
+  - Retain H123 funding ceiling — require funding_btc_pct < 0.85.
+  - All other H32 parameters unchanged (horizon 6 bars).
+  FAILURE_CONDITIONS:
+  - Extreme spread threshold produces too few trades to reach statistical significance.
+  - Extreme spread events are driven by microstructure noise, not regime — edge
+    does not generalize.
+  - Gross edge at this threshold is higher but variance is also higher — net result
+    still fails cost gate.
+  EXPECTED_FAILURE_MODE: Sample size drops below significance threshold before cost-adjusted
+    mean becomes positive.
+  entry_rules:
+  - Require spread_pct >= 0.97 (long entries) or spread_pct <= 0.03 (short entries).
+  - Require eth_slope_sign_1h != 0.
+  - Enter in eth_slope_sign_1h direction.
+  - Require funding_btc_pct < 0.85.
+  exit_rules:
+  - Hold for fixed 6 bars (30 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - ETH-USD 5m OHLCV (Coinbase)
+  - ETH 1h EMA20 slope sign
+  - spread_pct feature
+  - funding_btc_pct from rc.funding_rates (Hyperliquid)
+  parameters:
+    lookback_days: 365
+    horizon_bars: 6
+    fixed:
+      spread_pct_long_min: 0.97
+      spread_pct_short_max: 0.03
+      funding_pct_ceiling: 0.85
+      funding_window_bars: 8640
+      direction_mode: eth_slope_sign
+  allowed_variants: []
+  status: borderline
+  decision_date: '2026-02-23'
+  decision_notes: 'BORDERLINE. Tighter threshold (0.97/0.03) reduced frequency to
+    2.1/day as intended. Gross: P>0=1.000, WF 12/14. bps8: P>0=0.863, WF 9/14,
+    CI=[-0.018%, +0.064%] straddles zero. Edge exists but too thin to clear 8bps
+    cleanly. No further variants — moving to RF-generated H125+.'
+  source: Successor to H123. Tighter spread threshold to reduce frequency from ~7/day
+    to ~1-2/day and clear 8bps cost gate.
+- id: H125
+  family: momentum
+  class: tradeable_hypothesis
+  description: BTC VWAP z-score momentum signal gated by HMM TRENDING regime.
+  rationale: RF walk-forward (7/7 folds, all three horizons) consistently identifies
+    vwap_z as the strongest predictive feature. Positive direction across folds means
+    price above VWAP predicts further upside in trending markets — a momentum filter,
+    not mean reversion. Regime gate isolates the signal to periods where momentum
+    is expected to persist.
+  WHY: Test whether BTC price position relative to session VWAP, in a confirmed trending
+    regime, generates a positive 60min forward return edge.
+  RULES:
+  - Compute vwap_z as rolling z-score of (close - vwap) over 8640 bars (365d window).
+  - Require vwap_z above 70th rolling percentile (price stretched above VWAP).
+  - Require HMM regime label = TRENDING at current bar.
+  - Enter long only.
+  - Hold for fixed horizon of 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - VWAP z-score reverts rapidly in trending markets, giving negative forward return.
+  - Signal fires too frequently to survive 8bps cost gate.
+  - TRENDING regime label lag causes stale entries at regime transitions.
+  EXPECTED_FAILURE_MODE: Entries cluster at local exhaustion points within trending
+    legs, producing mean reversion rather than continuation.
+  entry_rules:
+  - Compute vwap_z = rolling_zscore(close - vwap, window=8640).
+  - Compute vwap_z_pct = rolling rank percentile of vwap_z over 8640 bars.
+  - Require vwap_z_pct >= 0.70.
+  - Require rc.regime_labels.regime = 'TRENDING' at current bar timestamp.
+  - Enter long at next bar open.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - vwap_z feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      vwap_z_pct_min: 0.70
+      regime_gate: TRENDING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. Gross barely positive (P>0=0.838, WF 7/11) but bps8 decisively
+    negative — P>0=0.000, CI=[-0.095%,-0.034%]. vwap_z momentum in TRENDING does
+    not generate enough gross edge to survive 8bps costs.'
+  source: RF walk-forward H6/H12/H24 — 7/7 folds all horizons. Pre-committed direction
+    positive (momentum), threshold 70th pct, horizon 12 bars.
+- id: H126
+  family: cross_asset
+  class: tradeable_hypothesis
+  description: ETH distance from 48h VWAP (z-scored) as BTC long signal, gated by
+    TRENDING regime.
+  rationale: RF walk-forward (7/7 folds at H6 and H12, 6/7 at H24) consistently
+    surfaces dist_to_vwap48_z_eth as a cross-asset predictor of BTC forward returns.
+    When ETH is stretched above its 48h VWAP in a trending regime, BTC tends to follow
+    — consistent with ETH leading cross-asset momentum.
+  WHY: Test whether ETH VWAP deviation, used as a cross-asset momentum signal, predicts
+    BTC 60min forward returns in trending regimes.
+  RULES:
+  - Compute dist_to_vwap48_z_eth as rolling z-score of ETH (close - vwap_48h) over
+    8640 bars.
+  - Require dist_to_vwap48_z_eth above 70th rolling percentile.
+  - Require HMM regime label = TRENDING at current bar.
+  - Enter long BTC only.
+  - Hold for fixed horizon of 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - ETH VWAP deviation does not lead BTC — contemporaneous, not predictive.
+  - Signal collapses in cost gate due to high trade frequency.
+  - Regime filter insufficient to isolate edge from RANGING noise.
+  EXPECTED_FAILURE_MODE: ETH/BTC co-movement is too tight — ETH above VWAP is already
+    priced into BTC at entry.
+  entry_rules:
+  - Compute dist_to_vwap48_z_eth = rolling_zscore(eth_close - eth_vwap_48h, window=8640).
+  - Compute dist_to_vwap48_z_eth_pct = rolling rank percentile over 8640 bars.
+  - Require dist_to_vwap48_z_eth_pct >= 0.70.
+  - Require rc.regime_labels.regime = 'TRENDING' at current bar timestamp.
+  - Enter long BTC at next bar open.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - ETH-USD 5m OHLCV (Coinbase)
+  - dist_to_vwap48_z_eth feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      dist_to_vwap48_z_eth_pct_min: 0.70
+      regime_gate: TRENDING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal — mean=-0.001%, P>0=0.484, WF 6/12. ETH
+    VWAP deviation in TRENDING does not predict BTC forward returns. bps8 decisively
+    negative.'
+  source: RF walk-forward — 7/7 folds H6 and H12, 6/7 H24. Pre-committed direction
+    positive, threshold 70th pct, horizon 12 bars.
+- id: H127
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: High BTC funding rate percentile as momentum signal, gated by TRENDING
+    regime.
+  rationale: RF walk-forward (5/7 folds at H6, 7/7 at H12, 7/7 at H24) consistently
+    identifies funding_btc_pct with positive direction. High perpetual funding means
+    longs are paying shorts — leveraged long positioning in a confirmed trending regime
+    signals momentum continuation, not crowding risk. Regime gate distinguishes this
+    from the crowded-long failure mode seen in H121/H122.
+  WHY: Test whether elevated BTC funding, conditioned on a confirmed TRENDING regime,
+    predicts positive 60min forward returns — a leveraged-positioning momentum signal.
+  RULES:
+  - Compute funding_btc_pct as rolling percentile of hourly funding rate over 8640
+    bars (365d window).
+  - Require funding_btc_pct above 70th rolling percentile.
+  - Require HMM regime label = TRENDING at current bar.
+  - Enter long only.
+  - Hold for fixed horizon of 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - High funding in trending regimes already signals late-cycle crowding, producing
+    mean reversion.
+  - Funding data lag (hourly vs 5m bars) introduces stale entries.
+  - Signal frequency too low to establish statistical significance.
+  EXPECTED_FAILURE_MODE: Funding peaks coincide with exhaustion tops — the same crowding
+    failure seen in H121/H122, just in a trending regime context.
+  entry_rules:
+  - Load funding_btc_pct from rc.funding_rates via compute_funding_features().
+  - Compute rolling rank percentile over 8640 bars.
+  - Require funding_btc_pct >= 0.70.
+  - Require rc.regime_labels.regime = 'TRENDING' at current bar timestamp.
+  - Enter long at next bar open.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates (Hyperliquid)
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      funding_btc_pct_min: 0.70
+      regime_gate: TRENDING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. High funding + TRENDING is too rare — n=168, 0.8/day. Gross
+    P>0=0.648, WF 5/10, no meaningful edge. bps8 P>0=0.001. Sample too small to
+    confirm or deny signal.'
+  source: RF walk-forward — 5/7 folds H6, 7/7 H12, 7/7 H24. Most direction-stable
+    new signal. Pre-committed positive, threshold 70th pct, horizon 12 bars.
+- id: H128
+  family: volatility_state
+  class: tradeable_hypothesis
+  description: High BTC 48h realized vol percentile as trend continuation signal,
+    gated by TRENDING regime.
+  rationale: RF walk-forward (7/7 folds at H6 and H12, 6/7 at H24) consistently
+    identifies rv48_pct_btc. Direction is positive at H12 and H24 — high realized
+    vol in a confirmed trending regime signals an active trend with sustained directional
+    movement. Using a 2h horizon (24 bars) per trend signal type in REGIME_FRAMEWORK.md.
+  WHY: Test whether elevated BTC 48h realized vol, in a confirmed trending regime,
+    predicts positive 2h forward returns.
+  RULES:
+  - Compute rv48_pct_btc as rolling percentile of 48h realized vol over 8640 bars.
+  - Require rv48_pct_btc above 70th rolling percentile.
+  - Require HMM regime label = TRENDING at current bar.
+  - Enter long only.
+  - Hold for fixed horizon of 24 bars (2h).
+  FAILURE_CONDITIONS:
+  - High vol in trending regime = late-stage trend exhaustion, not continuation.
+  - 24-bar hold is too long — edge evaporates before exit.
+  - TRENDING + high vol overlaps with VOLATILE regime mislabeling.
+  EXPECTED_FAILURE_MODE: High realized vol marks the end of trending legs rather than
+    the middle, producing negative 2h forward returns.
+  entry_rules:
+  - Compute rv48_pct_btc = rolling rank percentile of rv_48h_btc over 8640 bars.
+  - Require rv48_pct_btc >= 0.70.
+  - Require rc.regime_labels.regime = 'TRENDING' at current bar timestamp.
+  - Enter long at next bar open.
+  exit_rules:
+  - Hold for fixed 24 bars (2h). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - rv48_pct_btc feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+    fixed:
+      rv48_pct_btc_min: 0.70
+      regime_gate: TRENDING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL on cost gate. Gross signal exists (P>0=0.923, WF 8/11,
+    mean=+0.052%) but bps8 negative — P>0=0.208, CI=[-0.099%,+0.042%]. Closest
+    of the RF batch to passing. Gross edge real but too thin at 24-bar horizon.'
+  source: RF walk-forward — 7/7 folds H6 and H12, 6/7 H24. Horizon pre-committed
+    to 24 bars (trend type per REGIME_FRAMEWORK.md). Direction positive, threshold
+    70th pct.
+- id: H129
+  family: volatility_state
+  class: tradeable_hypothesis
+  description: High ETH 14-bar ATR percentile as cross-asset volatility expansion
+    signal, gated by TRENDING regime.
+  rationale: RF walk-forward (6/7 folds at H6 and H12, 7/7 at H24) consistently
+    identifies atr14_pct_eth with positive direction across all three horizons —
+    the most direction-consistent volatility candidate. High ETH ATR in a trending
+    regime indicates active cross-asset expansion.
+  WHY: Test whether elevated ETH short-term ATR, in a confirmed TRENDING regime,
+    predicts positive BTC 60min forward returns.
+  RULES:
+  - Compute atr14_pct_eth as rolling percentile of ETH 14-bar ATR over 8640 bars.
+  - Require atr14_pct_eth above 70th rolling percentile.
+  - Require HMM regime label = TRENDING at current bar.
+  - Enter long BTC only.
+  - Hold for fixed horizon of 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - High ETH ATR signals two-sided volatility, not directional — BTC path is random.
+  - Cross-asset ATR lead is contemporaneous, not predictive.
+  - Regime gate overlaps too tightly with VOLATILE mislabels.
+  EXPECTED_FAILURE_MODE: High ETH ATR in TRENDING is symmetric — up and down moves
+    equally likely, producing zero-mean forward returns.
+  entry_rules:
+  - Compute atr14_pct_eth = rolling rank percentile of ETH atr14 over 8640 bars.
+  - Require atr14_pct_eth >= 0.70.
+  - Require rc.regime_labels.regime = 'TRENDING' at current bar timestamp.
+  - Enter long BTC at next bar open.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - ETH-USD 5m OHLCV (Coinbase)
+  - atr14_pct_eth feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      atr14_pct_eth_pct_min: 0.70
+      regime_gate: TRENDING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal — mean=-0.013%, P>0=0.257, WF 5/11. ETH
+    ATR in TRENDING produces two-sided volatility as expected in failure mode. bps8
+    decisively negative P>0=0.000.'
+  source: RF walk-forward — 6/7 folds H6 and H12, 7/7 H24. Most direction-consistent
+    volatility signal. Pre-committed positive, threshold 70th pct, horizon 12 bars.
+- id: H130
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: BTC VWAP z-score mean-reversion in TRENDING regime — short when price
+    stretched above VWAP, long when stretched below.
+  rationale: Regime-conditional RF (TRENDING bars only, 5/5 folds) identifies vwap_z
+    with NEGATIVE direction — the opposite of what full-dataset RF suggested. Within
+    a trending regime, price stretched above VWAP mean-reverts back toward the trend
+    line rather than continuing. This corrects the H125 direction error and is grounded
+    in the regime-specific signal discovery.
+  WHY: Test whether vwap_z mean-reversion (short above, long below) generates a
+    positive 60min forward return edge specifically within TRENDING regimes.
+  RULES:
+  - Compute vwap_z rolling percentile over 8640 bars.
+  - Long signal when vwap_z below 30th pct (price stretched below VWAP in trend).
+  - Short signal when vwap_z above 70th pct (price stretched above VWAP in trend).
+  - Require HMM regime = TRENDING.
+  - Hold for fixed 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - Trending regimes sustain directional moves without mean-reversion — entries
+    against trend are stopped out.
+  - VWAP deviation in trends is asymmetric — below works, above does not (or vice versa).
+  - Trade frequency too high to survive 8bps costs.
+  EXPECTED_FAILURE_MODE: Trend continuation dominates — stretches above VWAP extend
+    further before reverting, producing losses on the short side.
+  entry_rules:
+  - Compute vwap_z_pct = rolling rank percentile of vwap_z over 8640 bars.
+  - Long when vwap_z_pct <= 0.30 AND regime = TRENDING.
+  - Short when vwap_z_pct >= 0.70 AND regime = TRENDING.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - vwap_z feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      vwap_z_pct_long_max: 0.30
+      vwap_z_pct_short_min: 0.70
+      regime_gate: TRENDING
+      direction: mean_reversion
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal — mean=-0.019%, P>0=0.061, WF 2/12. vwap_z
+    mean-reversion in TRENDING does not hold as a simple rule. Trend continuation
+    dominates both sides.'
+  source: Regime-conditional RF TRENDING 5/5 folds — direction NEGATIVE. Corrects
+    H125 direction error. Pre-committed both sides, threshold 70th/30th pct, horizon 12 bars.
+- id: H131
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: BTC VWAP z-score momentum in RANGING regime — long when price above
+    VWAP, short when below.
+  rationale: Regime-conditional RF (RANGING bars only, 6/6 folds) identifies vwap_z
+    with POSITIVE direction and SHAP=0.243 — the strongest signal found in any regime.
+    In ranging markets, price above VWAP signals intra-range momentum continuation
+    (not mean reversion), consistent with price oscillating within the range and
+    building on short-term direction.
+  WHY: Test whether vwap_z long-above/short-below generates a positive 60min forward
+    return edge specifically within RANGING regimes.
+  RULES:
+  - Compute vwap_z rolling percentile over 8640 bars.
+  - Long when vwap_z above 70th pct AND regime = RANGING.
+  - Short when vwap_z below 30th pct AND regime = RANGING.
+  - Hold for fixed 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - RANGING regime contains enough chop that vwap_z position has no directional
+    predictive power.
+  - Signal frequency too high — too many entries within a ranging day.
+  - Short side loses while long side wins (asymmetric).
+  EXPECTED_FAILURE_MODE: Range oscillation is too fast — price above VWAP reverts
+    within the 12-bar hold, producing churn not continuation.
+  entry_rules:
+  - Compute vwap_z_pct = rolling rank percentile of vwap_z over 8640 bars.
+  - Long when vwap_z_pct >= 0.70 AND regime = RANGING.
+  - Short when vwap_z_pct <= 0.30 AND regime = RANGING.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - vwap_z feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      vwap_z_pct_long_min: 0.70
+      vwap_z_pct_short_max: 0.30
+      regime_gate: RANGING
+      direction: momentum
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal — mean=-0.008%, P>0=0.166, WF 5/13. vwap_z
+    momentum in RANGING fires 6.9/day with no directional edge. Range oscillation
+    is symmetric.'
+  source: Regime-conditional RF RANGING 6/6 folds — SHAP=0.243, strongest signal
+    found. Direction POSITIVE. Pre-committed both sides, threshold 70th/30th pct, horizon 12 bars.
+- id: H132
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: High BTC funding percentile as long signal in VOLATILE regime.
+  rationale: Regime-conditional RF (VOLATILE bars only, 5/5 folds) identifies funding_btc_pct
+    with positive direction and SHAP=0.153 — the top feature in the volatile regime.
+    In volatile markets, elevated funding means leveraged longs are paying heavily
+    to maintain positions. Rather than signaling crowding risk (as in calm markets),
+    high funding in volatility signals committed directional conviction — the market
+    is volatile AND longs are paying up, consistent with an upside move.
+  WHY: Test whether high BTC funding in VOLATILE regimes predicts positive 60min
+    forward returns — a conviction signal in chaotic conditions.
+  RULES:
+  - Compute funding_btc_pct rolling percentile over 8640 bars.
+  - Long when funding_btc_pct above 70th pct AND regime = VOLATILE.
+  - Long only (no short side — volatile regime shorts have outsized risk).
+  - Hold for fixed 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - High funding in volatile markets = leveraged longs about to be liquidated
+    (cascade risk). Signal fires just before reversals.
+  - Sample size too small — VOLATILE + high funding is a rare combination.
+  - Volatile regime creates too much noise to see signal over 12 bars.
+  EXPECTED_FAILURE_MODE: Liquidation cascade — high funding in volatile markets
+    precedes forced selling, producing negative forward returns.
+  entry_rules:
+  - Load funding_btc_pct from rc.funding_rates via compute_funding_features().
+  - Compute rolling rank percentile over 8640 bars.
+  - Long when funding_btc_pct >= 0.70 AND regime = VOLATILE.
+  - Enter long only.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates (Hyperliquid)
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      funding_btc_pct_min: 0.70
+      regime_gate: VOLATILE
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal — mean=-0.019%, P>0=0.156, WF 2/13. High
+    funding in VOLATILE does not predict direction — liquidation cascade risk dominates.
+    bps8 P>0=0.000, WF 0/13.'
+  source: Regime-conditional RF VOLATILE 5/5 folds — top feature, SHAP=0.153,
+    direction POSITIVE. Long-only. Pre-committed 70th pct, horizon 12 bars.
+- id: H133
+  family: volatility_state
+  class: tradeable_hypothesis
+  description: High BTC 14-bar ATR percentile as long signal in RANGING regime.
+  rationale: Regime-conditional RF (RANGING bars only, 6/6 folds) identifies atr14_pct_btc
+    with positive direction and SHAP=0.099. In ranging markets, a high ATR reading
+    signals a volatility expansion within the range — bars are moving more than usual,
+    which predicts the start of a directional leg (breakout from range or strong
+    intra-range move) rather than continued chop.
+  WHY: Test whether elevated BTC ATR within a RANGING regime predicts positive 60min
+    forward returns — a volatility expansion signal in consolidation.
+  RULES:
+  - Compute atr14_pct_btc rolling percentile over 8640 bars.
+  - Long when atr14_pct_btc above 70th pct AND regime = RANGING.
+  - Long only.
+  - Hold for fixed 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - High ATR in ranging = noise/whipsaw, not directional expansion. No persistent
+    edge after the spike.
+  - Long-only misses the symmetric two-sided nature of ATR expansion in ranges.
+  - Signal fires on both directions equally — long bias produces zero-mean returns.
+  EXPECTED_FAILURE_MODE: ATR expansion in ranging regime is symmetric — price moves
+    up and down with equal probability, producing zero net edge long-only.
+  entry_rules:
+  - Compute atr14_pct_btc = rolling rank percentile of BTC atr14 over 8640 bars.
+  - Long when atr14_pct_btc >= 0.70 AND regime = RANGING.
+  - Enter long only.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - atr14_pct_btc feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      atr14_pct_btc_min: 0.70
+      regime_gate: RANGING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal — mean=-0.013%, P>0=0.298, WF 1/13. ATR
+    expansion in RANGING is symmetric — long-only bias has no edge. bps8 P>0=0.000,
+    WF 0/13.'
+  source: Regime-conditional RF RANGING 6/6 folds — SHAP=0.099, direction POSITIVE.
+    Long-only. Pre-committed 70th pct, horizon 12 bars.
+
+- id: H134
+  family: volatility_state
+  class: tradeable_hypothesis
+  description: Two-feature short signal in VOLATILE regime — ETH extended above 48h VWAP
+    AND BTC realized volatility spiking.
+  rationale: SHAP interaction analysis (VOLATILE-only RF, 5/5 folds) found that
+    dist_to_vwap48_z_eth and rv48_pct_btc have a synergistic interaction effect.
+    Quadrant analysis on out-of-sample test windows showed mean_fwd_r = -0.167%
+    per 60min bar (5/5 folds, 80% directional consistency) when BOTH features are
+    in the top 30% during VOLATILE regime bars. This is the first multi-feature rule
+    from the interaction pipeline — both features are non-CA (genuine new discovery).
+  WHY: Test whether the confluence of ETH being extended above its 48h anchor AND
+    BTC volatility spiking produces reliable mean-reversion short edge in volatile
+    regimes. Logic — volatility spike + ETH overextension signals near-term peak.
+  RULES:
+  - Gate on regime = VOLATILE (from rc.regime_labels).
+  - Compute dist_to_vwap48_z_eth rolling 70th percentile over 8640 bars.
+  - Compute rv48_pct_btc rolling 70th percentile (already a rolling percentile).
+  - Short when dist_to_vwap48_z_eth > 70th pct AND rv48_pct_btc > 70th pct AND
+    regime = VOLATILE.
+  - Short only. Hold 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - ETH extension + BTC vol spike may occur at start of a rally (not a reversal) —
+    if it's a breakout, shorting gets crushed.
+  - VOLATILE regime label lags by one fold step — stale label at regime transitions.
+  - Two conditions reduce sample size dramatically — may be too few trades to clear
+    statistical gates.
+  entry_rules:
+  - dist_to_vwap48_z_eth_pct = rolling 8640-bar percentile of dist_to_vwap48_z_eth.
+  - Short when dist_to_vwap48_z_eth_pct >= 0.70 AND rv48_pct_btc >= 0.70 AND
+    hmm_regime == VOLATILE.
+  - Short only (signal = -1.0).
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - dist_to_vwap48_z_eth feature from load_frame()
+  - rv48_pct_btc feature from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      dist_to_vwap48_z_eth_pct_min: 0.70
+      rv48_pct_btc_min: 0.70
+      regime_gate: VOLATILE
+      direction: short
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. Gross signal real but weak: mean=2.64bps, P>0=0.826, WF
+    P>0=0.848. Signal direction correct (52.9% win rate short) but magnitude too small
+    to clear 8bps cost gate. bps8 mean=-5.36bps, P>0=0.027. Root cause: percentile
+    threshold computed across all bars (not VOLATILE-only) dilutes the condition
+    vs RF quadrant analysis which used VOLATILE-bar-only percentiles. Signal is real
+    but insufficient edge at 8bps cost.'
+  source: RF SHAP interaction pipeline (VOLATILE-only, 5/5 folds). dist_to_vwap48_z_eth
+    HIGH AND rv48_pct_btc HIGH → SHORT. mean_fwd_r=-0.167%, 80% direction consistent.
+    Pre-committed 70th pct thresholds, horizon 12 bars.
+
+- id: H135
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: Two-feature long signal — BTC strongly outperforming ETH (spread_pct > p70)
+    AND BTC temporarily below its short-term VWAP (vwap_z < p30). Buy the dip within
+    the cross-asset trend.
+  rationale: Full-dataset RF SHAP interaction analysis (7/7 folds) found spread_pct
+    and vwap_z to be a top-interacting pair. Quadrant analysis showed the
+    (spread_pct HIGH, vwap_z LOW) quadrant has mean_fwd_r = +0.081% per 60min bar,
+    7/7 folds, 71% direction consistent. This is a CA signal plus oversold VWAP
+    filter — when BTC is in a strong cross-asset trend (high spread_pct) AND temporarily
+    oversold short-term (low vwap_z), price tends to recover. Extends the existing
+    CA family by adding a mean-reversion timing layer.
+  WHY: Test whether adding a vwap_z dip filter to the CA trend signal (spread_pct)
+    concentrates the edge — fires only when the trend is intact AND price has pulled
+    back. Raw mean_r = +8.1bps per 60min bar — right at the 8bps cost threshold.
+  RULES:
+  - Compute spread_pct rolling percentile over 8640 bars (already computed).
+  - Compute vwap_z rolling percentile over 8640 bars.
+  - Long when spread_pct > 70th pct AND vwap_z < 30th pct.
+  - Long only. No regime gate. Hold 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - vwap_z < p30 after a large CA trend move may be early — the dip continues.
+  - Overlap with existing CA signals reduces new information content.
+  - Mean_r of +8.1bps is right at the cost threshold — likely BORDERLINE at bps8.
+  entry_rules:
+  - vwap_z_pct = rolling 8640-bar percentile of vwap_z.
+  - Long when spread_pct >= 0.70 AND vwap_z_pct <= 0.30.
+  - Long only (signal = +1.0). No regime gate.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - spread_pct feature from load_frame()
+  - vwap_z feature from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      spread_pct_min: 0.70
+      vwap_z_pct_max: 0.30
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL (cost-constrained). Strong gross signal: mean=5.48bps, P>0=0.996,
+    CI=[+1.5, +9.5]bps. WF gross P>0=0.960. Signal is very real — P>0=0.996 is
+    extremely high confidence. But mean=5.48bps < 8bps cost gate. bps8 mean=-2.52bps,
+    P>0=0.108. Win rate = 57.3% (meaningful directional accuracy). This is the first
+    multi-feature hypothesis to show a strong gross signal since the interaction
+    pipeline was added. The CA+VWAP dip combination is genuinely predictive —
+    gap is ~2.5bps. Next step: tighten to p85/p15 thresholds → fewer but higher
+    magnitude trades.'
+  source: Full-dataset RF SHAP interaction pipeline (7/7 folds). spread_pct HIGH AND
+    vwap_z LOW → LONG. mean_fwd_r=+0.081%, 71% direction consistent. Pre-committed
+    70th/30th pct thresholds, horizon 12 bars.
+
+- id: H136
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: Tighter version of H135 — BTC strongly outperforming ETH (spread_pct > p85)
+    AND BTC more deeply below its short-term VWAP (vwap_z < p15). Higher threshold
+    means fewer but larger-magnitude trades.
+  rationale: H135 showed gross P>0=0.996 with mean=5.48bps — clearly real signal
+    but 2.5bps below the 8bps cost gate. The natural next step is to tighten both
+    thresholds from p70/p30 to p85/p15, forcing the signal to fire only when both
+    conditions are more extreme. At more extreme percentiles, the
+    expected per-trade return is higher (larger mean reversion), which may clear
+    the cost gate. Pre-committed to p85/p15 — no further optimization if this fails.
+  WHY: Test whether tightening the CA+VWAP dip thresholds from p70/p30 to p85/p15
+    pushes the mean return from ~5.5bps to >8bps, crossing the cost gate.
+  RULES:
+  - Compute spread_pct rolling percentile over 8640 bars (already computed).
+  - Compute vwap_z rolling percentile over 8640 bars.
+  - Long when spread_pct > 85th pct AND vwap_z < 15th pct.
+  - Long only. No regime gate. Hold 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - Tighter thresholds reduce sample size too much — insufficient trades for
+    statistical power.
+  - The mean return does not increase with tighter thresholds (flat across extremes).
+  - Only a couple more bps of improvement needed — if this still fails, the
+    combination fundamentally cannot clear 8bps at any reasonable frequency.
+  entry_rules:
+  - vwap_z_pct = rolling 8640-bar percentile of vwap_z.
+  - Long when spread_pct >= 0.85 AND vwap_z_pct <= 0.15.
+  - Long only (signal = +1.0). No regime gate.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - spread_pct feature from load_frame()
+  - vwap_z feature from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      spread_pct_min: 0.85
+      vwap_z_pct_max: 0.15
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. Tighter thresholds made things WORSE: n=101 (0.3/day),
+    gross mean=3.90bps (DOWN from H135 5.48bps), P>0=0.760 (DOWN from 0.996),
+    CI=[-7.7, +14.6]bps (very wide). WF gross P>0=0.546. The more extreme conditions
+    pick up unusual events (wide spread at reversal tops) rather than the clean
+    trend+dip combination. Too few trades for reliable statistics. Conclusion:
+    spread_pct + vwap_z combination cannot clear 8bps cost at any practical threshold.
+    The 5.48bps gross edge (H135) is the ceiling for this strategy. CLOSE FAMILY.'
+  source: Derived from H135 (FAIL cost-constrained). Tighter thresholds p85/p15
+    to attempt higher per-trade magnitude. Horizon 12 bars.
+
+- id: H137
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: RANGING regime — BTC volatility spike AND BTC outperforming ETH
+    (atr14_pct_btc > p70 AND spread_pct > p70) → LONG BTC. Breakout from range
+    signal supported by cross-asset confirmation.
+  rationale: Regime-conditional RF (RANGING-only, 4/6 folds) SHAP interaction
+    analysis found atr14_pct_btc and spread_pct have synergistic effects. Quadrant
+    analysis showed (atr14_pct_btc HIGH, spread_pct HIGH) in RANGING has mean_fwd_r
+    = +0.109% per 60min bar, 4/6 folds, 75% direction consistent. This is the
+    highest raw mean_r of any CA-overlap pair rule (10.9bps). Logic — in ranging
+    markets, a volatility spike signals a potential breakout. When that spike is
+    accompanied by BTC outperforming ETH (positive CA signal), the breakout is
+    more likely to be upward.
+  WHY: Test whether combining elevated BTC ATR with a bullish CA signal in RANGING
+    regime generates >8bps edge. The 10.9bps raw estimate gives headroom above cost.
+  RULES:
+  - Gate on regime = RANGING.
+  - Compute atr14_pct_btc rolling percentile (already computed, use directly).
+  - Compute spread_pct rolling percentile (already computed, use directly).
+  - Long when atr14_pct_btc >= 0.70 AND spread_pct >= 0.70 AND regime = RANGING.
+  - Long only. Hold 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - High ATR in RANGING is symmetric — long-only misses downward breakouts.
+  - spread_pct signal already captured by existing CA family (H65 etc.) — no
+    additional information from ATR.
+  - 4/6 folds is weak sample for an interaction rule.
+  entry_rules:
+  - Long when atr14_pct_btc >= 0.70 AND spread_pct >= 0.70 AND hmm_regime == RANGING.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - atr14_pct_btc and spread_pct features from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      atr14_pct_btc_min: 0.70
+      spread_pct_min: 0.70
+      regime_gate: RANGING
+      direction: long
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. Same pattern as H134-H136 — gross signal present but
+    too small: mean=4.06bps, P>0=0.835, CI=[-4.0, +12.9]bps. 158 trades (0.4/day)
+    due to RANGING gate + dual condition. BPS8 P>0=0.181. WF gross P>0=0.693.
+    Reducing sample with RANGING gate causes same cost-insufficient pattern as
+    other multi-feature regime rules. CA signal still dominant — ATR filter does
+    not add enough incremental edge.'
+  source: RF SHAP interaction (RANGING-only, 4/6 folds). atr14_pct_btc HIGH AND
+    spread_pct HIGH in RANGING → LONG. mean_fwd_r=+0.109%, 75% consistent. Pre-committed
+    70th pct thresholds, horizon 12 bars.
+
+- id: H138
+  family: volatility_state
+  class: tradeable_hypothesis
+  description: RANGING regime — low ETH 14-bar ATR AND low BTC funding percentile
+    (atr14_pct_eth < p30 AND funding_btc_pct < p30) → SHORT BTC. Calm ETH + bearish
+    funding in ranging market signals downward resolution.
+  rationale: Regime-conditional RF (RANGING-only, 3/6 folds) SHAP interaction
+    analysis found atr14_pct_eth and funding_btc_pct have synergistic effects.
+    Quadrant analysis showed (atr14_pct_eth LOW, funding_btc_pct LOW) in RANGING
+    has mean_fwd_r = -0.083% per 60min bar, 3/6 folds, 100% direction consistent.
+    Both are non-CA features — genuine new discovery. Logic — in ranging markets,
+    when ETH is calm (low ATR = not at an expansion point) AND funding is bearish
+    (longs paying little or shorts being paid), the market is positioned for a
+    downward move rather than an upward one.
+  WHY: First non-CA multi-feature SHORT rule in RANGING regime. Low ETH vol +
+    bearish funding as a downward bias signal. Test whether it clears 8bps cost.
+  RULES:
+  - Gate on regime = RANGING.
+  - Compute atr14_pct_eth rolling percentile (already computed, use directly).
+  - Compute funding_btc_pct rolling percentile (already computed, use directly).
+  - Short when atr14_pct_eth < 30th pct AND funding_btc_pct < 30th pct AND
+    regime = RANGING.
+  - Short only. Hold 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - Only 3/6 folds is weak — the pattern may be noise in a limited subset.
+  - Low funding + low vol is a common combination with no directional edge.
+  - Short-only misses symmetric mean-reversion bounces.
+  entry_rules:
+  - Short when atr14_pct_eth <= 0.30 AND funding_btc_pct <= 0.30 AND hmm_regime == RANGING.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - atr14_pct_eth and funding_btc_pct features from load_frame()
+  - rc.regime_labels populated via scripts/ml/hmm_regime_discovery.py
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      atr14_pct_eth_max: 0.30
+      funding_btc_pct_max: 0.30
+      regime_gate: RANGING
+      direction: short
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL. No gross signal: mean=-0.66bps, P>0=0.314. Win rate=49.2%
+    (signal direction WRONG). BPS8 mean=-8.66bps, P>0=0.000. The regime-filtered
+    RF (RANGING-only) computed percentile thresholds on RANGING bars only, but the
+    runner uses all-bars rolling percentiles → different condition selected than RF
+    expected. Also 3/6 folds is too small a sample for the 100% consistency to be
+    meaningful. Root cause: percentile mismatch between regime-filtered RF and
+    all-bars runner for non-percentile features. Lesson: only use full-dataset RF
+    rules (no --regime flag) for hypothesis derivation.'
+  source: RF SHAP interaction (RANGING-only, 3/6 folds, 100% consistent). atr14_pct_eth
+    LOW AND funding_btc_pct LOW in RANGING → SHORT. mean_fwd_r=-0.083%, 100% consistent.
+    Pre-committed 30th pct thresholds, horizon 12 bars.
+
+- id: H139
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: Full-dataset two-feature SHORT — BTC high realized volatility
+    (rv48_pct_btc > p70) AND BTC underperforming ETH (spread_pct < p30).
+    Volatile BTC in a relative underperformance vs ETH signals continued downside.
+  rationale: Full-dataset RF SHAP interaction analysis (7/7 folds) found rv48_pct_btc
+    and spread_pct to be a top-interacting pair. Quadrant analysis on out-of-sample
+    test windows showed (rv48_pct_btc HIGH, spread_pct LOW) has mean_fwd_r = -0.099%
+    per 60min bar, 7/7 folds, 71% direction consistent. Both features are percentile-form
+    (no z-score mismatch). This is the only full-dataset pair rule with raw mean_r
+    above the 8bps cost threshold (-9.9bps). Logic — high BTC realized volatility
+    while BTC is lagging ETH suggests BTC is in a volatile downswing, likely to
+    continue near-term.
+  WHY: Test whether high BTC vol + bearish CA signal produces >8bps SHORT edge.
+    Both features are pure percentile form — runner thresholds should match RF
+    estimates closely (no z-score mismatch). Raw estimate -9.9bps vs 8bps cost gate.
+  RULES:
+  - Compute rv48_pct_btc rolling percentile (already computed, use directly).
+  - Compute spread_pct rolling percentile (already computed, use directly).
+  - Short when rv48_pct_btc >= 0.70 AND spread_pct <= 0.30.
+  - Short only. No regime gate. Hold 12 bars (60 min).
+  FAILURE_CONDITIONS:
+  - High volatility + low spread may fire at the bottom of a move (before bounce).
+  - spread_pct < p30 is a weaker CA condition than the original H65 family
+    (which used p10 thresholds with slope confirmation). May not have sufficient
+    edge without slope confirmation.
+  - Direction inconsistency (71% folds agree, 2/7 disagree). Edge may be
+    conditional on unstable regime mix.
+  entry_rules:
+  - Short when rv48_pct_btc >= 0.70 AND spread_pct <= 0.30.
+  - Short only (signal = -1.0). No regime gate.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - rv48_pct_btc and spread_pct features from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      rv48_pct_btc_min: 0.70
+      spread_pct_max: 0.30
+      direction: short
+  allowed_variants: []
+  status: fail
+  decision_date: '2026-02-23'
+  decision_notes: 'FAIL (cost-constrained). Same pattern as H135. Gross signal
+    extremely strong: mean=5.24bps, P>0=0.995, CI=[+1.4, +9.1]bps. WF gross
+    mean=6.12bps, P>0=0.998 — among the strongest WF gross evidence we have seen.
+    But bps8 mean=-2.76bps, P>0=0.085. n=970 trades (2.7/day). This completes
+    the interaction pipeline hypothesis exploration: H135 (P>0=0.996, 5.48bps)
+    and H139 (P>0=0.998 WF, 6.12bps WF) are both real signals hitting the same
+    ~5-6bps ceiling. The multi-feature signals at p70/p30 thresholds consistently
+    produce ~5-6bps gross — 2-3bps below 8bps cost gate. This appears to be a
+    fundamental ceiling for this feature combination class at these thresholds.
+    No further attempts at this class are warranted without a cost reduction or
+    a fundamentally different feature set.'
+  source: Full-dataset RF SHAP interaction pipeline (7/7 folds). rv48_pct_btc HIGH
+    AND spread_pct LOW → SHORT. mean_fwd_r=-0.099%, 71% direction consistent.
+    Pre-committed 70th/30th pct thresholds, horizon 12 bars. Both features are
+    already percentile-form — no z-score/percentile mismatch with runner.
+
+- id: H140
+  family: funding_regime
+  class: tradeable_hypothesis
+  status: FAIL
+  decision_date: "2026-02-23"
+  decision_notes: "FAIL (cost-constrained). n=1461, 4.0/day, gross=0.94bps P>0=0.801
+    (BORDERLINE), WF+ 12/18 folds. P>0_bps8=0.000. The over-short extreme does
+    produce a slight positive gross edge but nowhere near the 8bps cost gate.
+    Consistent with the structural ~5-6bps ceiling we see on all rate/momentum signals."
+  description: Extreme negative BTC funding (shorts paying large premium) predicts
+    mean reversion LONG. When market is maximally over-short, short squeeze risk is
+    elevated.
+  rationale: Perpetual funding rates measure the cost of holding a directional position.
+    When funding is very negative (< p10 of 30d history), shorts are paying longs a
+    large premium to maintain their position. This indicates an over-short market
+    where the crowd is heavily positioned for downside. Historically in crypto,
+    over-short extremes tend to self-correct via short covering rallies.
+  WHY: Test whether extreme negative funding (over-short condition) predicts positive
+    BTC forward returns. Directional opposite of H121 (extreme positive funding fade
+    which failed with negative gross). Over-short markets may be more predictive than
+    over-long due to more violent short squeeze dynamics.
+  RULES:
+  - Enter LONG when funding_btc_pct <= 0.10 (bottom decile of 30d rolling history).
+  - Persistent signal — hold as long as condition is true, horizon=8 bars per entry.
+  - No regime gate. No slope confirmation required.
+  FAILURE_CONDITIONS:
+  - If the market is in a sustained downtrend, negative funding can persist while
+    price continues lower (trend-following shorts remain profitable).
+  - H121 (extreme positive funding fade) failed with negative gross — if the
+    symmetric positive version fails directionally, this version may also be wrong.
+  entry_rules:
+  - Long when funding_btc_pct <= 0.10.
+  - Signal = +1.0. Hold for horizon bars.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates via Hyperliquid
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      funding_btc_pct_max: 0.10
+      direction: long
+  allowed_variants: []
+  source: Theory-first. Anchor candidate for FR family — extreme negative funding
+    (over-short) as standalone LONG signal. First test of this mechanism.
+
+- id: H141
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: Extreme positive BTC funding (crowded longs) combined with ETH slope
+    flipping negative predicts amplified SHORT. Leveraged longs are forced to unwind
+    when trend reverses.
+  rationale: CA-1 (ETH slope flip) generates ~0.34%/trade on average. When the market
+    is simultaneously crowded long (high funding), a downward slope flip is amplified
+    by the forced unwind of leveraged positions. The funding level acts as a crowding
+    multiplier for the CA signal — more longs need to exit quickly, creating stronger
+    selling pressure.
+  WHY: Test whether CA slope flip DOWN, when conditioned on extreme positive funding,
+    produces higher per-trade edge than CA-1 alone. Hypothesis is that the crowding
+    amplifies the move beyond the baseline CA-1 mean of 0.34%.
+  RULES:
+  - Enter SHORT when ALL conditions met at same bar.
+  - Condition 1 — crowded longs: funding_btc_pct >= 0.85.
+  - Condition 2 — slope flip down: eth_slope_sign_1h == -1 AND prior bar was +1.
+  - Event-triggered (dedup gap = horizon bars).
+  FAILURE_CONDITIONS:
+  - Reduces frequency significantly vs CA-1 (requires both conditions simultaneously).
+  - Extreme funding often occurs in trending up markets — slope flips down may
+    be brief corrections rather than trend reversals in that context.
+  - H123 (CA + funding gate) failed cost-constrained. This is a different mechanism
+    (extreme funding as amplifier vs. exclusion gate) but may face same issue.
+  entry_rules:
+  - Short when funding_btc_pct >= 0.85 AND eth_slope flips from +1 to -1.
+  - Signal = -1.0. Event-triggered with dedup gap = horizon.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates via Hyperliquid
+  - eth_slope_sign_1h from load_frame() 1h feature set
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      funding_btc_pct_min: 0.85
+      slope_direction: down_flip
+      direction: short
+  allowed_variants: []
+  status: INCONCLUSIVE
+  decision_date: "2026-02-23"
+  decision_notes: "INCONCLUSIVE (n=16, too few trades). gross=17.64bps P>0=0.863,
+    WF+ 1/5 folds, P>0_bps8=0.702. The concept is promising — extreme crowding +
+    slope flip yields high per-trade returns — but 16 trades in 365d is insufficient
+    for statistical conclusions. The extreme funding (p85) + slope flip combo is rare.
+    Consider loosening to p80 or testing on longer dataset before drawing conclusions.
+    Do NOT iterate thresholds yet — this is the anchor test."
+  source: Theory-first. Tests whether extreme crowding amplifies CA-1 slope flip
+    signal on the short side.
+
+- id: H142
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: ETH perpetual funding much higher than BTC funding predicts SHORT BTC.
+    When ETH is more crowded long than BTC in the perps market, ETH longs are at
+    higher risk of forced liquidation which drags BTC lower.
+  rationale: The cross-asset funding spread (ETH funding minus BTC funding) measures
+    relative positioning crowding. When ETH perp longs are paying a much higher
+    premium than BTC perp longs, ETH is more over-leveraged. ETH corrections tend
+    to drag BTC lower (they are 0.85+ correlated). Additionally, extreme ETH crowding
+    relative to BTC may compress the ETH-BTC spread (the CA signal basis), which
+    itself predicts a bearish environment for BTC.
+  WHY: First test of cross-asset funding spread as a directional signal. Tests a
+    genuinely new data dimension — the relative positioning across assets in the
+    derivatives market.
+  RULES:
+  - Compute funding_spread = funding_rate_eth - funding_rate_btc.
+  - Compute funding_spread_pct = rolling 30d percentile rank of funding_spread.
+  - Enter SHORT when funding_spread_pct >= 0.80.
+  - Persistent signal. No slope confirmation required.
+  FAILURE_CONDITIONS:
+  - High ETH funding vs BTC could reflect ETH-specific bullish catalyst (not crowding).
+  - Correlation between ETH and BTC corrections may not be tight enough at 8-bar horizon.
+  - If H121 (BTC-only extreme funding fade) failed, cross-asset variant may too.
+  entry_rules:
+  - Short when funding_spread_pct >= 0.80 (ETH much more crowded than BTC).
+  - Signal = -1.0. Hold for horizon bars.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - funding_rate_btc and funding_rate_eth from rc.funding_rates via Hyperliquid
+  - funding_spread_pct computed in compute_funding_features()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      funding_spread_pct_min: 0.80
+      direction: short
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-23"
+  decision_notes: "FAIL (no gross edge). n=2400, 6.6/day, gross=-0.10bps P>0=0.443,
+    WF+ 5/18 folds. ETH-BTC funding spread divergence has no directional edge.
+    When ETH perps are more crowded than BTC, the short BTC prediction is wrong —
+    the spread likely reflects genuine ETH overperformance vs. BTC rotation, not
+    imminent correction. The mechanism is economically flawed."
+  source: Theory-first. Cross-asset funding spread as a new directional signal.
+    Requires funding_spread_pct feature added to compute_funding_features().
+
+- id: H143
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: BTC funding sign and ETH slope sign consensus — both point in same
+    direction simultaneously — predicts continuation in that direction.
+  rationale: CA-1 uses only ETH slope momentum. Funding sign reflects market positioning
+    consensus. When both agree (slope positive AND funding positive = bullish
+    positioning AND upward momentum), the signal should have higher conviction than
+    either alone. This is a conjunction of two independent information sources —
+    price-derived momentum and derivatives-market sentiment.
+  WHY: Test whether requiring both ETH slope direction AND BTC funding sign to agree
+    produces a higher-quality CA-type signal. The hypothesis is that funding sign
+    filters out CA signals where market participants are positioned against the move
+    (which may be shorter-lived).
+  RULES:
+  - Enter when eth_slope_sign_1h != 0 AND funding_btc_sign != 0 AND both are equal.
+  - Direction = eth_slope_sign_1h (same as CA-1 direction).
+  - Persistent signal — active whenever both conditions agree.
+  FAILURE_CONDITIONS:
+  - Funding sign changes infrequently vs slope sign — agreement may be coincidental.
+  - This is a less stringent filter than H141 (extreme level vs. any positive sign).
+  - High frequency if slope and funding are broadly correlated (both often positive
+    in bull markets) — may not improve over CA-1 meaningfully.
+  entry_rules:
+  - Long when eth_slope_sign_1h == +1 AND funding_btc_sign == +1.
+  - Short when eth_slope_sign_1h == -1 AND funding_btc_sign == -1.
+  - Signal = eth_slope_sign_1h. Persistent.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h from load_frame() 1h features
+  - funding_btc_sign from rc.funding_rates via Hyperliquid
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      direction: consensus
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-23"
+  decision_notes: "FAIL (cost-constrained). n=6821, 18.7/day, gross=1.63bps P>0=1.000,
+    WF+ 16/20 folds. Real directional signal with P>0=1.000 (certain) but only 1.63bps
+    gross — far below the 8bps cost gate. Same structural cost ceiling as all momentum
+    signals. The funding+slope consensus fires too often (every time they re-agree after
+    disagreement ~hourly) with too little per-trade edge. DO NOT iterate thresholds."
+  source: Theory-first. Funding sign + slope sign consensus as a higher-conviction
+    CA variant. Tests whether derivatives positioning confirms price momentum.
+
+- id: H144
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: Sustained extreme positive BTC funding (3+ consecutive hours) combined
+    with ETH slope flipping negative. Deep, persistent crowding leads to a more
+    violent forced unwind than a single-period funding spike.
+  rationale: H141 tests extreme funding at the moment of slope flip. H144 adds the
+    requirement that funding has been extreme for 3+ consecutive hours — meaning the
+    crowding is deep and systematic, not a brief spike. Markets with sustained crowded-
+    long positioning contain more accumulated forced-sell pressure. When the slope
+    eventually flips negative in this context, the unwind should be more severe and
+    last longer than a single-period crowding event.
+  WHY: Tests whether sustained (vs. instantaneous) extreme funding amplifies the
+    CA slope flip signal more than H141. Requires 3h × 12 bars = 36 consecutive
+    bars with funding_btc_pct >= 0.85 before the slope flip trigger.
+  RULES:
+  - Compute sustained_extreme = rolling(36).min(funding_btc_pct >= 0.85) == 1.0.
+  - Trigger: eth_slope_sign_1h flips from +1 to -1 AND sustained_extreme is True.
+  - Event-triggered (dedup gap = horizon bars). Signal = -1.0 (SHORT only).
+  - Horizon = 12 bars (60 min) — slightly longer than CA-1 given deeper crowding.
+  FAILURE_CONDITIONS:
+  - Very few signals (requires 3+ consecutive hours of extreme funding AND a slope flip
+    in that window). Small n may make statistical inference unreliable.
+  - Sustained extreme funding tends to occur during prolonged bull runs — slope
+    flips within those periods may be brief and followed by resumption of trend.
+  entry_rules:
+  - Short when funding_btc_pct >= 0.85 for 3+ consecutive hours AND slope flips down.
+  - Signal = -1.0. Event-triggered with dedup gap = horizon.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - funding_btc_pct from rc.funding_rates via Hyperliquid
+  - eth_slope_sign_1h from load_frame() 1h feature set
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      funding_btc_pct_min: 0.85
+      sustained_hours: 3
+      direction: short
+  allowed_variants: []
+  status: INCONCLUSIVE
+  decision_date: "2026-02-23"
+  decision_notes: "INCONCLUSIVE (n=11, too few trades). gross=4.94bps P>0=0.543,
+    WF+ 0/5 folds, P>0_bps8=0.387. Only 11 trades in 365d — the condition (3h of
+    sustained extreme funding AND a slope flip) is extremely rare. No conclusions
+    possible. DO NOT iterate. Accept that this mechanism requires OI or liquidation
+    data to confirm crowding rather than just funding duration."
+  source: Theory-first. Extended version of H141 requiring sustained (not just
+    instantaneous) extreme funding before the slope flip trigger.
+
+- id: H145
+  family: volume_state
+  class: tradeable_hypothesis
+  description: High volume ETH slope flip — same CA-1 signal but only when volume
+    is expanding (BTC volume > p80). High-volume directional moves have more
+    conviction and are more likely to continue.
+  rationale: CA-1 fires on every ETH slope flip regardless of volume. Volume expansion
+    during a slope flip signals that large participants are actively driving the move —
+    not just noise or thin-book artifacts. High-volume flips should have higher
+    per-trade edge because the move is being backed by real capital flows. This is
+    a quality filter on the CA-1 anchor signal.
+  WHY: Test whether gating CA-1 by high volume (volume_btc_pct >= 0.80) increases
+    per-trade mean return at the cost of reduced frequency. If high-volume flips
+    average meaningfully more than the CA-1 baseline of 0.34%, this is the anchor
+    for the volume_state signal family.
+  RULES:
+  - Enter when eth_slope_sign_1h flips direction (same as CA-1).
+  - Additional gate: volume_btc_pct >= 0.80 at the time of the flip.
+  - Direction = direction of new slope sign. Event-triggered.
+  FAILURE_CONDITIONS:
+  - Reduces frequency significantly — fewer qualifying flips.
+  - High volume may simply indicate high volatility, not directional conviction
+    (volume spikes on both directions equally during volatile periods).
+  - If CA-1 already captures all edge from the slope flip, volume adds no signal.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_btc_pct >= 0.80.
+  - Direction = new eth_slope_sign. Event-triggered with dedup gap = horizon.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h from load_frame() 1h features
+  - volume_btc_pct computed in load_frame() from candle volume
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-1
+  decision_date: "2026-02-23"
+  decision_notes: "PASS — VS-1 ANCHOR. n=136, 0.4/day, gross=26.19bps P>0=1.000,
+    WF+ 15/18 folds (83%), P>0_bps8=1.000. Clears cost gate convincingly. High-volume
+    ETH slope flips carry ~3x the per-trade edge of unfiltered CA-1 signals. Volume
+    filters out noise flips — only slope changes backed by real capital flows persist.
+    NEXT: run robustness checks (odd/even subsample, p75/p85 threshold variants,
+    1-bar lag). If robustness holds, expand VS family."
+  source: Theory-first. Volume filter on CA-1 as anchor for volume_state family.
+    Tests whether high-volume slope flips have more edge than average flips.
+
+- id: H146
+  family: volume_state
+  class: tradeable_hypothesis
+  description: Volume breakout — BTC price closes above prior 12-bar rolling high
+    on expanding volume (> p75). Classic momentum breakout with volume confirmation.
+  rationale: A price breakout above a recent high on expanding volume signals that
+    buyers are absorbing available supply at higher prices with genuine participation.
+    In crypto, breakout moves on high volume tend to continue as trend-followers
+    and late buyers chase the move. This is a fundamentally different signal from
+    the CA slope flip — it is price-structure based rather than cross-asset based.
+  WHY: Test whether high-volume price breakouts predict continued upside over 8 bars
+    in BTC. This is a classic momentum signal that has never been formally tested
+    in this pipeline. Anchor candidate for volume_state breakout signals.
+  RULES:
+  - Enter LONG when close_btc > rolling_max(close_btc, 12 bars).shift(1).
+  - Additional gate: volume_btc_pct >= 0.75.
+  - LONG only (no symmetric short on breakdown — test directional first).
+  - Event-triggered with dedup gap = horizon bars.
+  FAILURE_CONDITIONS:
+  - Breakouts often fail in ranging/choppy markets (false breakouts).
+  - May fire at local highs just before reversals (classic retail trap).
+  - If CA-1 is already capturing the same momentum, breakout adds no independent edge.
+  entry_rules:
+  - Long when close_btc > prior 12-bar high AND volume_btc_pct >= 0.75.
+  - Signal = +1.0 (LONG only). Event-triggered.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - volume_btc_pct computed in load_frame() from candle volume
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.75
+      lookback_bars: 12
+      direction: long
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-23"
+  decision_notes: "FAIL (no edge). n=2077, 5.7/day, gross=0.15bps P>0=0.555,
+    WF+ 10/18 folds. Volume breakouts (price > 12-bar high on high volume) have no
+    directional edge in BTC 5m bars. In crypto perps, breakouts above short lookback
+    highs on high volume are common and not predictive — the signal fires during both
+    genuine moves and noise spikes. The 12-bar lookback (1h) is too short to be
+    meaningful structure."
+  source: Theory-first. Volume breakout as anchor for volume_state breakout signals.
+    Classic price-structure + volume confirmation momentum signal, untested in pipeline.
+
+- id: H147
+  family: volume_state
+  class: tradeable_hypothesis
+  description: Low volume large bar — fade (mean reversion). A large BTC bar on
+    very low volume lacks genuine participation and is likely to reverse.
+  rationale: Large price moves on unusually low volume are characteristic of thin-book
+    artifacts, spoofing, or temporary liquidity imbalances rather than genuine directional
+    conviction. In liquid markets, real directional moves require volume participation.
+    When a large bar occurs with very low volume (< p20), the probability of mean
+    reversion is elevated — the move lacks the supply/demand imbalance needed to sustain.
+  WHY: Test whether large-move + low-volume bars predict reversal over the next 6 bars.
+    Shorter horizon (6 bars = 30 min) than CA-type signals because mean reversion
+    tends to be faster than momentum continuation. Anchor candidate for volume_state
+    MR signals.
+  RULES:
+  - Identify bars where ret1_abs_btc_pct >= 0.80 (top 20% bar size) AND volume_btc_pct <= 0.20.
+  - Enter in OPPOSITE direction to bar_dir_btc (fade the move).
+  - Event-triggered with dedup gap = horizon bars.
+  - Horizon = 6 bars (30 min) — shorter for mean reversion.
+  FAILURE_CONDITIONS:
+  - Low volume moves in crypto may be legitimate breakouts in off-peak hours (Asia session).
+  - Defining large + low-volume jointly may produce very few qualifying events.
+  - 5m bar_dir_btc may not reliably measure the direction of the move being faded.
+  entry_rules:
+  - Fade (go opposite to bar direction) when ret1_abs_btc_pct >= 0.80 AND volume_btc_pct <= 0.20.
+  - Direction = -bar_dir_btc. Event-triggered.
+  exit_rules:
+  - Hold for fixed 6 bars (30 min). No early exit.
+  required_inputs:
+  - BTC-USD 5m OHLCV (Coinbase)
+  - ret1_abs_btc_pct and bar_dir_btc from load_frame()
+  - volume_btc_pct computed in load_frame() from candle volume
+  parameters:
+    lookback_days: 365
+    horizon_bars: 6
+    fixed:
+      volume_btc_pct_max: 0.20
+      ret1_abs_btc_pct_min: 0.80
+      direction: fade
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-23"
+  decision_notes: "FAIL (cost-constrained). n=403, 1.1/day, gross=2.41bps P>0=0.984,
+    WF+ 12/18 folds. Real directional signal — low-volume large bars do tend to reverse
+    — but only 2.41bps gross, far below 8bps cost gate. Same structural ceiling.
+    The mean reversion is real but the magnitude is too small to be tradeable at 5m scale."
+  source: Theory-first. Low-volume large bar fade as mean reversion anchor for
+    volume_state family. Tests whether thin-book artifact moves reliably reverse.
+
+- id: H159
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 odd-day subsample robustness check. Same signal as H145 (high-volume
+    ETH slope flip) but evaluated only on odd calendar days.
+  rationale: If VS-1 is real, it should hold across arbitrary temporal subsamples.
+    An odd/even split gives two non-overlapping half-datasets. Both must pass gross
+    gate for the signal to be considered robust rather than a lucky subset.
+  WHY: Robustness check for H145 (VS-1 anchor). Pre-committed before seeing results.
+  RULES:
+  - Same as H145 (eth_slope_sign_1h flip + volume_btc_pct >= 0.80 + dedup gap = 8).
+  - Evaluate only trades occurring on odd calendar days (dt.day % 2 == 1).
+  entry_rules:
+  - Identical to H145. Day filter applied at evaluation, not signal generation.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+      subsample: odd_days
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-1
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-1 robustness (odd-day subsample). n=65, gross=24.83bps
+    P>0=1.000, WF+ 12/17, bps8_P>0=0.995. Signal holds on odd days alone — confirms
+    VS-1 is not a temporal artifact concentrated in specific days."
+  source: Robustness check for VS-1 (H145). Pre-committed odd-day subsample test.
+
+- id: H160
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 even-day subsample robustness check. Same signal as H145 (high-volume
+    ETH slope flip) but evaluated only on even calendar days.
+  rationale: Symmetric to H159. Together H159+H160 confirm VS-1 is stable across
+    arbitrary time partitions.
+  WHY: Robustness check for H145 (VS-1 anchor). Pre-committed before seeing results.
+  RULES:
+  - Same as H145. Evaluate only trades occurring on even calendar days (dt.day % 2 == 0).
+  entry_rules:
+  - Identical to H145. Day filter applied at evaluation, not signal generation.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+      subsample: even_days
+  allowed_variants: []
+  status: BORDERLINE
+  signal_group: VS-1
+  decision_date: "2026-02-24"
+  decision_notes: "BORDERLINE — VS-1 robustness (even-day subsample). n=71, gross=27.43bps
+    P>0=1.000, WF+ 12/17, bps8_P>0=0.999. Passes bps8 with P>0=0.999 but WF fold
+    count (12/17 = 71%) is marginal. Together with H159 (odd-day PASS), the signal
+    clearly holds across both halves — BORDERLINE here is a WF count artifact of
+    fewer trades per fold after day-filtering."
+  source: Robustness check for VS-1 (H145). Pre-committed even-day subsample test.
+
+- id: H161
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 with 1-bar execution lag. Signal fires at slope flip bar, but
+    entry is on the NEXT bar's close (5 min later). Tests execution realism — if the
+    signal requires entering on the same bar it fires, it may be look-ahead.
+  rationale: CA-1 (H77) showed the signal survives next-bar execution. VS-1 should
+    also be tested with a 1-bar lag because real execution at the exact flip bar close
+    may be unrealistic during fast moves (which high-volume flips often are).
+  WHY: Robustness check for H145. If 1-bar lag destroys the edge, the signal depends
+    on unrealistic same-bar execution. If it survives, execution is realistic.
+  RULES:
+  - Same signal generation as H145. Enter on close[t+1] instead of close[t].
+  - Horizon counts from t+1.
+  entry_rules:
+  - Same as H145. Entry shifted by 1 bar (next close after signal).
+  exit_rules:
+  - Hold for fixed 8 bars from entry bar. No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+      execution_lag_bars: 1
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-1
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-1 robustness (1-bar execution lag). n=136, gross=25.84bps
+    P>0=1.000, WF+ 16/18, bps8_P>0=1.000. Edge is essentially unchanged from H145
+    (26.19bps). Real-world execution at next bar close is viable. No look-ahead
+    dependence. This is critical for deployment realism."
+  source: Robustness check for VS-1 (H145). Execution lag test to confirm signal
+    does not depend on same-bar entry.
+
+- id: H162
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 with looser volume threshold (p75). Tests threshold sensitivity —
+    does the VS-1 edge survive with slightly lower volume requirements?
+  rationale: H145 uses volume_btc_pct >= 0.80. p75 includes more trades. If the edge
+    is robust, it should hold at p75 (more trades, possibly lower per-trade return).
+    A significant drop in edge at p75 suggests the high-volume bar requirement is not
+    a robust filter but curve-fitted to p80.
+  WHY: Threshold sensitivity check for VS-1. p80 was pre-committed. p75 adds 15th
+    to 20th percentile volume trades. Looser threshold means more trades but may
+    dilute edge.
+  RULES:
+  - eth_slope_sign_1h flip + volume_btc_pct >= 0.75 (instead of 0.80).
+  - Otherwise identical to H145.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_btc_pct >= 0.75.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.75
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-1
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-1 threshold sensitivity (p75 volume gate). n=164, 0.5/day,
+    gross=26.58bps P>0=1.000, WF+ 16/18, bps8_P>0=1.000. More trades than H145 (164
+    vs 136) with essentially identical edge (26.58 vs 26.19bps). Edge is NOT sensitive
+    to p80 vs p75 threshold — indicates robust volume mechanism not curve-fitted to p80."
+  source: Robustness check for VS-1 (H145). Volume threshold sensitivity test
+    (looser threshold p75 vs. anchor p80).
+
+- id: H163
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 with tighter volume threshold (p85). Tests whether requiring
+    even higher volume improves per-trade edge at the cost of frequency.
+  rationale: H145 uses volume_btc_pct >= 0.80. p85 is stricter — only the highest-volume
+    slope flips. If the mechanism is real, tighter volume filter should maintain or
+    increase per-trade edge with fewer but higher-quality trades.
+  WHY: Threshold sensitivity check for VS-1. p85 reduces trades but selects the most
+    extreme volume events. Tighter threshold means fewer trades but potentially higher
+    per-trade edge (or too few for significance).
+  RULES:
+  - eth_slope_sign_1h flip + volume_btc_pct >= 0.85 (instead of 0.80).
+  - Otherwise identical to H145.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_btc_pct >= 0.85.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.85
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-1
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-1 threshold sensitivity (p85 volume gate). n=104, 0.3/day,
+    gross=32.23bps P>0=1.000, WF+ 16/18, bps8_P>0=1.000. Highest per-trade edge of
+    any VS test: 32bps vs 26bps at p80. Tighter volume filter selects higher-conviction
+    slope flips. This is consistent with the volume mechanism being real — the very
+    highest-volume flips have the most reliable follow-through."
+  source: Robustness check for VS-1 (H145). Volume threshold sensitivity test
+    (tighter threshold p85 vs. anchor p80).

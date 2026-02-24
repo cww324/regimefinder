@@ -223,4 +223,16 @@ def compute_funding_features(deriv: pd.DataFrame, window_bars: int = 8640) -> pd
         # OI % change from prior settlement (meaningful change, not every 5m bar)
         deriv[f"oi_{asset}_chg"] = oi.pct_change().where(oi.diff().ne(0))
 
+    # Cross-asset funding spread: ETH funding relative to BTC funding.
+    # Positive = ETH perps more bullish/crowded than BTC. Negative = BTC more crowded.
+    if "funding_rate_btc" in deriv.columns and "funding_rate_eth" in deriv.columns:
+        spread = deriv["funding_rate_eth"] - deriv["funding_rate_btc"]
+        deriv["funding_spread"] = spread
+        deriv["funding_spread_pct"] = spread.rolling(w).rank(pct=True)
+
+    # Cross-asset OI spread: ETH OI percentile relative to BTC OI percentile.
+    # Positive = ETH more leveraged than BTC (per rolling history).
+    if "oi_btc_pct" in deriv.columns and "oi_eth_pct" in deriv.columns:
+        deriv["oi_spread_pct"] = deriv["oi_eth_pct"] - deriv["oi_btc_pct"]
+
     return deriv

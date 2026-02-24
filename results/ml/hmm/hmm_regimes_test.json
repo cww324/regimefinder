@@ -1,0 +1,43 @@
+{
+  "run_date": "2026-02-23",
+  "config": {
+    "days": 365,
+    "n_states": 3,
+    "train_days": 90,
+    "step_days": 30,
+    "symbol": "BTC-USD",
+    "timeframe": "1h"
+  },
+  "n_labeled_bars": 6364,
+  "n_total_bars": 8524,
+  "state_summary": [
+    {
+      "state_id": 0,
+      "regime_name": "RANGING",
+      "pct_bars": 0.41,
+      "mean_rv_1h": 0.002773,
+      "mean_er20": 1.0,
+      "mean_atr_pct": 0.31,
+      "mean_funding_pct": 0.468
+    },
+    {
+      "state_id": 1,
+      "regime_name": "TRENDING",
+      "pct_bars": 0.251,
+      "mean_rv_1h": 0.003602,
+      "mean_er20": 1.0,
+      "mean_atr_pct": 0.556,
+      "mean_funding_pct": 0.497
+    },
+    {
+      "state_id": 2,
+      "regime_name": "VOLATILE",
+      "pct_bars": 0.339,
+      "mean_rv_1h": 0.005152,
+      "mean_er20": 0.999,
+      "mean_atr_pct": 0.681,
+      "mean_funding_pct": 0.541
+    }
+  ],
+  "note": "States sorted by rv_1h ascending: 0=RANGING (low vol), 1=TRENDING (mid vol, directional), 2=VOLATILE (high vol/shock). 365d window is mostly bull-market \u2014 all regimes are bull-market variants."
+}

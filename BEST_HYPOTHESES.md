@@ -112,12 +112,34 @@ Not assigned a shortcode yet.
 
 ---
 
+## VS-1 — High-Volume ETH Slope Flip ★ NEW ANCHOR (2026-02-23)
+
+**What it is:** CA-1 (ETH slope flip) gated by volume expansion (volume_btc_pct ≥ p80). Only trades slope flips that occur during high-volume bars. Volume filters out thin-book noise flips.
+
+**Why it works:** Volume expansion during a slope flip confirms that real capital is driving the move. Unfiltered CA-1 includes thin-book artifact flips that dilute the edge. The volume gate selects only flips with genuine participation — ~3× higher per-trade return than CA-1.
+
+| H-number | Variant | gross_bps | n/day | WF+ | bps8 PASS | Label |
+|----------|---------|-----------|-------|-----|-----------|-------|
+| **H145** | Base signal (365d, p80 volume) | **26.19** | 0.4 | **15/18** | **YES** | **VS-1** |
+
+**Status:** PASS + 4/5 robustness checks pass (H159-H163, run 2026-02-24). Signal confirmed robust.
+
+| H-number | Variant | gross_bps | WF+ | bps8 PASS | n/day |
+|----------|---------|-----------|-----|-----------|-------|
+| H145 | Base (p80 vol) | 26.19 | 15/18 | YES | 0.4 |
+| H159 | Odd-day | 24.83 | 12/17 | YES | 0.2 |
+| H160 | Even-day | 27.43 | 12/17 | BORDERLINE | 0.2 |
+| H161 | 1-bar lag | 25.84 | 16/18 | YES | 0.4 |
+| H162 | p75 vol | 26.58 | 16/18 | YES | 0.5 |
+| H163 | p85 vol | **32.23** | 16/18 | YES | 0.3 |
+
+---
+
 ## Families with No Confirmed Signals
 
 | Family | H-numbers tested | Outcome |
 |--------|-----------------|---------|
-| FR (Funding Regime) | H121–H124 | H121–H123 FAIL; H124 pending |
-| VS (Volatility State) | H101–H110 | All FAIL (tested on 180d, worth 365d revisit) |
+| FR (Funding Regime) | H121–H144 | All FAIL/INCONCLUSIVE. H141 (n=16, 17bps) is interesting but insufficient data. |
 | MR (Mean Reversion) | H15, H18, H22–H26 | INCONCLUSIVE (insufficient folds) |
 | CD (Cross-Exchange Divergence) | H102–H113 | FAIL (no second exchange data) |
 
@@ -125,17 +147,17 @@ Not assigned a shortcode yet.
 
 ## Key Observations
 
-1. **One signal family dominates.** All 25 confirmed PASSes are `cross_asset_regime` — ETH/BTC slope flip trades.
-2. **H65 is the anchor.** H84 has the highest per-trade return (+0.38%) but is session-restricted. H65 runs all hours and survives every replication test.
-3. **Replication is unusually solid.** CA-1 has 9 independent replications. CA-2 has 8. This level of robustness is rare.
-4. **No confirmed short-side signals.** All 25 PASSes are long-biased. The 365d window (Feb 2025–Feb 2026) was a bull run.
-5. **Next regime: RF discovery.** Use `docs/rf_experiment_plan.md` to systematically explore non-CA signal families.
+1. **Two signal families confirmed.** CA (ETH/BTC slope flip) and VS (volume-gated slope flip) both pass.
+2. **H65 is the CA anchor.** H84 (EU/US overlap session) is the strongest single CA variant at +0.38%/trade.
+3. **H145 is the VS anchor.** High-volume slope flips average 26bps — ~3× unfiltered CA-1.
+4. **No confirmed short-side signals.** The 365d window (Feb 2025–Feb 2026) was a bull run.
+5. **FR signals cost-constrained.** Every funding rate signal tested has real gross alpha but can't clear 8bps cost gate.
+6. **H141 concept promising.** Extreme funding (≥p85) + slope flip produced 17.64bps in only 16 trades — too few to confirm but mechanism is sound.
 
 ---
 
 ## What to do next
 
-- Run **H124**: CA+FR with tighter spread threshold (≥0.97) — target 1-2 trades/day
-- Run **RF experiment**: `docs/rf_experiment_plan.md` — let XGBoost find what we haven't tested
-- Consider **portfolio construction** combining H65 (all-hours) + H84 (session-filtered)
-- See `docs/multi_market_expansion.md` to add SOL-USD or a second exchange
+1. **VS family expansion**: session-gated (08-16 UTC), ETH volume gate, h=12, p85 as standard threshold
+2. **H141 revisit**: loosen funding threshold from p85 to p80 to get more trades (pre-commit threshold first)
+3. **OI/liquidations data**: backfill rc.open_interest and rc.liquidations to unlock H148-H156

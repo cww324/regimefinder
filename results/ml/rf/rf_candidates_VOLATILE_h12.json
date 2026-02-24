@@ -1,0 +1,791 @@
+{
+  "run_date": "2026-02-23",
+  "config": {
+    "days": 365,
+    "horizon": 12,
+    "regime": "VOLATILE",
+    "train_days": 90,
+    "step_days": 30,
+    "min_folds": 3
+  },
+  "n_folds": 5,
+  "n_candidates": 10,
+  "top_candidates": [
+    {
+      "feature": "funding_btc_pct",
+      "consistent_folds": 5,
+      "total_folds": 5,
+      "mean_abs_shap": 0.153466,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "spread_pct",
+      "consistent_folds": 5,
+      "total_folds": 5,
+      "mean_abs_shap": 0.142871,
+      "direction": "negative",
+      "ca_family": true,
+      "note": "CA-family feature \u2014 likely rediscovering existing signal. Skip unless combining with non-CA features."
+    },
+    {
+      "feature": "dist_to_vwap48_z_eth",
+      "consistent_folds": 5,
+      "total_folds": 5,
+      "mean_abs_shap": 0.118538,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "rv48_pct_btc",
+      "consistent_folds": 5,
+      "total_folds": 5,
+      "mean_abs_shap": 0.111026,
+      "direction": "negative",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "day_of_week",
+      "consistent_folds": 5,
+      "total_folds": 5,
+      "mean_abs_shap": 0.102681,
+      "direction": "negative",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "vwap_z",
+      "consistent_folds": 5,
+      "total_folds": 5,
+      "mean_abs_shap": 0.100899,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "eth_slope_z_1h",
+      "consistent_folds": 4,
+      "total_folds": 5,
+      "mean_abs_shap": 0.089712,
+      "direction": "negative",
+      "ca_family": true,
+      "note": "CA-family feature \u2014 likely rediscovering existing signal. Skip unless combining with non-CA features."
+    },
+    {
+      "feature": "rv48_pct_eth",
+      "consistent_folds": 4,
+      "total_folds": 5,
+      "mean_abs_shap": 0.088368,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "atr14_pct_btc",
+      "consistent_folds": 3,
+      "total_folds": 5,
+      "mean_abs_shap": 0.086442,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "hour_of_day",
+      "consistent_folds": 3,
+      "total_folds": 5,
+      "mean_abs_shap": 0.078814,
+      "direction": "negative",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    }
+  ],
+  "regime_breakdown": [
+    {
+      "feature": "funding_btc_pct",
+      "direction": "positive",
+      "threshold_p70": 0.695197,
+      "regime_stats": {
+        "RANGING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "TRENDING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "VOLATILE": {
+          "n": 7570,
+          "mean_fwd_r": -0.0094
+        }
+      },
+      "interpretation": "No positive regime \u2014 signal may be noise"
+    },
+    {
+      "feature": "dist_to_vwap48_z_eth",
+      "direction": "positive",
+      "threshold_p70": 0.448278,
+      "regime_stats": {
+        "RANGING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "TRENDING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "VOLATILE": {
+          "n": 7768,
+          "mean_fwd_r": -0.0356
+        }
+      },
+      "interpretation": "No positive regime \u2014 signal may be noise"
+    },
+    {
+      "feature": "rv48_pct_btc",
+      "direction": "negative",
+      "threshold_p70": 0.851215,
+      "regime_stats": {
+        "RANGING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "TRENDING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "VOLATILE": {
+          "n": 7767,
+          "mean_fwd_r": -0.0304
+        }
+      },
+      "interpretation": "No positive regime \u2014 signal may be noise"
+    },
+    {
+      "feature": "day_of_week",
+      "direction": "negative",
+      "threshold_p70": 4.0,
+      "regime_stats": {
+        "RANGING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "TRENDING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "VOLATILE": {
+          "n": 3936,
+          "mean_fwd_r": -0.0309
+        }
+      },
+      "interpretation": "No positive regime \u2014 signal may be noise"
+    },
+    {
+      "feature": "vwap_z",
+      "direction": "positive",
+      "threshold_p70": 0.755173,
+      "regime_stats": {
+        "RANGING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "TRENDING": {
+          "n": 0,
+          "mean_fwd_r": null
+        },
+        "VOLATILE": {
+          "n": 7768,
+          "mean_fwd_r": -0.0153
+        }
+      },
+      "interpretation": "No positive regime \u2014 signal may be noise"
+    }
+  ],
+  "hypothesis_suggestions": [],
+  "folds": [
+    {
+      "fold": 1,
+      "train_end": "2025-09-01",
+      "test_start": "2025-09-01",
+      "test_end": "2025-10-01",
+      "train_n": 8316,
+      "test_n": 696,
+      "top_features": [
+        {
+          "feature": "funding_btc_pct",
+          "rank": 1,
+          "mean_abs_shap": 0.20141981542110443,
+          "mean_shap": 0.07361912727355957,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 2,
+          "mean_abs_shap": 0.16368746757507324,
+          "mean_shap": 0.026930462568998337,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 3,
+          "mean_abs_shap": 0.12975665926933289,
+          "mean_shap": -0.06186280399560928,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 4,
+          "mean_abs_shap": 0.11782785505056381,
+          "mean_shap": 0.050080556422472,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 5,
+          "mean_abs_shap": 0.11670882254838943,
+          "mean_shap": 0.0006018359563313425,
+          "direction": "positive"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 6,
+          "mean_abs_shap": 0.11109787225723267,
+          "mean_shap": -0.018863102421164513,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 7,
+          "mean_abs_shap": 0.10932611674070358,
+          "mean_shap": -0.04140621796250343,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 8,
+          "mean_abs_shap": 0.10575796663761139,
+          "mean_shap": -0.06405708193778992,
+          "direction": "negative"
+        },
+        {
+          "feature": "vwap_z",
+          "rank": 9,
+          "mean_abs_shap": 0.10158266872167587,
+          "mean_shap": 0.04784547537565231,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 10,
+          "mean_abs_shap": 0.08340826630592346,
+          "mean_shap": 0.008297961205244064,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 11,
+          "mean_abs_shap": 0.0755292996764183,
+          "mean_shap": -0.06699808686971664,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 12,
+          "mean_abs_shap": 0.06257721781730652,
+          "mean_shap": -0.015717698261141777,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 13,
+          "mean_abs_shap": 0.0605693981051445,
+          "mean_shap": 0.0025802638847380877,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.05615394935011864,
+          "mean_shap": 0.014865024946630001,
+          "direction": "positive"
+        },
+        {
+          "feature": "abs_vwap_dist_pct_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.05574432760477066,
+          "mean_shap": 0.0011502025881782174,
+          "direction": "positive"
+        }
+      ]
+    },
+    {
+      "fold": 2,
+      "train_end": "2025-10-01",
+      "test_start": "2025-10-01",
+      "test_end": "2025-10-31",
+      "train_n": 9012,
+      "test_n": 3168,
+      "top_features": [
+        {
+          "feature": "funding_btc_pct",
+          "rank": 1,
+          "mean_abs_shap": 0.2037515789270401,
+          "mean_shap": 0.14484789967536926,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 2,
+          "mean_abs_shap": 0.16687729954719543,
+          "mean_shap": 0.010995477437973022,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 3,
+          "mean_abs_shap": 0.13945139944553375,
+          "mean_shap": 0.030171291902661324,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 4,
+          "mean_abs_shap": 0.13503433763980865,
+          "mean_shap": -0.0013082482619211078,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 5,
+          "mean_abs_shap": 0.1335693597793579,
+          "mean_shap": -0.0006756438524462283,
+          "direction": "negative"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 6,
+          "mean_abs_shap": 0.12569132447242737,
+          "mean_shap": -0.022775067016482353,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 7,
+          "mean_abs_shap": 0.11185912787914276,
+          "mean_shap": 0.01865363121032715,
+          "direction": "positive"
+        },
+        {
+          "feature": "vwap_z",
+          "rank": 8,
+          "mean_abs_shap": 0.11058083921670914,
+          "mean_shap": 0.030492184683680534,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 9,
+          "mean_abs_shap": 0.09711199998855591,
+          "mean_shap": 0.012974188663065434,
+          "direction": "positive"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 10,
+          "mean_abs_shap": 0.08920740336179733,
+          "mean_shap": -0.013734386302530766,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 11,
+          "mean_abs_shap": 0.08260509371757507,
+          "mean_shap": -0.012173044495284557,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 12,
+          "mean_abs_shap": 0.08189626783132553,
+          "mean_shap": -0.016064617782831192,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 13,
+          "mean_abs_shap": 0.07417400181293488,
+          "mean_shap": -0.008434236980974674,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 14,
+          "mean_abs_shap": 0.06409280002117157,
+          "mean_shap": -0.0063291206024587154,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.04436006769537926,
+          "mean_shap": -0.0016589418519288301,
+          "direction": "negative"
+        }
+      ]
+    },
+    {
+      "fold": 3,
+      "train_end": "2025-10-31",
+      "test_start": "2025-10-31",
+      "test_end": "2025-11-30",
+      "train_n": 12180,
+      "test_n": 696,
+      "top_features": [
+        {
+          "feature": "spread_pct",
+          "rank": 1,
+          "mean_abs_shap": 0.17076453566551208,
+          "mean_shap": 0.028819210827350616,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 2,
+          "mean_abs_shap": 0.12200728803873062,
+          "mean_shap": -0.002269198652356863,
+          "direction": "negative"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 3,
+          "mean_abs_shap": 0.10475562512874603,
+          "mean_shap": -0.010833035223186016,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 4,
+          "mean_abs_shap": 0.10202816128730774,
+          "mean_shap": -0.013005845248699188,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 5,
+          "mean_abs_shap": 0.09284500032663345,
+          "mean_shap": 0.016592834144830704,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 6,
+          "mean_abs_shap": 0.08614875376224518,
+          "mean_shap": -0.036736562848091125,
+          "direction": "negative"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 7,
+          "mean_abs_shap": 0.08370377123355865,
+          "mean_shap": -0.005626038648188114,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 8,
+          "mean_abs_shap": 0.08092985302209854,
+          "mean_shap": 0.014173988252878189,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 9,
+          "mean_abs_shap": 0.0710868388414383,
+          "mean_shap": 0.020914826542139053,
+          "direction": "positive"
+        },
+        {
+          "feature": "vwap_z",
+          "rank": 10,
+          "mean_abs_shap": 0.06584807485342026,
+          "mean_shap": 0.030601827427744865,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 11,
+          "mean_abs_shap": 0.05306568369269371,
+          "mean_shap": 0.0010172635084018111,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 12,
+          "mean_abs_shap": 0.05139511451125145,
+          "mean_shap": 0.010980767197906971,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 13,
+          "mean_abs_shap": 0.04787590727210045,
+          "mean_shap": -0.02384914830327034,
+          "direction": "negative"
+        },
+        {
+          "feature": "ret1_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.04209739714860916,
+          "mean_shap": -0.002650982001796365,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 15,
+          "mean_abs_shap": 0.03652769699692726,
+          "mean_shap": -0.023799238726496696,
+          "direction": "negative"
+        }
+      ]
+    },
+    {
+      "fold": 4,
+      "train_end": "2025-11-30",
+      "test_start": "2025-11-30",
+      "test_end": "2025-12-30",
+      "train_n": 12876,
+      "test_n": 8554,
+      "top_features": [
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 1,
+          "mean_abs_shap": 0.14842329919338226,
+          "mean_shap": 0.10827285796403885,
+          "direction": "positive"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 2,
+          "mean_abs_shap": 0.1445862352848053,
+          "mean_shap": -0.03747597336769104,
+          "direction": "negative"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 3,
+          "mean_abs_shap": 0.1213269829750061,
+          "mean_shap": 0.024631744250655174,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 4,
+          "mean_abs_shap": 0.11704077571630478,
+          "mean_shap": -0.09184827655553818,
+          "direction": "negative"
+        },
+        {
+          "feature": "vwap_z",
+          "rank": 5,
+          "mean_abs_shap": 0.0928514152765274,
+          "mean_shap": -0.003149994881823659,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 6,
+          "mean_abs_shap": 0.0925137996673584,
+          "mean_shap": -0.05396198853850365,
+          "direction": "negative"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 7,
+          "mean_abs_shap": 0.09037402272224426,
+          "mean_shap": 0.03362130746245384,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 8,
+          "mean_abs_shap": 0.07430628687143326,
+          "mean_shap": -0.0124876843765378,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 9,
+          "mean_abs_shap": 0.06207110360264778,
+          "mean_shap": 0.016557954251766205,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 10,
+          "mean_abs_shap": 0.061276305466890335,
+          "mean_shap": -0.012130347080528736,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 11,
+          "mean_abs_shap": 0.054111965000629425,
+          "mean_shap": -0.024449333548545837,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 12,
+          "mean_abs_shap": 0.0532638356089592,
+          "mean_shap": -0.008499206975102425,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 13,
+          "mean_abs_shap": 0.04886876419186592,
+          "mean_shap": -0.0026883080136030912,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.04527999833226204,
+          "mean_shap": 0.028757963329553604,
+          "direction": "positive"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 15,
+          "mean_abs_shap": 0.039071448147296906,
+          "mean_shap": -0.003203668398782611,
+          "direction": "negative"
+        }
+      ]
+    },
+    {
+      "fold": 5,
+      "train_end": "2026-01-29",
+      "test_start": "2026-01-29",
+      "test_end": "2026-02-28",
+      "train_n": 21514,
+      "test_n": 4379,
+      "top_features": [
+        {
+          "feature": "spread_pct",
+          "rank": 1,
+          "mean_abs_shap": 0.16221269965171814,
+          "mean_shap": 0.012693929485976696,
+          "direction": "positive"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 2,
+          "mean_abs_shap": 0.1360744684934616,
+          "mean_shap": 0.02676091529428959,
+          "direction": "positive"
+        },
+        {
+          "feature": "vwap_z",
+          "rank": 3,
+          "mean_abs_shap": 0.13363230228424072,
+          "mean_shap": 0.049725230783224106,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 4,
+          "mean_abs_shap": 0.11909740418195724,
+          "mean_shap": 0.019236747175455093,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 5,
+          "mean_abs_shap": 0.09725455939769745,
+          "mean_shap": -0.04243505746126175,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 6,
+          "mean_abs_shap": 0.08564414083957672,
+          "mean_shap": -0.024062732234597206,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 7,
+          "mean_abs_shap": 0.0779566615819931,
+          "mean_shap": 0.004853511229157448,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 8,
+          "mean_abs_shap": 0.07245396822690964,
+          "mean_shap": 0.008393957279622555,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 9,
+          "mean_abs_shap": 0.07012069970369339,
+          "mean_shap": -0.005256932228803635,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 10,
+          "mean_abs_shap": 0.06342168152332306,
+          "mean_shap": -0.007751628756523132,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 11,
+          "mean_abs_shap": 0.06329052150249481,
+          "mean_shap": 0.004967144224792719,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 12,
+          "mean_abs_shap": 0.05736309662461281,
+          "mean_shap": -0.008569669909775257,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 13,
+          "mean_abs_shap": 0.053823113441467285,
+          "mean_shap": -0.0035837125033140182,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.042100690305233,
+          "mean_shap": -0.006845376919955015,
+          "direction": "negative"
+        },
+        {
+          "feature": "abs_vwap_dist_pct_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.03920794650912285,
+          "mean_shap": -0.0017222001915797591,
+          "direction": "negative"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Horizon=12 bars (60 min). Re-run with --horizon 6 and --horizon 24 for MR and trend candidates.",
+    "CA-family candidates likely rediscover existing signals. Focus on [NEW] candidates.",
+    "Pre-commit to threshold before running any suggestion through the pipeline.",
+    "Run suggestions through standard WF+bootstrap gates \u2014 do not trust RF in-sample performance."
+  ]
+}

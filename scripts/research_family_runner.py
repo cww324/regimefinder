@@ -22,6 +22,9 @@ SUPPORTED_FAMILIES = {
     "efficiency_mean_reversion",
     "cross_asset_divergence",
     "funding_regime",
+    "momentum",
+    "cross_asset",
+    "volume_state",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -78,15 +81,23 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
         "H98",
         "H99",
         "H100",
+        "H124",
+        "H135",
+        "H136",
+        "H137",
+        "H139",
     },
     "shock_structure": {"H27", "H42", "H43", "H44", "H45", "H46"},
     "volatility_conditioning": {"H47", "H48", "H49", "H50"},
-    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53"},
+    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53", "H130", "H131"},
     "range_structure": {"H28", "H54", "H55", "H56", "H113"},
-    "volatility_state": {"H101", "H102", "H103", "H104", "H112"},
+    "volatility_state": {"H101", "H102", "H103", "H104", "H112", "H128", "H129", "H133", "H134", "H138"},
     "efficiency_mean_reversion": {"H105", "H106", "H107"},
     "cross_asset_divergence": {"H108", "H109", "H110", "H111"},
-    "funding_regime": {"H121", "H122", "H123"},
+    "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144"},
+    "momentum": {"H125"},
+    "cross_asset": {"H126"},
+    "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163"},
 }
 
 
@@ -453,6 +464,10 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["atr14_pct"] = x["atr14_pct_btc"]
     x["rv48_pct"] = x["rv48_pct_btc"]
 
+    # Volume percentile features (30d rolling window)
+    x["volume_btc_pct"] = x["volume_btc"].rolling(w20d).rank(pct=True)
+    x["volume_eth_pct"] = x["volume_eth"].rolling(w20d).rank(pct=True)
+
     # Funding rate features (requires Postgres DSN; skipped for legacy SQLite path)
     if dsn:
         try:
@@ -473,6 +488,28 @@ def load_frame(days: int, dsn: str = "") -> pd.DataFrame:
     x["dist_to_vwap48"] = x["dist_to_vwap48_btc"]
     x["dist_to_vwap48_z"] = x["dist_to_vwap48_z_btc"]
     x["abs_vwap_dist_pct"] = x["abs_vwap_dist_pct_btc"]
+
+    # HMM regime labels (requires Postgres DSN; skipped for legacy SQLite path)
+    if dsn:
+        try:
+            import psycopg as _psycopg
+            with _psycopg.connect(dsn) as _conn:
+                _rl = pd.read_sql(
+                    "SELECT ts, regime_name FROM rc.regime_labels WHERE symbol = 'BTC-USD' ORDER BY ts",
+                    _conn,
+                )
+            if not _rl.empty:
+                _rl["dt"] = pd.to_datetime(_rl["ts"], utc=True).dt.as_unit("us")
+                _rl = _rl[["dt", "regime_name"]].rename(columns={"regime_name": "hmm_regime"})
+                x["dt"] = x["dt"].dt.as_unit("us")
+                x = pd.merge_asof(
+                    x.sort_values("dt"),
+                    _rl.sort_values("dt"),
+                    on="dt",
+                    direction="backward",
+                )
+        except Exception:
+            pass  # regime labels unavailable — non-regime families continue normally
 
     return x
 
@@ -698,6 +735,47 @@ def build_signal(
         if hypothesis_id == "H61":
             flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
             return pd.Series(np.where(flip, eth_sign, 0.0), index=x.index)
+        if hypothesis_id == "H124":
+            # H32 + funding ceiling, ultra-tight spread threshold (0.97/0.03 vs 0.90/0.10)
+            # targets ~1-2 trades/day to clear 8bps cost gate
+            h124_f_pct = x["funding_btc_pct"]
+            funding_ok = h124_f_pct.lt(0.85)
+            mask = spread.ge(0.97) & eth_sign.eq(1) & funding_ok
+            mask |= spread.le(0.03) & eth_sign.eq(-1) & funding_ok
+            return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
+
+        if hypothesis_id == "H135":
+            # Multi-feature LONG: spread_pct > p70 AND vwap_z < p30 (no regime gate)
+            # RF SHAP interaction (full dataset, 7/7 folds), mean_fwd_r=+0.081%
+            # "CA trend strong + BTC temporarily oversold" = buy the dip within trend
+            _w = 20 * 24 * 12  # 8640 bars ≈ 30d rolling window
+            vwap_z_pct = x["vwap_z"].rolling(_w).rank(pct=True)
+            mask = spread.ge(0.70) & vwap_z_pct.le(0.30)
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H136":
+            # Tighter version of H135: spread_pct > p85 AND vwap_z < p15
+            # H135 showed P>0=0.996 gross but only 5.48bps — tighter thresholds
+            # aim for higher per-trade magnitude to clear 8bps cost gate
+            _w = 20 * 24 * 12  # 8640 bars ≈ 30d rolling window
+            vwap_z_pct = x["vwap_z"].rolling(_w).rank(pct=True)
+            mask = spread.ge(0.85) & vwap_z_pct.le(0.15)
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H137":
+            # RANGING: atr14_pct_btc > p70 AND spread_pct > p70 → LONG
+            # High BTC volatility spike + bullish CA signal in RANGING = upward breakout
+            # RF SHAP interaction (RANGING-only, 4/6 folds), mean_fwd_r=+0.109%
+            ranging = x.get("hmm_regime", pd.Series("", index=x.index)).eq("RANGING")
+            mask = x["atr14_pct_btc"].ge(0.70) & spread.ge(0.70) & ranging
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H139":
+            # Full-dataset SHORT: rv48_pct_btc > p70 AND spread_pct < p30
+            # High BTC vol + BTC underperforming ETH → short. Both are percentile features.
+            # RF SHAP interaction (7/7 folds), mean_fwd_r=-0.099%, 71% consistent
+            mask = x["rv48_pct_btc"].ge(0.70) & spread.le(0.30)
+            return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
 
     if family == "shock_structure":
         if hypothesis_id == "H27":
@@ -773,6 +851,26 @@ def build_signal(
         if hypothesis_id == "H53":
             mask = x["vwap_z"].abs().ge(3.0)
             return pd.Series(np.where(mask, -np.sign(x["vwap_z"]), 0.0), index=x.index)
+
+        if hypothesis_id == "H130":
+            # vwap_z mean-reversion in TRENDING: short above 70th pct, long below 30th pct
+            _w = 20 * 24 * 12
+            trending = x.get("hmm_regime", pd.Series("", index=x.index)).eq("TRENDING")
+            vwap_z_pct = x["vwap_z"].rolling(_w).rank(pct=True)
+            sig = pd.Series(0.0, index=x.index)
+            sig = sig.where(~(vwap_z_pct.le(0.30) & trending), 1.0)
+            sig = sig.where(~(vwap_z_pct.ge(0.70) & trending), -1.0)
+            return sig
+
+        if hypothesis_id == "H131":
+            # vwap_z momentum in RANGING: long above 70th pct, short below 30th pct
+            _w = 20 * 24 * 12
+            ranging = x.get("hmm_regime", pd.Series("", index=x.index)).eq("RANGING")
+            vwap_z_pct = x["vwap_z"].rolling(_w).rank(pct=True)
+            sig = pd.Series(0.0, index=x.index)
+            sig = sig.where(~(vwap_z_pct.ge(0.70) & ranging), 1.0)
+            sig = sig.where(~(vwap_z_pct.le(0.30) & ranging), -1.0)
+            return sig
 
     if family == "volatility_state":
         if hypothesis_id == "H101":
@@ -1029,6 +1127,232 @@ def build_signal(
             mask |= spread.le(0.10) & eth_sign.eq(-1) & funding_ok
             return pd.Series(np.where(mask, eth_sign, 0.0), index=x.index)
 
+        if hypothesis_id == "H127":
+            # High BTC funding percentile in TRENDING regime → long
+            trending = x.get("hmm_regime", pd.Series("", index=x.index)).eq("TRENDING")
+            mask = f_pct.ge(0.70) & trending
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H132":
+            # High BTC funding percentile in VOLATILE regime → long
+            volatile = x.get("hmm_regime", pd.Series("", index=x.index)).eq("VOLATILE")
+            mask = f_pct.ge(0.70) & volatile
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H140":
+            # Extreme negative funding → LONG (over-short market, squeeze potential)
+            # Theory: when shorts pay large premium (funding < p10), market is over-short.
+            # Enter once when condition FIRST becomes true (edge-triggered, not persistent).
+            condition = f_pct.le(0.10)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H141":
+            # Extreme positive funding + ETH slope flip DOWN → SHORT
+            # Theory: crowded longs (high funding) + slope turning negative = forced unwind.
+            # The CA-1 slope flip is amplified when longs are over-leveraged.
+            eth_sign_141 = x["eth_slope_sign_1h"]
+            slope_flip_down = eth_sign_141.eq(-1) & eth_sign_141.shift(1).eq(1)
+            crowded = f_pct.ge(0.85)
+            candidate = slope_flip_down & crowded
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H142":
+            # Cross-asset funding divergence: ETH funding >> BTC funding → SHORT BTC
+            # Theory: when ETH perps are more crowded long than BTC, ETH longs are at higher
+            # risk of forced liquidation. ETH correction drags BTC down.
+            # Fire on onset (first bar condition becomes true), not persistently.
+            require_columns(x, hypothesis_id, ["funding_spread_pct"])
+            condition = x["funding_spread_pct"].ge(0.80)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H143":
+            # Funding sign + ETH slope sign consensus → trade in that direction
+            # Theory: when both the perpetual funding direction AND price momentum agree,
+            # the signal has higher conviction. Funding confirms market participants are
+            # positioned in the same direction as the slope trend.
+            # Fire on onset (first bar both agree), not persistently.
+            eth_sign_143 = x["eth_slope_sign_1h"]
+            condition = eth_sign_143.eq(f_sign) & eth_sign_143.ne(0) & f_sign.ne(0)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign_143.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H144":
+            # Sustained extreme funding (3+ hours) + ETH slope flip → amplified SHORT
+            # Theory: if funding has been extreme positive for 3+ consecutive hours, the
+            # market is deeply crowded — not just a spike. When slope flips down in this
+            # context, the forced unwind is more severe and persistent.
+            # 3 hours × 12 5m-bars/hour = 36 bars rolling minimum of extreme flag.
+            sustained = f_pct.ge(0.85).astype(float).rolling(36).min().eq(1.0)
+            eth_sign_144 = x["eth_slope_sign_1h"]
+            slope_flip_down = eth_sign_144.eq(-1) & eth_sign_144.shift(1).eq(1)
+            candidate = slope_flip_down & sustained
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+    if family == "volume_state":
+        require_columns(x, hypothesis_id, ["volume_btc_pct", "volume_eth_pct"])
+        vol_pct = x["volume_btc_pct"]
+        eth_sign = x["eth_slope_sign_1h"]
+
+        if hypothesis_id == "H145":
+            # Volume spike + ETH slope flip → amplified CA direction
+            # Theory: high-volume slope flips have more conviction — large participants
+            # are driving the move, not noise. Expect stronger continuation.
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H146":
+            # High volume + price breakout above 12-bar rolling high → LONG
+            # Theory: when price breaks to a new short-term high on expanding volume,
+            # buyers are absorbing supply; momentum likely continues.
+            rolling_high = x["close_btc"].rolling(12).max().shift(1)
+            breakout = x["close_btc"].gt(rolling_high)
+            high_vol = vol_pct.ge(0.75)
+            candidate = breakout & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H147":
+            # Low volume + large bar → fade (mean reversion)
+            # Theory: a large price move on very low volume lacks genuine participation.
+            # The move is likely noise or a thin-book artifact; expect reversion.
+            large_move = x["ret1_abs_btc_pct"].ge(0.80)
+            low_vol = vol_pct.le(0.20)
+            bar_dir = x["bar_dir_btc"]
+            candidate = large_move & low_vol & bar_dir.ne(0)
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = (-bar_dir).to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        # VS-1 robustness checks (H159-H163): same core as H145, vary threshold or subsample
+        if hypothesis_id in {"H159", "H160", "H161"}:
+            # H159: odd-day subsample of VS-1 (filtered in build_events)
+            # H160: even-day subsample of VS-1 (filtered in build_events)
+            # H161: VS-1 with 1-bar execution lag (signal is same; build_events shifts entry)
+            # All three use identical H145 signal logic — subsample/lag applied downstream.
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H162":
+            # VS-1 with looser volume threshold: p75 (more trades, test sensitivity)
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.75)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H163":
+            # VS-1 with tighter volume threshold: p85 (fewer trades, test sensitivity)
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.85)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+    if family == "momentum":
+        if hypothesis_id == "H125":
+            # vwap_z above 70th pct in TRENDING regime → long
+            _w = 20 * 24 * 12
+            trending = x.get("hmm_regime", pd.Series("", index=x.index)).eq("TRENDING")
+            vwap_z_pct = x["vwap_z"].rolling(_w).rank(pct=True)
+            mask = vwap_z_pct.ge(0.70) & trending
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+    if family == "cross_asset":
+        if hypothesis_id == "H126":
+            # ETH dist_to_vwap48_z above 70th pct in TRENDING regime → long BTC
+            _w = 20 * 24 * 12
+            trending = x.get("hmm_regime", pd.Series("", index=x.index)).eq("TRENDING")
+            dist_pct = x["dist_to_vwap48_z_eth"].rolling(_w).rank(pct=True)
+            mask = dist_pct.ge(0.70) & trending
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+    if family == "volatility_state":
+        if hypothesis_id == "H128":
+            # rv48_pct_btc above 70th pct in TRENDING regime → long
+            trending = x.get("hmm_regime", pd.Series("", index=x.index)).eq("TRENDING")
+            mask = x["rv48_pct_btc"].ge(0.70) & trending
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H129":
+            # atr14_pct_eth above 70th pct in TRENDING regime → long BTC
+            trending = x.get("hmm_regime", pd.Series("", index=x.index)).eq("TRENDING")
+            mask = x["atr14_pct_eth"].ge(0.70) & trending
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H133":
+            # atr14_pct_btc above 70th pct in RANGING regime → long
+            ranging = x.get("hmm_regime", pd.Series("", index=x.index)).eq("RANGING")
+            mask = x["atr14_pct_btc"].ge(0.70) & ranging
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H134":
+            # Multi-feature SHORT in VOLATILE: dist_to_vwap48_z_eth > p70 AND rv48_pct_btc > p70
+            # RF SHAP interaction (VOLATILE-only, 5/5 folds), mean_fwd_r=-0.167%
+            _w = 20 * 24 * 12  # 8640 bars ≈ 30d rolling window
+            volatile = x.get("hmm_regime", pd.Series("", index=x.index)).eq("VOLATILE")
+            dist_eth_pct = x["dist_to_vwap48_z_eth"].rolling(_w).rank(pct=True)
+            mask = dist_eth_pct.ge(0.70) & x["rv48_pct_btc"].ge(0.70) & volatile
+            return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H138":
+            # RANGING: atr14_pct_eth < p30 AND funding_btc_pct < p30 → SHORT
+            # Low ETH vol + bearish funding in RANGING = downward resolution
+            # RF SHAP interaction (RANGING-only, 3/6 folds, 100% consistent), mean_fwd_r=-0.083%
+            ranging = x.get("hmm_regime", pd.Series("", index=x.index)).eq("RANGING")
+            mask = x["atr14_pct_eth"].le(0.30) & x["funding_btc_pct"].le(0.30) & ranging
+            return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
+
     raise ValueError(
         f"Unsupported hypothesis/family route: {hypothesis_id} ({family}). "
         f"Known IDs for family: {sorted(SUPPORTED_IDS_BY_FAMILY.get(family, set()))}"
@@ -1064,10 +1388,14 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         # Execution realism: signal at t, enter on close[t+1], hold horizon bars from entry.
         # Trades without t+1 or t+1+horizon are dropped downstream via dropna.
         entry_offset = 1
+    elif hypothesis_id == "H161":
+        # VS-1 with 1-bar execution lag: signal fires on slope flip, enter on next bar close.
+        trade_close_col = "close_btc"
+        entry_offset = 1
     else:
         trade_close_col = "close_btc"
 
-    if hypothesis_id not in {"H61", "H76", "H77"}:
+    if hypothesis_id not in {"H61", "H76", "H77", "H161"}:
         entry_offset = 0
 
     effective_horizon = pd.Series(int(horizon), index=x.index, dtype=int)
@@ -1104,6 +1432,11 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         base = base[(base["dt"].dt.hour >= 8) & (base["dt"].dt.hour < 16)].copy()
     if hypothesis_id in {"H82", "H85"}:
         base = base[(base["dt"].dt.hour >= 16) & (base["dt"].dt.hour < 24)].copy()
+    # VS-1 robustness: odd-day (H159), even-day (H160) subsamples.
+    if hypothesis_id == "H159":
+        base = base[base["dt"].dt.day % 2 == 1].copy()
+    if hypothesis_id == "H160":
+        base = base[base["dt"].dt.day % 2 == 0].copy()
 
     # MAE proxy using close-path from entry to horizon.
     close_arr = close_s.to_numpy(dtype=float)
@@ -1348,8 +1681,8 @@ def main() -> None:
     args = parse_args()
     if args.timeframe != "5m":
         raise ValueError("research_family_runner supports timeframe=5m only.")
-    if int(args.horizon) not in {4, 6, 8, 10}:
-        raise ValueError("Standard runner expects horizon in {4,6,8,10}.")
+    if int(args.horizon) not in {4, 6, 8, 10, 12, 24}:
+        raise ValueError("Standard runner expects horizon in {4,6,8,10,12,24}.")
     if args.family not in SUPPORTED_FAMILIES:
         raise ValueError(f"Unsupported family: {args.family}")
 

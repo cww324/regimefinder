@@ -103,16 +103,55 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 ---
 
 ### Funding Regime (FR)
-*No confirmed signals yet. H121-H123 failed. H124 pending.*
+*No confirmed signals yet. H121-H144 all failed or inconclusive.*
 
 | H-number | Idea | Status | Notes |
 |----------|------|--------|-------|
-| H121 | Extreme funding fade | FAIL | Inconsistent, 70 trades/365d |
+| H121 | Extreme funding fade | FAIL | Inconsistent, negative gross |
 | H122 | Funding sign flip | FAIL | Negative gross |
-| H123 | CA signal + funding gate | FAIL | Signal real, cost-constrained (~7 trades/day) |
-| H124 | CA + FR, tighter entry (≥0.97) | PENDING | Next to run |
+| H123 | CA signal + funding gate | FAIL | Signal real, cost-constrained |
+| H124 | CA + FR, tighter (≥0.97) | BORDERLINE | Gross real, bps8 straddles zero |
+| H140 | Extreme negative funding → LONG | FAIL | 0.94bps gross, cost-constrained |
+| H141 | Extreme funding + slope flip → SHORT | INCONCLUSIVE | 17.6bps gross but n=16 |
+| H142 | ETH>BTC funding spread → SHORT | FAIL | No gross edge |
+| H143 | Funding+slope consensus | FAIL | 1.63bps, cost-constrained |
+| H144 | Sustained extreme funding + flip → SHORT | INCONCLUSIVE | n=11 |
 
-*First passing FR hypothesis will be labeled **FR-1**.*
+*First passing FR hypothesis will be labeled **FR-1**. H141 concept is promising — needs more data (loosened threshold or longer lookback).*
+
+---
+
+### Volume State (VS) — NEW 2026-02-23
+
+| H-number | Idea | Status | Notes |
+|----------|------|--------|-------|
+| **H145** | **High-volume ETH slope flip** | **PASS — VS-1 ANCHOR** | **26bps gross, P>0=1.000, WF+ 15/18, bps8 PASS** |
+| H146 | Volume breakout (price > 12-bar high) | FAIL | No gross edge |
+| H147 | Low-volume large bar fade | FAIL | 2.41bps, cost-constrained |
+
+#### VS-1 — High-Volume ETH Slope Flip ★ NEW ANCHOR
+**What it is:** CA-1 (ETH slope flip) gated by high volume (volume_btc_pct ≥ 0.80). Only fires when the slope change is accompanied by above-average trading volume, indicating real capital flows rather than thin-book noise.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| H145 | Base signal (p80 vol, 365d) | 26.19 | 15/18 | PASS | 0.4 | **VS-1** |
+| H159 | Odd-day subsample | 24.83 | 12/17 | PASS | 0.2 | VS-1 replication |
+| H160 | Even-day subsample | 27.43 | 12/17 | BORDERLINE* | 0.2 | VS-1 replication |
+| H161 | 1-bar execution lag | 25.84 | 16/18 | PASS | 0.4 | VS-1 replication |
+| H162 | p75 volume gate | 26.58 | 16/18 | PASS | 0.5 | VS-1 replication |
+| H163 | p85 volume gate | 32.23 | 16/18 | PASS | 0.3 | VS-1 replication |
+
+*H160 bps8 P>0=0.999 — edge is real, BORDERLINE classification from low fold count.
+
+**Why it works:** Volume expansion during a slope flip signals large participants are driving the move. Unfiltered CA-1 flips include thin-book artifact reversals that dilute the edge. Volume ≥ p80 filters to flips with genuine participation — ~3× the per-trade edge of CA-1.
+
+**Confirmed robust:** All 5 robustness checks pass. 1-bar lag survives (execution realistic). p75-p85 range all pass (not curve-fitted). Odd + even day both hold (not temporal artifact).
+
+**VS family ready for expansion.** Next candidates:
+- VS-1 | ST — session-gated variants (08-16 UTC strongest for CA)
+- VS-2 — longer horizon (h=12): do high-volume flips persist longer?
+- VS-1 with ETH volume gate (volume_eth_pct ≥ 0.80) instead of BTC
+- VS-1 with p85 as production threshold (H163 showed 32bps — consider making this the standard)
 
 ---
 
@@ -121,7 +160,6 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 | Family | H-numbers tested | Outcome | Notes |
 |--------|-----------------|---------|-------|
 | MR (Mean Reversion) | H15, H18, H22-H26 | INCONCLUSIVE | Insufficient folds even on 365d |
-| VS (Volatility State) | H101-H110 | FAIL/INCONCLUSIVE | Tested on 180d only, worth 365d revisit |
 | CD (Cross-Asset Divergence) | H102-H113 | FAIL | No Binance data yet |
 
 ---

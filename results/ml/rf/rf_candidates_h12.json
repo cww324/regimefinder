@@ -1,0 +1,1067 @@
+{
+  "run_date": "2026-02-23",
+  "config": {
+    "days": 365,
+    "horizon": 12,
+    "train_days": 90,
+    "step_days": 30,
+    "min_folds": 5
+  },
+  "n_folds": 7,
+  "n_candidates": 9,
+  "top_candidates": [
+    {
+      "feature": "vwap_z",
+      "consistent_folds": 7,
+      "total_folds": 7,
+      "mean_abs_shap": 0.165651,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "btc_slope_sign_1h",
+      "consistent_folds": 7,
+      "total_folds": 7,
+      "mean_abs_shap": 0.099288,
+      "direction": "negative",
+      "ca_family": true,
+      "note": "CA-family feature \u2014 likely rediscovering existing signal. Skip unless combining with non-CA features."
+    },
+    {
+      "feature": "spread_pct",
+      "consistent_folds": 7,
+      "total_folds": 7,
+      "mean_abs_shap": 0.081779,
+      "direction": "positive",
+      "ca_family": true,
+      "note": "CA-family feature \u2014 likely rediscovering existing signal. Skip unless combining with non-CA features."
+    },
+    {
+      "feature": "dist_to_vwap48_z_eth",
+      "consistent_folds": 7,
+      "total_folds": 7,
+      "mean_abs_shap": 0.079463,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "funding_btc_pct",
+      "consistent_folds": 7,
+      "total_folds": 7,
+      "mean_abs_shap": 0.077462,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "rv48_pct_btc",
+      "consistent_folds": 7,
+      "total_folds": 7,
+      "mean_abs_shap": 0.077121,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "atr14_pct_eth",
+      "consistent_folds": 6,
+      "total_folds": 7,
+      "mean_abs_shap": 0.063412,
+      "direction": "positive",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "day_of_week",
+      "consistent_folds": 5,
+      "total_folds": 7,
+      "mean_abs_shap": 0.058751,
+      "direction": "negative",
+      "ca_family": false,
+      "note": "Non-CA feature \u2014 potential new signal family."
+    },
+    {
+      "feature": "eth_slope_abs_pct_1h",
+      "consistent_folds": 5,
+      "total_folds": 7,
+      "mean_abs_shap": 0.054282,
+      "direction": "positive",
+      "ca_family": true,
+      "note": "CA-family feature \u2014 likely rediscovering existing signal. Skip unless combining with non-CA features."
+    }
+  ],
+  "regime_breakdown": [
+    {
+      "feature": "vwap_z",
+      "direction": "positive",
+      "threshold_p70": 0.850363,
+      "regime_stats": {
+        "RANGING": {
+          "n": 9465,
+          "mean_fwd_r": 0.002
+        },
+        "TRENDING": {
+          "n": 6324,
+          "mean_fwd_r": 0.013
+        },
+        "VOLATILE": {
+          "n": 7178,
+          "mean_fwd_r": -0.0155
+        }
+      },
+      "interpretation": "Works in RANGING and TRENDING \u2014 regime-conditional"
+    },
+    {
+      "feature": "dist_to_vwap48_z_eth",
+      "direction": "positive",
+      "threshold_p70": 0.400291,
+      "regime_stats": {
+        "RANGING": {
+          "n": 8134,
+          "mean_fwd_r": -0.0072
+        },
+        "TRENDING": {
+          "n": 6310,
+          "mean_fwd_r": 0.0097
+        },
+        "VOLATILE": {
+          "n": 8279,
+          "mean_fwd_r": -0.0359
+        }
+      },
+      "interpretation": "Only works in TRENDING regime \u2014 fragile, label accordingly"
+    },
+    {
+      "feature": "funding_btc_pct",
+      "direction": "positive",
+      "threshold_p70": 0.596586,
+      "regime_stats": {
+        "RANGING": {
+          "n": 7267,
+          "mean_fwd_r": 0.0023
+        },
+        "TRENDING": {
+          "n": 5434,
+          "mean_fwd_r": 0.0293
+        },
+        "VOLATILE": {
+          "n": 10319,
+          "mean_fwd_r": -0.0182
+        }
+      },
+      "interpretation": "Works in RANGING and TRENDING \u2014 regime-conditional"
+    },
+    {
+      "feature": "rv48_pct_btc",
+      "direction": "positive",
+      "threshold_p70": 0.714236,
+      "regime_stats": {
+        "RANGING": {
+          "n": 4125,
+          "mean_fwd_r": 0.0107
+        },
+        "TRENDING": {
+          "n": 6467,
+          "mean_fwd_r": 0.0306
+        },
+        "VOLATILE": {
+          "n": 12282,
+          "mean_fwd_r": -0.0195
+        }
+      },
+      "interpretation": "Works in RANGING and TRENDING \u2014 regime-conditional"
+    },
+    {
+      "feature": "atr14_pct_eth",
+      "direction": "positive",
+      "threshold_p70": 0.701215,
+      "regime_stats": {
+        "RANGING": {
+          "n": 5300,
+          "mean_fwd_r": 0.0032
+        },
+        "TRENDING": {
+          "n": 6558,
+          "mean_fwd_r": 0.0136
+        },
+        "VOLATILE": {
+          "n": 11334,
+          "mean_fwd_r": -0.0175
+        }
+      },
+      "interpretation": "Works in RANGING and TRENDING \u2014 regime-conditional"
+    }
+  ],
+  "hypothesis_suggestions": [
+    {
+      "suggested_h_id": "H125",
+      "feature": "vwap_z",
+      "direction": "positive",
+      "consistent_folds": 7,
+      "suggested_rule": "Enter long BTC when vwap_z is above 70th pct, gated by regime=TRENDING",
+      "suggested_family": "mean_reversion",
+      "best_regime": "TRENDING",
+      "status": "CANDIDATE \u2014 review before adding to hypotheses.yaml",
+      "warning": "Pre-commit to threshold BEFORE looking at in-sample performance. Use 70th/30th pct as starting point, do not optimize."
+    },
+    {
+      "suggested_h_id": "H126",
+      "feature": "dist_to_vwap48_z_eth",
+      "direction": "positive",
+      "consistent_folds": 7,
+      "suggested_rule": "Enter long BTC when dist_to_vwap48_z_eth is above 70th pct, gated by regime=TRENDING",
+      "suggested_family": "mean_reversion",
+      "best_regime": "TRENDING",
+      "status": "CANDIDATE \u2014 review before adding to hypotheses.yaml",
+      "warning": "Pre-commit to threshold BEFORE looking at in-sample performance. Use 70th/30th pct as starting point, do not optimize."
+    },
+    {
+      "suggested_h_id": "H127",
+      "feature": "funding_btc_pct",
+      "direction": "positive",
+      "consistent_folds": 7,
+      "suggested_rule": "Enter long BTC when funding_btc_pct is above 70th pct, gated by regime=TRENDING",
+      "suggested_family": "funding_regime",
+      "best_regime": "TRENDING",
+      "status": "CANDIDATE \u2014 review before adding to hypotheses.yaml",
+      "warning": "Pre-commit to threshold BEFORE looking at in-sample performance. Use 70th/30th pct as starting point, do not optimize."
+    },
+    {
+      "suggested_h_id": "H128",
+      "feature": "rv48_pct_btc",
+      "direction": "positive",
+      "consistent_folds": 7,
+      "suggested_rule": "Enter long BTC when rv48_pct_btc is above 70th pct, gated by regime=TRENDING",
+      "suggested_family": "volatility_state",
+      "best_regime": "TRENDING",
+      "status": "CANDIDATE \u2014 review before adding to hypotheses.yaml",
+      "warning": "Pre-commit to threshold BEFORE looking at in-sample performance. Use 70th/30th pct as starting point, do not optimize."
+    },
+    {
+      "suggested_h_id": "H129",
+      "feature": "atr14_pct_eth",
+      "direction": "positive",
+      "consistent_folds": 6,
+      "suggested_rule": "Enter long BTC when atr14_pct_eth is above 70th pct, gated by regime=TRENDING",
+      "suggested_family": "volatility_state",
+      "best_regime": "TRENDING",
+      "status": "CANDIDATE \u2014 review before adding to hypotheses.yaml",
+      "warning": "Pre-commit to threshold BEFORE looking at in-sample performance. Use 70th/30th pct as starting point, do not optimize."
+    }
+  ],
+  "folds": [
+    {
+      "fold": 1,
+      "train_end": "2025-08-16",
+      "test_start": "2025-08-16",
+      "test_end": "2025-09-15",
+      "train_n": 25860,
+      "test_n": 8640,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.16120195388793945,
+          "mean_shap": 0.04955373704433441,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 2,
+          "mean_abs_shap": 0.1110563725233078,
+          "mean_shap": 0.010600978508591652,
+          "direction": "positive"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 3,
+          "mean_abs_shap": 0.10462342202663422,
+          "mean_shap": -0.03551597148180008,
+          "direction": "negative"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 4,
+          "mean_abs_shap": 0.0831378698348999,
+          "mean_shap": -0.005852336995303631,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 5,
+          "mean_abs_shap": 0.07995980978012085,
+          "mean_shap": -0.025131508708000183,
+          "direction": "negative"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 6,
+          "mean_abs_shap": 0.07779929041862488,
+          "mean_shap": 0.00687287887558341,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 7,
+          "mean_abs_shap": 0.07744207978248596,
+          "mean_shap": 0.034260042011737823,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 8,
+          "mean_abs_shap": 0.07544004917144775,
+          "mean_shap": -0.005940545815974474,
+          "direction": "negative"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 9,
+          "mean_abs_shap": 0.07374037057161331,
+          "mean_shap": 0.05675126239657402,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 10,
+          "mean_abs_shap": 0.07229704409837723,
+          "mean_shap": 0.012647653929889202,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 11,
+          "mean_abs_shap": 0.062014687806367874,
+          "mean_shap": -0.01225170399993658,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 12,
+          "mean_abs_shap": 0.058481764048337936,
+          "mean_shap": -0.001980167580768466,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 13,
+          "mean_abs_shap": 0.04480715095996857,
+          "mean_shap": 0.0009183317888528109,
+          "direction": "positive"
+        },
+        {
+          "feature": "delta_er",
+          "rank": 14,
+          "mean_abs_shap": 0.02915254421532154,
+          "mean_shap": 0.0014538593823090196,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.02890428528189659,
+          "mean_shap": 0.004477088339626789,
+          "direction": "positive"
+        }
+      ]
+    },
+    {
+      "fold": 2,
+      "train_end": "2025-09-15",
+      "test_start": "2025-09-15",
+      "test_end": "2025-10-15",
+      "train_n": 34500,
+      "test_n": 8640,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.18530498445034027,
+          "mean_shap": 0.04788979887962341,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 2,
+          "mean_abs_shap": 0.10356099158525467,
+          "mean_shap": 0.013478097505867481,
+          "direction": "positive"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 3,
+          "mean_abs_shap": 0.10112378001213074,
+          "mean_shap": 0.07156103849411011,
+          "direction": "positive"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 4,
+          "mean_abs_shap": 0.09264466911554337,
+          "mean_shap": -0.013765038922429085,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 5,
+          "mean_abs_shap": 0.09088711440563202,
+          "mean_shap": 0.030459465458989143,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 6,
+          "mean_abs_shap": 0.09058230370283127,
+          "mean_shap": 0.009868737310171127,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 7,
+          "mean_abs_shap": 0.07934823632240295,
+          "mean_shap": -0.010742082260549068,
+          "direction": "negative"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 8,
+          "mean_abs_shap": 0.06690408289432526,
+          "mean_shap": -0.01146627776324749,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 9,
+          "mean_abs_shap": 0.0537705272436142,
+          "mean_shap": 0.0019553001038730145,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 10,
+          "mean_abs_shap": 0.053524259477853775,
+          "mean_shap": 0.0013176287757232785,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 11,
+          "mean_abs_shap": 0.052806686609983444,
+          "mean_shap": -0.004042652901262045,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 12,
+          "mean_abs_shap": 0.04202882945537567,
+          "mean_shap": 0.00225427676923573,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 13,
+          "mean_abs_shap": 0.039417464286088943,
+          "mean_shap": 0.0016150005394592881,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.038542427122592926,
+          "mean_shap": -0.00370746455155313,
+          "direction": "negative"
+        },
+        {
+          "feature": "abs_delta_er_pct",
+          "rank": 15,
+          "mean_abs_shap": 0.02986060455441475,
+          "mean_shap": -0.00018038538109976798,
+          "direction": "negative"
+        }
+      ]
+    },
+    {
+      "fold": 3,
+      "train_end": "2025-10-15",
+      "test_start": "2025-10-15",
+      "test_end": "2025-11-14",
+      "train_n": 43140,
+      "test_n": 8570,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.1500004529953003,
+          "mean_shap": -0.003815654432401061,
+          "direction": "negative"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 2,
+          "mean_abs_shap": 0.07940143346786499,
+          "mean_shap": 0.06545984745025635,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 3,
+          "mean_abs_shap": 0.07897163927555084,
+          "mean_shap": -0.00693296454846859,
+          "direction": "negative"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 4,
+          "mean_abs_shap": 0.07715725898742676,
+          "mean_shap": -0.005414014216512442,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 5,
+          "mean_abs_shap": 0.06959947943687439,
+          "mean_shap": -0.0010211463086307049,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 6,
+          "mean_abs_shap": 0.06920722126960754,
+          "mean_shap": -0.018735695630311966,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 7,
+          "mean_abs_shap": 0.06794383376836777,
+          "mean_shap": 0.015000895597040653,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 8,
+          "mean_abs_shap": 0.0623931847512722,
+          "mean_shap": 0.005230162758380175,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 9,
+          "mean_abs_shap": 0.0573076494038105,
+          "mean_shap": -0.007569487206637859,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 10,
+          "mean_abs_shap": 0.049977678805589676,
+          "mean_shap": 0.015361199155449867,
+          "direction": "positive"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 11,
+          "mean_abs_shap": 0.04916555434465408,
+          "mean_shap": -0.006658110301941633,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 12,
+          "mean_abs_shap": 0.04797443374991417,
+          "mean_shap": -0.0067087262868881226,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 13,
+          "mean_abs_shap": 0.04603663086891174,
+          "mean_shap": -0.002741894219070673,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.029782235622406006,
+          "mean_shap": 0.005854169372469187,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.02484923228621483,
+          "mean_shap": 0.004501527175307274,
+          "direction": "positive"
+        }
+      ]
+    },
+    {
+      "fold": 4,
+      "train_end": "2025-11-14",
+      "test_start": "2025-11-14",
+      "test_end": "2025-12-14",
+      "train_n": 51710,
+      "test_n": 8638,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.14657630026340485,
+          "mean_shap": 0.02450578287243843,
+          "direction": "positive"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 2,
+          "mean_abs_shap": 0.11159427464008331,
+          "mean_shap": 0.023617414757609367,
+          "direction": "positive"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 3,
+          "mean_abs_shap": 0.09522800147533417,
+          "mean_shap": -0.0293510090559721,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 4,
+          "mean_abs_shap": 0.07639016211032867,
+          "mean_shap": -0.0065694814547896385,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 5,
+          "mean_abs_shap": 0.07453849911689758,
+          "mean_shap": 0.022553471848368645,
+          "direction": "positive"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 6,
+          "mean_abs_shap": 0.07158471643924713,
+          "mean_shap": -0.002051433315500617,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 7,
+          "mean_abs_shap": 0.07015981525182724,
+          "mean_shap": -0.0008496246882714331,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 8,
+          "mean_abs_shap": 0.06595958769321442,
+          "mean_shap": -0.001256974064745009,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 9,
+          "mean_abs_shap": 0.06475137919187546,
+          "mean_shap": -0.002073147566989064,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 10,
+          "mean_abs_shap": 0.057879894971847534,
+          "mean_shap": -0.010387523099780083,
+          "direction": "negative"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 11,
+          "mean_abs_shap": 0.05486268177628517,
+          "mean_shap": -0.0019010226242244244,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 12,
+          "mean_abs_shap": 0.044680848717689514,
+          "mean_shap": -0.006795940455049276,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 13,
+          "mean_abs_shap": 0.04395675286650658,
+          "mean_shap": 0.0032163222786039114,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 14,
+          "mean_abs_shap": 0.03644304350018501,
+          "mean_shap": 0.003137972205877304,
+          "direction": "positive"
+        },
+        {
+          "feature": "ret1_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.0300829466432333,
+          "mean_shap": 6.175367889227346e-05,
+          "direction": "positive"
+        }
+      ]
+    },
+    {
+      "fold": 5,
+      "train_end": "2025-12-14",
+      "test_start": "2025-12-14",
+      "test_end": "2026-01-13",
+      "train_n": 60348,
+      "test_n": 8639,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.15647955238819122,
+          "mean_shap": -0.018485018983483315,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 2,
+          "mean_abs_shap": 0.11185513436794281,
+          "mean_shap": -0.00477151945233345,
+          "direction": "negative"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 3,
+          "mean_abs_shap": 0.07899414002895355,
+          "mean_shap": -0.04223140701651573,
+          "direction": "negative"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 4,
+          "mean_abs_shap": 0.07100760191679001,
+          "mean_shap": 0.01899588853120804,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 5,
+          "mean_abs_shap": 0.06758558005094528,
+          "mean_shap": -0.002090512542054057,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 6,
+          "mean_abs_shap": 0.06750676035881042,
+          "mean_shap": 0.0004304066824261099,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 7,
+          "mean_abs_shap": 0.0638827532529831,
+          "mean_shap": 0.004990248009562492,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 8,
+          "mean_abs_shap": 0.0630585104227066,
+          "mean_shap": 0.0038664685562253,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 9,
+          "mean_abs_shap": 0.05792955309152603,
+          "mean_shap": 0.015733318403363228,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 10,
+          "mean_abs_shap": 0.05175396427512169,
+          "mean_shap": 0.004772427026182413,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 11,
+          "mean_abs_shap": 0.04525931179523468,
+          "mean_shap": 0.011943020857870579,
+          "direction": "positive"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 12,
+          "mean_abs_shap": 0.04243077337741852,
+          "mean_shap": -0.0004663852450903505,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 13,
+          "mean_abs_shap": 0.03733992949128151,
+          "mean_shap": 0.0044785793870687485,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 14,
+          "mean_abs_shap": 0.029934147372841835,
+          "mean_shap": -0.00029098594677634537,
+          "direction": "negative"
+        },
+        {
+          "feature": "ret1_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.022883610799908638,
+          "mean_shap": 0.0012853189837187529,
+          "direction": "positive"
+        }
+      ]
+    },
+    {
+      "fold": 6,
+      "train_end": "2026-01-13",
+      "test_start": "2026-01-13",
+      "test_end": "2026-02-12",
+      "train_n": 68987,
+      "test_n": 8638,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.190987691283226,
+          "mean_shap": 0.06357157230377197,
+          "direction": "positive"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 2,
+          "mean_abs_shap": 0.11344362795352936,
+          "mean_shap": -0.034671586006879807,
+          "direction": "negative"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 3,
+          "mean_abs_shap": 0.1077360212802887,
+          "mean_shap": 0.026987822726368904,
+          "direction": "positive"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 4,
+          "mean_abs_shap": 0.09193272143602371,
+          "mean_shap": -0.010746536776423454,
+          "direction": "negative"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 5,
+          "mean_abs_shap": 0.07138746976852417,
+          "mean_shap": 0.028772426769137383,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 6,
+          "mean_abs_shap": 0.06504266709089279,
+          "mean_shap": -0.02384740300476551,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 7,
+          "mean_abs_shap": 0.06443554908037186,
+          "mean_shap": 0.022893941029906273,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 8,
+          "mean_abs_shap": 0.06218338757753372,
+          "mean_shap": -0.000660487508866936,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 9,
+          "mean_abs_shap": 0.056072454899549484,
+          "mean_shap": 0.004061058163642883,
+          "direction": "positive"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 10,
+          "mean_abs_shap": 0.048712242394685745,
+          "mean_shap": -0.001531827962026,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 11,
+          "mean_abs_shap": 0.04788174107670784,
+          "mean_shap": 0.01938249170780182,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_btc",
+          "rank": 12,
+          "mean_abs_shap": 0.03750329464673996,
+          "mean_shap": -0.012951603159308434,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 13,
+          "mean_abs_shap": 0.03729955852031708,
+          "mean_shap": -0.016580237075686455,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 14,
+          "mean_abs_shap": 0.03023175522685051,
+          "mean_shap": 0.013640334829688072,
+          "direction": "positive"
+        },
+        {
+          "feature": "ret1_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.028180010616779327,
+          "mean_shap": 0.0046681868843734264,
+          "direction": "positive"
+        }
+      ]
+    },
+    {
+      "fold": 7,
+      "train_end": "2026-02-12",
+      "test_start": "2026-02-12",
+      "test_end": "2026-03-14",
+      "train_n": 77625,
+      "test_n": 3116,
+      "top_features": [
+        {
+          "feature": "vwap_z",
+          "rank": 1,
+          "mean_abs_shap": 0.1690085232257843,
+          "mean_shap": -0.03268393129110336,
+          "direction": "negative"
+        },
+        {
+          "feature": "btc_slope_sign_1h",
+          "rank": 2,
+          "mean_abs_shap": 0.10801690816879272,
+          "mean_shap": -0.009524843655526638,
+          "direction": "negative"
+        },
+        {
+          "feature": "spread_pct",
+          "rank": 3,
+          "mean_abs_shap": 0.07071767002344131,
+          "mean_shap": 0.007821084931492805,
+          "direction": "positive"
+        },
+        {
+          "feature": "funding_btc_pct",
+          "rank": 4,
+          "mean_abs_shap": 0.06600002199411392,
+          "mean_shap": 0.00020932253391947597,
+          "direction": "positive"
+        },
+        {
+          "feature": "dist_to_vwap48_z_eth",
+          "rank": 5,
+          "mean_abs_shap": 0.05961413308978081,
+          "mean_shap": -0.011237433180212975,
+          "direction": "negative"
+        },
+        {
+          "feature": "rv48_pct_btc",
+          "rank": 6,
+          "mean_abs_shap": 0.057152021676301956,
+          "mean_shap": -0.036297690123319626,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr14_pct_btc",
+          "rank": 7,
+          "mean_abs_shap": 0.05700439587235451,
+          "mean_shap": -0.013256879523396492,
+          "direction": "negative"
+        },
+        {
+          "feature": "eth_slope_abs_pct_1h",
+          "rank": 8,
+          "mean_abs_shap": 0.049673087894916534,
+          "mean_shap": 0.02869446389377117,
+          "direction": "positive"
+        },
+        {
+          "feature": "atr14_pct_eth",
+          "rank": 9,
+          "mean_abs_shap": 0.049379613250494,
+          "mean_shap": 0.0374712236225605,
+          "direction": "positive"
+        },
+        {
+          "feature": "eth_slope_z_1h",
+          "rank": 10,
+          "mean_abs_shap": 0.04804055765271187,
+          "mean_shap": 0.014177985489368439,
+          "direction": "positive"
+        },
+        {
+          "feature": "day_of_week",
+          "rank": 11,
+          "mean_abs_shap": 0.04252421483397484,
+          "mean_shap": -0.005910397972911596,
+          "direction": "negative"
+        },
+        {
+          "feature": "hour_of_day",
+          "rank": 12,
+          "mean_abs_shap": 0.039090175181627274,
+          "mean_shap": -0.004010895267128944,
+          "direction": "negative"
+        },
+        {
+          "feature": "ret1_btc",
+          "rank": 13,
+          "mean_abs_shap": 0.0285816453397274,
+          "mean_shap": 0.0019408459775149822,
+          "direction": "positive"
+        },
+        {
+          "feature": "rv48_pct_eth",
+          "rank": 14,
+          "mean_abs_shap": 0.02135193906724453,
+          "mean_shap": -0.0087346900254488,
+          "direction": "negative"
+        },
+        {
+          "feature": "atr_rv_ratio_pct_btc",
+          "rank": 15,
+          "mean_abs_shap": 0.016916867345571518,
+          "mean_shap": 0.00030702276853844523,
+          "direction": "positive"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Horizon=12 bars (60 min). Re-run with --horizon 6 and --horizon 24 for MR and trend candidates.",
+    "CA-family candidates likely rediscover existing signals. Focus on [NEW] candidates.",
+    "Pre-commit to threshold before running any suggestion through the pipeline.",
+    "Run suggestions through standard WF+bootstrap gates \u2014 do not trust RF in-sample performance."
+  ]
+}
