@@ -107,7 +107,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
                      "H164", "H165", "H166", "H167", "H168",
                      "H169", "H170", "H171", "H172", "H173"},
     "oi_liq": {"H176", "H177", "H178", "H179", "H180",
-               "H181", "H182", "H183", "H184", "H185", "H186"},
+               "H181", "H182", "H183", "H184", "H185", "H186", "H187"},
 }
 
 
@@ -1515,8 +1515,8 @@ def build_signal(
                 out[np.asarray(idx, dtype=int)] = -1.0
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id == "H180":
-            # VS-2 + liquidation confirmation gate.
+        if hypothesis_id in {"H180", "H187"}:
+            # VS-2 + liquidation confirmation gate. H187: 1-bar execution lag robustness check.
             # Volume-gated slope flip (VS-2 mechanism) PLUS elevated total liquidations.
             # Theory: VS-2 already selects high-conviction flips; adding liq confirmation
             # filters to only those where leveraged money is being forced out — the
@@ -1571,14 +1571,14 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         # VS-1/VS-2 with 1-bar execution lag.
         trade_close_col = "close_btc"
         entry_offset = 1
-    elif hypothesis_id in {"H183", "H184", "H185", "H186"}:
-        # OI-gated slope flip + LQ family 1-bar execution lag robustness checks.
+    elif hypothesis_id in {"H183", "H184", "H185", "H186", "H187"}:
+        # OI-gated slope flip + LQ family + VS-3 1-bar execution lag robustness checks.
         trade_close_col = "close_btc"
         entry_offset = 1
     else:
         trade_close_col = "close_btc"
 
-    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171", "H183", "H184", "H185", "H186"}:
+    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171", "H183", "H184", "H185", "H186", "H187"}:
         entry_offset = 0
 
     effective_horizon = pd.Series(int(horizon), index=x.index, dtype=int)

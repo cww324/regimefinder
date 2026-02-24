@@ -6021,3 +6021,28 @@ hypotheses:
     P>0=1.000 folds 15/17. LQ-3 edge is extremely robust to execution lag.
     Drop from H179 (31.0bps) is negligible. EXECUTION REALISTIC. Paper trade ready."
   source: Robustness check for H179 (LQ-3).
+
+- id: H187
+  family: oi_liq
+  class: robustness_check
+  description: H180 (VS-3) 1-bar execution lag robustness check.
+  rationale: VS-3 fires on slope flip + volume p80 + liq p70. With only 0.26 trades/day
+    and n=85, each trade matters. Confirms edge survives a 5-minute entry delay.
+  WHY: VS-3 is the all-time best signal (60.5bps) — execution realism check is
+    required before paper trading. VS-2 lag (H171) passed at 34.94bps, so VS-3
+    likely passes too, but must verify given the triple-gate structure.
+  RULES:
+  - Same signal as H180. Entry at close[t+1]. Direction = eth_slope_sign_1h. Horizon = 12.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.80
+      total_liq_btc_pct_min: 0.70
+  allowed_variants: []
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — n=85, gross=54.1bps P>0=1.000, WF+ 16/17, WF bps8=45.1bps
+    P>0=1.000 folds 15/17. VS-3 edge barely affected by 1-bar lag (60.5 → 54.1bps,
+    fold structure identical). EXECUTION REALISTIC. Paper trade ready."
+  source: Robustness check for H180 (VS-3).
