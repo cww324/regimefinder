@@ -5205,3 +5205,343 @@ hypotheses:
     highest-volume flips have the most reliable follow-through."
   source: Robustness check for VS-1 (H145). Volume threshold sensitivity test
     (tighter threshold p85 vs. anchor p80).
+
+- id: H164
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 session-gated to EU/US overlap (08:00-16:00 UTC). High-volume
+    ETH slope flip restricted to the highest-liquidity trading session.
+  rationale: CA-1 showed its strongest variant (H84) is session-gated to 08-16 UTC
+    with +0.38% vs +0.34% unfiltered. The same mechanism should apply to VS-1 — the
+    EU/US overlap session has deeper order books, more institutional participation,
+    and slope flips on high volume in this window should have the highest conviction.
+  WHY: Test whether 08-16 UTC session restriction improves VS-1 per-trade edge, as
+    it did for CA-1. Pre-committed before seeing results.
+  RULES:
+  - Same as H145 (eth_slope flip + volume_btc_pct >= 0.80 + dedup gap = 8).
+  - Evaluate only trades occurring between 08:00 and 16:00 UTC.
+  entry_rules:
+  - Same as H145. Session filter applied at evaluation.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+      session_utc: "08-16"
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-24"
+  decision_notes: "FAIL. n=54, 0.1/day, gross=25.08bps P>0=0.999, WF+ 10/17 (59%),
+    bps8_P>0=0.986. The bps8 bootstrap is strong but WF fold pass count (10/17) is
+    below the PASS threshold. Unlike CA-1 where H84 (08-16) was the strongest session,
+    VS-1 in EU/US hours does not improve over all-hours. The EU/US session may have
+    more contested high-volume slope flips (more participants fading momentum)."
+  source: VS family expansion. Session-gated VS-1 (EU/US overlap). Mirrors H84 for CA-1.
+
+- id: H165
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 session-gated to Asia session (00:00-08:00 UTC). High-volume
+    ETH slope flip restricted to the Asian trading session.
+  rationale: CA-1 showed positive but lower edge in Asia session (H83, +0.27%).
+    Testing whether VS-1 shows similar session-specific behavior. Lower liquidity
+    in Asia means high-volume bars are even more selective — fewer but potentially
+    more meaningful flips.
+  WHY: Complete the session breakdown for VS-1 (H164=EU/US, H165=Asia, H166=US only).
+  RULES:
+  - Same as H145. Evaluate only trades 00:00-08:00 UTC.
+  entry_rules:
+  - Same as H145. Session filter applied at evaluation.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+      session_utc: "00-08"
+  allowed_variants: []
+  status: INCONCLUSIVE
+  decision_date: "2026-02-24"
+  decision_notes: "INCONCLUSIVE (n=15, too few trades). gross=15.86bps P>0=0.966,
+    WF+ 4/10, bps8_P>0=0.798. High-volume ETH slope flips in Asian session are very
+    rare (0.04/day). Not enough observations to draw conclusions."
+  source: VS family expansion. Session-gated VS-1 (Asia). Mirrors H83 for CA-1.
+
+- id: H166
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 session-gated to US session (16:00-24:00 UTC). High-volume
+    ETH slope flip restricted to the US trading hours.
+  rationale: CA-1 showed strong edge in US session (H85, +0.36%). US session has
+    high retail and momentum-trading activity; high-volume flips in this window
+    may benefit from trend-following amplification.
+  WHY: Complete the session breakdown for VS-1. Pre-committed before seeing results.
+  RULES:
+  - Same as H145. Evaluate only trades 16:00-24:00 UTC.
+  entry_rules:
+  - Same as H145. Session filter applied at evaluation.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_btc_pct_min: 0.80
+      session_utc: "16-24"
+  allowed_variants: []
+  status: BORDERLINE
+  decision_date: "2026-02-24"
+  decision_notes: "BORDERLINE. n=67, 0.2/day, gross=29.40bps P>0=1.000, WF+ 13/18
+    (72%), bps8_P>0=1.000. Strong bps8 bootstrap but WF fold count marginal. US session
+    (16-24 UTC) shows the highest per-trade edge of the session variants (29.40bps),
+    but with too few trades per fold to confirm reliably. Worth revisiting with more data."
+  source: VS family expansion. Session-gated VS-1 (US). Mirrors H85 for CA-1.
+
+- id: H167
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-2 — high-volume ETH slope flip with 12-bar (60 min) hold instead
+    of 8-bar (40 min). Tests whether volume-validated slope flips sustain their
+    directional momentum longer than unfiltered flips.
+  rationale: High-volume slope flips signal participation by larger players. Large
+    players tend to hold positions longer than retail, so the momentum effect may
+    persist for 60 minutes rather than 40. CA-1 with h=6 (H60/CA-3) vs h=8 (H65/CA-1)
+    shows diminishing returns at shorter horizon. VS-1 may show the opposite — longer
+    horizons work better when the flip is backed by real volume.
+  WHY: Test whether VS-1 edge increases, decreases, or is stable at h=12. Anchor
+    for VS-2 (volume_state, longer horizon). Pre-committed before seeing results.
+  RULES:
+  - eth_slope_sign_1h flip + volume_btc_pct >= 0.80. Hold for 12 bars (60 min).
+  - Event-triggered with dedup gap = 12.
+  entry_rules:
+  - Same signal as H145. Hold extended to 12 bars.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.80
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-2
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-2 ANCHOR. n=136, 0.4/day, gross=38.63bps P>0=1.000,
+    WF+ 17/18, bps8_P>0=1.000. Strongest VS anchor yet — h=12 gives 38bps vs 26bps
+    at h=8 for VS-1. High-volume momentum persists for 60 min, not just 40. All 5
+    robustness checks pass (H169-H173) with 34-45bps range. VS-2 at p85 (H173) gives
+    45bps — the best single VS variant."
+  source: VS family expansion. Longer horizon variant. VS-2 anchor candidate.
+    Justification for h=12 pre-committed.
+
+- id: H168
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-1 with ETH volume gate instead of BTC volume. High ETH volume
+    during ETH slope flip — a self-referential volume confirmation.
+  rationale: H145 uses BTC volume as the volume gate — BTC is the dominant asset
+    and sets the floor for overall crypto market activity. ETH volume is more specific
+    to the ETH market and may be a purer signal for ETH slope changes. When ETH itself
+    shows high volume at the moment its slope flips, the move is being driven by
+    genuine ETH-specific demand (not just BTC spillover). Hypothesis is that ETH
+    volume gate is at least as strong as BTC volume gate for ETH slope signals.
+  WHY: Test whether ETH volume is equivalent, better, or worse than BTC volume as
+    the gate for VS-1. These two are correlated but not identical — ETH-specific
+    volume spikes may occur independently of BTC volume. Pre-committed before results.
+  RULES:
+  - eth_slope_sign_1h flip + volume_eth_pct >= 0.80 (ETH volume, not BTC).
+  - Event-triggered with dedup gap = 8.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_eth_pct >= 0.80.
+  exit_rules:
+  - Hold for fixed 8 bars (40 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_eth_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      volume_eth_pct_min: 0.80
+  allowed_variants: []
+  status: BORDERLINE
+  decision_date: "2026-02-24"
+  decision_notes: "BORDERLINE. n=117, 0.3/day, gross=24.46bps P>0=1.000, WF+ 14/18
+    (78%), bps8_P>0=0.999. ETH volume gate gives slightly lower edge than BTC volume
+    gate (H145: 26.19bps vs H168: 24.46bps). Real signal but WF fold count just below
+    PASS threshold. ETH and BTC volumes are correlated (~0.8), so the ETH gate selects
+    similar but slightly different events. BTC volume appears to be the better gate."
+  source: VS family expansion. ETH volume gate instead of BTC. Tests whether the
+    asset-specific volume provides equivalent or stronger confirmation for ETH signals.
+
+- id: H169
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-2 odd-day subsample robustness check. Same signal as H167 (h=12
+    high-volume ETH slope flip) evaluated only on odd calendar days.
+  rationale: VS-2 (H167) produced 38.63bps PASS. Robustness check mirrors H159 for VS-1.
+  WHY: Confirm VS-2 holds on arbitrary temporal subsamples. Pre-committed.
+  RULES:
+  - Same as H167 (h=12, vol_btc_pct >= 0.80). Odd days only (dt.day % 2 == 1).
+  entry_rules:
+  - Identical to H167. Day filter applied at evaluation.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.80
+      subsample: odd_days
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-2
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-2 robustness (odd-day). n=65, gross=36.35bps P>0=1.000,
+    WF+ 12/17, bps8_P>0=1.000. Signal holds strongly on odd days alone."
+  source: Robustness check for VS-2 (H167). Odd-day subsample.
+
+- id: H170
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-2 even-day subsample robustness check. Same signal as H167 (h=12)
+    evaluated only on even calendar days.
+  rationale: Symmetric to H169. Together H169+H170 confirm VS-2 is stable across
+    arbitrary time partitions.
+  WHY: Confirm VS-2 holds on even-day subsample. Pre-committed.
+  RULES:
+  - Same as H167 (h=12, vol_btc_pct >= 0.80). Even days only (dt.day % 2 == 0).
+  entry_rules:
+  - Identical to H167. Day filter applied at evaluation.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.80
+      subsample: even_days
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-2
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-2 robustness (even-day). n=71, gross=40.72bps P>0=1.000,
+    WF+ 13/17, bps8_P>0=1.000. Even higher than anchor on even days (40.72 vs 38.63)."
+  source: Robustness check for VS-2 (H167). Even-day subsample.
+
+- id: H171
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-2 with 1-bar execution lag. Signal fires at slope flip bar, entry
+    on the NEXT bar close. Tests execution realism for the 12-bar hold variant.
+  rationale: VS-1 survived 1-bar lag (H161). VS-2 should be tested independently
+    because the longer 12-bar hold may have different sensitivity to entry timing.
+  WHY: Execution realism check for VS-2. Pre-committed before seeing results.
+  RULES:
+  - Same signal as H167 (h=12, vol >= p80). Enter on close[t+1].
+  entry_rules:
+  - Same as H167. Entry shifted by 1 bar.
+  exit_rules:
+  - Hold for fixed 12 bars from entry bar. No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.80
+      execution_lag_bars: 1
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-2
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-2 robustness (1-bar lag). n=136, gross=34.94bps P>0=1.000,
+    WF+ 17/18, bps8_P>0=1.000. 1-bar lag costs ~3.7bps (38.63→34.94) but still
+    comfortably passes. VS-2 execution at next bar close is viable."
+  source: Robustness check for VS-2 (H167). Execution lag test.
+
+- id: H172
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-2 with p75 volume threshold (12-bar hold). Tests threshold
+    sensitivity for the longer-horizon variant.
+  rationale: VS-1 at p75 (H162) showed same edge as p80 — not curve-fitted. Testing
+    whether VS-2 shows the same stability at p75. With h=12, p75 adds more trades
+    while potentially diluting from high-quality p80+ events.
+  WHY: Threshold sensitivity check for VS-2. Pre-committed.
+  RULES:
+  - eth_slope_sign_1h flip + volume_btc_pct >= 0.75, hold 12 bars.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_btc_pct >= 0.75.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.75
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-2
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-2 robustness (p75 vol). n=164, 0.5/day, gross=39.88bps
+    P>0=1.000, WF+ 17/18, bps8_P>0=1.000. More trades (164 vs 136) with same edge.
+    Not curve-fitted to p80."
+  source: Robustness check for VS-2 (H167). Volume threshold sensitivity (p75).
+
+- id: H173
+  family: volume_state
+  class: tradeable_hypothesis
+  description: VS-2 with p85 volume threshold (12-bar hold). Tests whether
+    highest-volume-only selection improves per-trade edge at h=12.
+  rationale: VS-1 at p85 (H163) gave 32bps vs 26bps at p80 — tighter is better.
+    Testing whether this pattern holds at h=12. If p85 at h=12 gives even higher
+    edge, p85+h=12 may be the best VS variant overall.
+  WHY: Threshold sensitivity check for VS-2. Pre-committed.
+  RULES:
+  - eth_slope_sign_1h flip + volume_btc_pct >= 0.85, hold 12 bars.
+  entry_rules:
+  - Long/Short when eth_slope flips AND volume_btc_pct >= 0.85.
+  exit_rules:
+  - Hold for fixed 12 bars (60 min). No early exit.
+  required_inputs:
+  - BTC-USD and ETH-USD 5m OHLCV (Coinbase)
+  - eth_slope_sign_1h and volume_btc_pct from load_frame()
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      volume_btc_pct_min: 0.85
+  allowed_variants: []
+  status: PASS
+  signal_group: VS-2
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — VS-2 robustness (p85 vol). n=104, 0.3/day, gross=45.29bps
+    P>0=1.000, WF+ 17/18, bps8_P>0=1.000. Best single VS variant: 45bps at h=12+p85.
+    Tighter volume filter selects highest-conviction flips which sustain for 60 min."
+  source: Robustness check for VS-2 (H167). Volume threshold sensitivity (p85).

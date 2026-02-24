@@ -97,7 +97,9 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144"},
     "momentum": {"H125"},
     "cross_asset": {"H126"},
-    "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163"},
+    "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163",
+                     "H164", "H165", "H166", "H167", "H168",
+                     "H169", "H170", "H171", "H172", "H173"},
 }
 
 
@@ -1259,6 +1261,60 @@ def build_signal(
                 out[out_idx] = (-bar_dir).to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
+        # VS-1 session-gated expansion (H164-H166): same signal as H145, session filter in build_events
+        # H167: VS-2 — longer horizon h=12 (signal identical to H145; horizon arg controls hold)
+        # H169-H173: VS-2 robustness checks (same signal as H167; subsample/lag/threshold variants)
+        if hypothesis_id in {"H164", "H165", "H166", "H167", "H169", "H170", "H171"}:
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H172":
+            # VS-2 with looser volume threshold: p75 (more trades, test sensitivity)
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.75)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H173":
+            # VS-2 with tighter volume threshold: p85
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.85)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H168":
+            # VS-1 with ETH volume gate instead of BTC volume
+            # Theory: ETH volume expansion during ETH slope flip is a purer self-referential
+            # signal — the ETH market itself is validating its own directional flip.
+            require_columns(x, hypothesis_id, ["volume_eth_pct"])
+            eth_vol_pct = x["volume_eth_pct"]
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_eth_vol = eth_vol_pct.ge(0.80)
+            candidate = slope_flip & high_eth_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
         # VS-1 robustness checks (H159-H163): same core as H145, vary threshold or subsample
         if hypothesis_id in {"H159", "H160", "H161"}:
             # H159: odd-day subsample of VS-1 (filtered in build_events)
@@ -1388,14 +1444,14 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         # Execution realism: signal at t, enter on close[t+1], hold horizon bars from entry.
         # Trades without t+1 or t+1+horizon are dropped downstream via dropna.
         entry_offset = 1
-    elif hypothesis_id == "H161":
-        # VS-1 with 1-bar execution lag: signal fires on slope flip, enter on next bar close.
+    elif hypothesis_id in {"H161", "H171"}:
+        # VS-1/VS-2 with 1-bar execution lag.
         trade_close_col = "close_btc"
         entry_offset = 1
     else:
         trade_close_col = "close_btc"
 
-    if hypothesis_id not in {"H61", "H76", "H77", "H161"}:
+    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171"}:
         entry_offset = 0
 
     effective_horizon = pd.Series(int(horizon), index=x.index, dtype=int)
@@ -1436,6 +1492,18 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
     if hypothesis_id == "H159":
         base = base[base["dt"].dt.day % 2 == 1].copy()
     if hypothesis_id == "H160":
+        base = base[base["dt"].dt.day % 2 == 0].copy()
+    # VS-1 session-gated expansion.
+    if hypothesis_id == "H165":
+        base = base[(base["dt"].dt.hour >= 0) & (base["dt"].dt.hour < 8)].copy()
+    if hypothesis_id == "H164":
+        base = base[(base["dt"].dt.hour >= 8) & (base["dt"].dt.hour < 16)].copy()
+    if hypothesis_id == "H166":
+        base = base[(base["dt"].dt.hour >= 16) & (base["dt"].dt.hour < 24)].copy()
+    # VS-2 robustness: odd-day (H169), even-day (H170) subsamples.
+    if hypothesis_id == "H169":
+        base = base[base["dt"].dt.day % 2 == 1].copy()
+    if hypothesis_id == "H170":
         base = base[base["dt"].dt.day % 2 == 0].copy()
 
     # MAE proxy using close-path from entry to horizon.

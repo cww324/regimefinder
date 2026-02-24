@@ -134,11 +134,53 @@ Organized by regime family. All results use 365d dataset and 60/15/15 WF.
 
 *H160 BORDERLINE is a WF fold-count artifact (71 trades / 17 folds = ~4/fold). bps8 P>0=0.999 confirms the edge is real.
 
-**Key robustness insights:**
+**Key robustness insights (VS-1):**
 - **1-bar lag passes** → real execution at next bar close works; no look-ahead dependence
 - **p85 gives highest edge (32bps)** → higher-volume flips are more reliable; mechanism is real
 - **p75 also passes with same edge** → not curve-fitted to p80; stable across threshold range
 - **Odd + even day both hold** → not a temporal or calendar artifact
+
+---
+
+#### VS-1 Expansion + VS-2 Anchor — 2026-02-24
+
+**Session-gated VS-1 (H164-H166)**
+
+| ID | Session | n | /day | gross_bps | WF+ | bps8_P>0 | Status |
+|----|---------|---|------|-----------|-----|----------|--------|
+| H164 | 08-16 UTC (EU/US) | 54 | 0.1 | 25.08 | 10/17 | 0.986 | FAIL |
+| H165 | 00-08 UTC (Asia) | 15 | 0.04 | 15.86 | 4/10 | 0.798 | INCONCLUSIVE |
+| H166 | 16-24 UTC (US) | 67 | 0.2 | 29.40 | 13/18 | 1.000 | BORDERLINE |
+
+Session gates do NOT help VS-1 (contrast with CA-1 where 08-16 was strongest). Too few trades per fold when session-filtered.
+
+**VS-2 Anchor: h=12 hold (H167) + ETH vol gate (H168)**
+
+| ID | Description | n | /day | gross_bps | WF+ | bps8_P>0 | Status |
+|----|-------------|---|------|-----------|-----|----------|--------|
+| **H167** | **VS-2: h=12, vol p80** | **136** | **0.4** | **38.63** | **17/18** | **1.000** | **PASS (VS-2)** |
+| H168 | ETH vol gate, h=8 | 117 | 0.3 | 24.46 | 14/18 | 0.999 | BORDERLINE |
+
+VS-2 (h=12): 38.63bps vs VS-1 (h=8): 26.19bps — momentum persists for 60 min when volume-backed.
+
+**VS-2 Robustness Checks (H169-H173) — All Pass**
+
+| H# | Check | n | gross_bps | WF+ | bps8_P>0 | Result |
+|----|-------|---|-----------|-----|----------|--------|
+| H169 | Odd-day | 65 | 36.35 | 12/17 | 1.000 | **PASS** |
+| H170 | Even-day | 71 | 40.72 | 13/17 | 1.000 | **PASS** |
+| H171 | 1-bar lag | 136 | 34.94 | 17/18 | 1.000 | **PASS** |
+| H172 | p75 vol | 164 | 39.88 | 17/18 | 1.000 | **PASS** |
+| H173 | p85 vol | 104 | **45.29** | 17/18 | 1.000 | **PASS** |
+
+**Pattern across VS variants:**
+
+| | h=8 | h=12 |
+|--|-----|------|
+| **p80 vol** | 26.19bps (VS-1) | 38.63bps (VS-2) |
+| **p85 vol** | 32.23bps | **45.29bps (best)** |
+
+Both h and volume threshold independently increase edge — they compound. VS-2 at p85 is the highest-performing single variant in the entire research history at 45bps.
 
 ---
 

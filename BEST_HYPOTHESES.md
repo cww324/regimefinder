@@ -158,6 +158,37 @@ Not assigned a shortcode yet.
 
 ## What to do next
 
-1. **VS family expansion**: session-gated (08-16 UTC), ETH volume gate, h=12, p85 as standard threshold
-2. **H141 revisit**: loosen funding threshold from p85 to p80 to get more trades (pre-commit threshold first)
-3. **OI/liquidations data**: backfill rc.open_interest and rc.liquidations to unlock H148-H156
+---
+
+## VS-2 — High-Volume ETH Slope Flip, h=12 ★ ANCHOR (2026-02-24)
+
+**What it is:** VS-1 with 60-minute hold (12 bars). Volume-validated momentum sustains for 60 min.
+
+**The best single VS variant:** VS-2 at p85 (H173): **45.29bps gross, WF+ 17/18, bps8 P>0=1.000**
+
+| H-number | Variant | gross_bps | WF+ | bps8 PASS | n/day |
+|----------|---------|-----------|-----|-----------|-------|
+| H167 | Base (p80 vol, h=12) | 38.63 | 17/18 | YES | 0.4 |
+| H169 | Odd-day | 36.35 | 12/17 | YES | 0.2 |
+| H170 | Even-day | 40.72 | 13/17 | YES | 0.2 |
+| H171 | 1-bar lag | 34.94 | 17/18 | YES | 0.4 |
+| H172 | p75 vol | 39.88 | 17/18 | YES | 0.5 |
+| H173 | p85 vol | **45.29** | 17/18 | YES | 0.3 |
+
+**VS pattern summary (all confirmed pass):**
+
+| | h=8 | h=12 |
+|--|-----|------|
+| **p80 vol** | 26bps (VS-1/H145) | 38bps (VS-2/H167) |
+| **p85 vol** | 32bps (H163) | **45bps (H173, BEST)** |
+
+Both volume threshold and hold horizon independently add edge and compound together.
+**Session gates do NOT help VS** (H164-H166 FAIL/BORDERLINE/INCONCLUSIVE). All-hours is already robust.
+
+---
+
+## What to do next
+
+1. **H141 revisit**: loosen funding threshold from p85 to p80 to get more trades (pre-commit threshold first)
+2. **OI/liquidations data**: backfill rc.open_interest and rc.liquidations to unlock H148-H156
+3. **Portfolio construction**: combine CA-1 (H65, all-hours) + VS-2 (H167/H173, complementary timing)

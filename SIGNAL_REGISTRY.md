@@ -147,11 +147,33 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 
 **Confirmed robust:** All 5 robustness checks pass. 1-bar lag survives (execution realistic). p75-p85 range all pass (not curve-fitted). Odd + even day both hold (not temporal artifact).
 
-**VS family ready for expansion.** Next candidates:
-- VS-1 | ST — session-gated variants (08-16 UTC strongest for CA)
-- VS-2 — longer horizon (h=12): do high-volume flips persist longer?
-- VS-1 with ETH volume gate (volume_eth_pct ≥ 0.80) instead of BTC
-- VS-1 with p85 as production threshold (H163 showed 32bps — consider making this the standard)
+---
+
+#### VS-2 — High-Volume ETH Slope Flip, h=12 ★ NEW ANCHOR (2026-02-24)
+**What it is:** VS-1 with a 60-minute hold (12 bars) instead of 40-minute (8 bars). Volume-validated slope flips sustain directional momentum for 60 min.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| H167 | Base (p80 vol, h=12) | 38.63 | 17/18 | PASS | 0.4 | **VS-2** |
+| H169 | Odd-day | 36.35 | 12/17 | PASS | 0.2 | VS-2 replication |
+| H170 | Even-day | 40.72 | 13/17 | PASS | 0.2 | VS-2 replication |
+| H171 | 1-bar lag | 34.94 | 17/18 | PASS | 0.4 | VS-2 replication |
+| H172 | p75 vol | 39.88 | 17/18 | PASS | 0.5 | VS-2 replication |
+| H173 | p85 vol | **45.29** | 17/18 | PASS | 0.3 | VS-2 replication |
+
+**All 5 robustness checks pass.** VS-2 at p85 (H173) is the highest-performing single variant in all research: **45bps gross, WF+ 17/18, bps8 P>0=1.000**.
+
+---
+
+### VS Expansion Results (2026-02-24)
+
+**Session gates do NOT help VS** (contrast with CA-1 where 08-16 UTC was strongest):
+- H164 (08-16 UTC): FAIL (WF count too low)
+- H165 (00-08 UTC): INCONCLUSIVE (n=15)
+- H166 (16-24 UTC): BORDERLINE (29.4bps, WF 13/18)
+- H168 (ETH vol gate): BORDERLINE (24.46bps, WF 14/18)
+
+Session filtering on VS signals leaves too few trades per fold for reliable WF assessment. All-hours VS is already highly robust.
 
 ---
 
