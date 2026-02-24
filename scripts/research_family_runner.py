@@ -106,7 +106,8 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163",
                      "H164", "H165", "H166", "H167", "H168",
                      "H169", "H170", "H171", "H172", "H173"},
-    "oi_liq": {"H176", "H177", "H178", "H179", "H180"},
+    "oi_liq": {"H176", "H177", "H178", "H179", "H180",
+               "H181", "H182", "H183", "H184", "H185", "H186"},
 }
 
 
@@ -1467,10 +1468,9 @@ def build_signal(
         eth_sign = x["eth_slope_sign_1h"]
         vol_pct = x["volume_btc_pct"]
 
-        if hypothesis_id == "H176":
+        if hypothesis_id in {"H176", "H181", "H182", "H183"}:
             # OI-gated ETH slope flip — same structure as VS-1 but using OI as the quality gate.
-            # High OI means many leveraged positions. A slope flip when OI is elevated forces
-            # more of those positions to close, amplifying the move.
+            # H181: odd-day subsample. H182: even-day subsample. H183: 1-bar execution lag.
             slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
             high_oi = oi_pct.ge(0.80)
             candidate = slope_flip & high_oi
@@ -1481,10 +1481,9 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id == "H177":
+        if hypothesis_id in {"H177", "H184"}:
             # Long liquidation cascade → SHORT continuation.
-            # Extreme long-side liquidations (prior 1h) signal a sharp down move.
-            # Theory: cascade liquidations tend to have follow-through as margin calls ripple.
+            # H184: 1-bar execution lag robustness check for H177 (LQ-1).
             condition = long_liq_pct.ge(0.90)
             onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
@@ -1493,10 +1492,9 @@ def build_signal(
                 out[np.asarray(idx, dtype=int)] = -1.0
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id == "H178":
+        if hypothesis_id in {"H178", "H185"}:
             # Short liquidation squeeze → LONG continuation.
-            # Extreme short-side liquidations (prior 1h) signal a sharp up move.
-            # Theory: forced short covering creates sustained buying pressure.
+            # H185: 1-bar execution lag robustness check for H178 (LQ-2).
             condition = short_liq_pct.ge(0.90)
             onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
@@ -1505,11 +1503,9 @@ def build_signal(
                 out[np.asarray(idx, dtype=int)] = 1.0
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id == "H179":
+        if hypothesis_id in {"H179", "H186"}:
             # Liquidation-gated slope flip → SHORT.
-            # Long liquidations elevated (≥p70) AND ETH slope flips DOWN.
-            # When the recent hour had heavy long liquidations AND momentum just turned negative,
-            # the move is likely to continue (cascade + trend confirmation).
+            # H186: 1-bar execution lag robustness check for H179 (LQ-3).
             slope_flip_down = eth_sign.eq(-1) & eth_sign.shift(1).eq(1)
             high_long_liq = long_liq_pct.ge(0.70)
             candidate = slope_flip_down & high_long_liq
@@ -1575,10 +1571,14 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         # VS-1/VS-2 with 1-bar execution lag.
         trade_close_col = "close_btc"
         entry_offset = 1
+    elif hypothesis_id in {"H183", "H184", "H185", "H186"}:
+        # OI-gated slope flip + LQ family 1-bar execution lag robustness checks.
+        trade_close_col = "close_btc"
+        entry_offset = 1
     else:
         trade_close_col = "close_btc"
 
-    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171"}:
+    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171", "H183", "H184", "H185", "H186"}:
         entry_offset = 0
 
     effective_horizon = pd.Series(int(horizon), index=x.index, dtype=int)
@@ -1631,6 +1631,11 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
     if hypothesis_id == "H169":
         base = base[base["dt"].dt.day % 2 == 1].copy()
     if hypothesis_id == "H170":
+        base = base[base["dt"].dt.day % 2 == 0].copy()
+    # H176 (OI-gated slope flip) robustness: odd-day (H181), even-day (H182) subsamples.
+    if hypothesis_id == "H181":
+        base = base[base["dt"].dt.day % 2 == 1].copy()
+    if hypothesis_id == "H182":
         base = base[base["dt"].dt.day % 2 == 0].copy()
 
     # MAE proxy using close-path from entry to horizon.

@@ -5879,3 +5879,145 @@ hypotheses:
     confirmation produces the highest per-trade return in all research history.
     Assigned VS-3 (extends VS family with liq confirmation layer)."
   source: VS-2 + liquidation confirmation. Multi-signal combination.
+
+- id: H181
+  family: oi_liq
+  class: robustness_check
+  description: H176 (OI-gated slope flip) odd-day subsample robustness check.
+  rationale: OI-1 candidate has borderline WF bps8 fold count (13/18). Split by
+    odd/even day to detect day-of-week or systematic bias. If both subsamples pass,
+    confidence in H176 increases for permanent OI-1 shortcode assignment.
+  WHY: Standard robustness protocol for borderline PASS signals before shortcode.
+  RULES:
+  - Same signal as H176. Entry filtered to odd calendar days only.
+  - Horizon = 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_btc_pct_min: 0.80
+  allowed_variants: []
+  status: BORDERLINE
+  decision_date: "2026-02-24"
+  decision_notes: "BORDERLINE — n=113, gross=17.1bps P>0=1.000, WF+ 11/18, WF bps8=8.0bps
+    P>0=0.987 folds 11/18. Gross edge real but WF bps8 fold count marginal.
+    Odd days retain edge but not reliably cost-positive."
+  source: Robustness check for H176 (OI-1 candidate).
+
+- id: H182
+  family: oi_liq
+  class: robustness_check
+  description: H176 (OI-gated slope flip) even-day subsample robustness check.
+  rationale: Complement to H181. Both halves must hold for OI-1 shortcode to be assigned.
+  WHY: Standard robustness protocol.
+  RULES:
+  - Same signal as H176. Entry filtered to even calendar days only.
+  - Horizon = 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_btc_pct_min: 0.80
+  allowed_variants: []
+  status: FAIL
+  decision_date: "2026-02-24"
+  decision_notes: "FAIL — n=104, gross=15.6bps P>0=1.000 (gross real), but WF bps8=5.1bps
+    folds 5/18. Even days collapse at cost. Confirms H176 is NOT ready for OI-1 shortcode
+    assignment. The edge is asymmetrically concentrated in odd days."
+  source: Robustness check for H176 (OI-1 candidate).
+
+- id: H183
+  family: oi_liq
+  class: robustness_check
+  description: H176 (OI-gated slope flip) 1-bar execution lag robustness check.
+  rationale: Validates that the OI-1 edge survives a 1-bar (5 min) delay between
+    signal and entry — confirming the signal is exploitable in practice.
+  WHY: Standard execution realism check for all new signal anchors.
+  RULES:
+  - Same signal as H176. Entry at close[t+1] instead of close[t].
+  - Horizon = 8 bars from entry bar.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_btc_pct_min: 0.80
+  allowed_variants: []
+  status: BORDERLINE
+  decision_date: "2026-02-24"
+  decision_notes: "BORDERLINE — n=217, gross=14.9bps P>0=1.000, WF+ 15/18, WF bps8=5.1bps
+    P>0=0.959 folds 9/18. Gross survives lag but cost-net edge is not reliable.
+    Combined with H182 FAIL, confirms H176 is cost-constrained. OI-1 shortcode NOT assigned."
+  source: Robustness check for H176 (OI-1 candidate).
+
+- id: H184
+  family: oi_liq
+  class: robustness_check
+  description: H177 (LQ-1) 1-bar execution lag robustness check.
+  rationale: LQ-1 fires on onset of extreme long liquidation hour. Checks whether
+    the cascade follow-through is robust to a 5-minute entry delay.
+  WHY: LQ-1 is an ANCHOR signal — execution realism must be confirmed before
+    deploying to paper trading.
+  RULES:
+  - Same signal as H177. Entry at close[t+1]. Direction = SHORT (-1.0). Horizon = 8.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.90
+      direction: short
+  allowed_variants: []
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — n=1437, gross=18.1bps P>0=1.000, WF+ 18/18, WF bps8=9.9bps
+    P>0=1.000 folds 14/18. LQ-1 edge fully survives 1-bar execution lag.
+    Drop from H177 (20.0bps) to 18.1bps is small. EXECUTION REALISTIC. Paper trade ready."
+  source: Robustness check for H177 (LQ-1 anchor).
+
+- id: H185
+  family: oi_liq
+  class: robustness_check
+  description: H178 (LQ-2) 1-bar execution lag robustness check.
+  rationale: LQ-2 fires on onset of extreme short liquidation hour. Checks whether
+    the short-squeeze follow-through is robust to a 5-minute entry delay.
+  WHY: LQ-2 is an ANCHOR signal — execution realism required before paper trading.
+  RULES:
+  - Same signal as H178. Entry at close[t+1]. Direction = LONG (+1.0). Horizon = 8.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      short_liq_btc_pct_min: 0.90
+      direction: long
+  allowed_variants: []
+  status: BORDERLINE
+  decision_date: "2026-02-24"
+  decision_notes: "BORDERLINE — n=1474, gross=13.7bps P>0=1.000, WF+ 18/18, WF bps8=4.7bps
+    P>0=0.997 folds 16/18. WF bps8 fold count (16/18) is very strong but WF mean is thin.
+    Drop from H178 (16.0bps) to 13.7bps brings WF net mean below 8bps threshold.
+    Edge is real and consistent — marginal execution constraint. Treat as deployable with
+    awareness that actual fill quality will matter more than for LQ-1."
+  source: Robustness check for H178 (LQ-2 anchor).
+
+- id: H186
+  family: oi_liq
+  class: robustness_check
+  description: H179 (LQ-3) 1-bar execution lag robustness check.
+  rationale: LQ-3 combines liq context with slope flip. Verifies edge survives
+    a 1-bar execution delay.
+  WHY: Standard pre-paper-trade robustness check.
+  RULES:
+  - Same signal as H179. Entry at close[t+1]. Direction = SHORT. Horizon = 8.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.70
+      slope_direction: down_flip
+      direction: short
+  allowed_variants: []
+  status: PASS
+  decision_date: "2026-02-24"
+  decision_notes: "PASS — n=166, gross=31.3bps P>0=1.000, WF+ 17/17, WF bps8=20.9bps
+    P>0=1.000 folds 15/17. LQ-3 edge is extremely robust to execution lag.
+    Drop from H179 (31.0bps) is negligible. EXECUTION REALISTIC. Paper trade ready."
+  source: Robustness check for H179 (LQ-3).
