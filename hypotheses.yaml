@@ -6390,3 +6390,276 @@ hypotheses:
       vol_collapse_bars: 2
   allowed_variants: []
   status: active
+- id: H215
+  family: direction_split
+  class: tradeable_hypothesis
+  description: CA-1 LONG-only direction split.
+  rationale: Isolate whether CA-1's edge comes from bullish slope flips, bearish
+    flips, or both equally. Critical given the 365d dataset was predominantly bullish.
+  WHY: If LONG trades drive all the edge, SHORT entries should be suppressed in
+    the paper trader. Must know before scaling deployment.
+  RULES:
+  - Same signal as CA-1 (ETH slope flip, non-zero). Only take entries where direction=+1.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: CA-1
+      direction_filter: long_only
+  allowed_variants: []
+  status: active
+- id: H216
+  family: direction_split
+  class: tradeable_hypothesis
+  description: CA-1 SHORT-only direction split.
+  rationale: Isolate whether CA-1 bearish flips carry independent edge or are
+    diluting the signal with flat/negative returns.
+  WHY: If SHORT trades fail independently, suppress them. If both directions pass,
+    CA-1 is genuinely symmetric and full deployment is justified.
+  RULES:
+  - Same signal as CA-1 (ETH slope flip, non-zero). Only take entries where direction=-1.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: CA-1
+      direction_filter: short_only
+  allowed_variants: []
+  status: active
+- id: H217
+  family: direction_split
+  class: tradeable_hypothesis
+  description: VS-2 LONG-only direction split.
+  rationale: Isolate VS-2 bullish flip performance. VS-2 fires on high-volume slope
+    flips — but are bullish flips more reliable than bearish in a trending market?
+  WHY: If VS-2 LONGs dominate performance, bearish entries add noise. Gate direction
+    in paper trader if SHORT side is weak.
+  RULES:
+  - Same signal as VS-2 (slope flip AND vol_btc_pct >= 0.80). Long entries only.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-2
+      direction_filter: long_only
+  allowed_variants: []
+  status: active
+- id: H218
+  family: direction_split
+  class: tradeable_hypothesis
+  description: VS-2 SHORT-only direction split.
+  rationale: Isolate VS-2 bearish flip performance independently from bullish flips.
+  WHY: VS-2 SHORTs in a bull market could be systematically weaker. If SHORT P>0
+    fails, suppress all VS-2 short entries in deployed signals.
+  RULES:
+  - Same signal as VS-2 (slope flip AND vol_btc_pct >= 0.80). Short entries only.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-2
+      direction_filter: short_only
+  allowed_variants: []
+  status: active
+- id: H219
+  family: direction_split
+  class: tradeable_hypothesis
+  description: VS-3 LONG-only direction split.
+  rationale: VS-3 is the best signal at 60bps. Determine if that edge is concentrated
+    in bullish flips or is genuinely symmetric across both directions.
+  WHY: VS-3 requires slope + volume + total liquidations — a very high bar. If
+    LONGs and SHORTs both pass, VS-3 is robust. If only one direction passes, gate
+    the other in the paper trader immediately.
+  RULES:
+  - Same signal as VS-3 (slope flip AND vol p80 AND total_liq p70). Long entries only.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-3
+      direction_filter: long_only
+  allowed_variants: []
+  status: active
+- id: H220
+  family: direction_split
+  class: tradeable_hypothesis
+  description: VS-3 SHORT-only direction split.
+  rationale: Isolate whether VS-3 bearish flips independently justify deployment
+    or whether the short side is being carried by the long side.
+  WHY: In a bull market, forced short liquidations (total_liq spike) may correlate
+    with snapback longs more than continuation shorts. Must verify independently.
+  RULES:
+  - Same signal as VS-3 (slope flip AND vol p80 AND total_liq p70). Short entries only.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-3
+      direction_filter: short_only
+  allowed_variants: []
+  status: active
+- id: H221
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 restricted to Asia session (00:00–08:00 UTC).
+  rationale: Liquidation cascades have known intraday clustering. Asia open is
+    historically the highest-risk window for forced liquidations. Test whether
+    LQ-1 edge is concentrated there.
+  WHY: If LQ-1 works primarily in Asia hours, time-gating the paper trader to that
+    window could improve Sharpe by eliminating weak off-hours entries.
+  RULES:
+  - Same signal as LQ-1 (onset of long_liq_btc_pct >= 0.90, direction=-1).
+  - Only accept entries between 00:00 and 08:00 UTC.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: LQ-1
+      utc_window: 00:00-08:00
+  allowed_variants: []
+  status: active
+- id: H222
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 restricted to US session (12:00–20:00 UTC).
+  rationale: Test whether LQ-1 liquidation cascade edge concentrates in the US
+    trading session vs Asia hours.
+  WHY: US session has higher institutional participation and different liquidation
+    dynamics than Asia. Comparing H221 vs H222 tells us which session drives LQ-1.
+  RULES:
+  - Same signal as LQ-1 (onset of long_liq_btc_pct >= 0.90, direction=-1).
+  - Only accept entries between 12:00 and 20:00 UTC.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: LQ-1
+      utc_window: 12:00-20:00
+  allowed_variants: []
+  status: active
+- id: H223
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-2 restricted to Asia session (00:00–08:00 UTC).
+  rationale: Test whether LQ-2 short liquidation squeeze edge concentrates in Asia
+    hours, mirroring the LQ-1 time-of-day hypothesis.
+  WHY: Short squeezes may cluster in Asia where leveraged short positions built
+    during off-hours get unwound at open. Gating to this window tests that theory.
+  RULES:
+  - Same signal as LQ-2 (onset of short_liq_btc_pct >= 0.90, direction=+1).
+  - Only accept entries between 00:00 and 08:00 UTC.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: LQ-2
+      utc_window: 00:00-08:00
+  allowed_variants: []
+  status: active
+- id: H224
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-2 restricted to US session (12:00–20:00 UTC).
+  rationale: Test whether LQ-2 short squeeze edge concentrates in the US session.
+  WHY: Paired control for H223. Together H223/H224 reveal whether LQ-2 has a
+    session-specific concentration or is uniformly distributed across the day.
+  RULES:
+  - Same signal as LQ-2 (onset of short_liq_btc_pct >= 0.90, direction=+1).
+  - Only accept entries between 12:00 and 20:00 UTC.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: LQ-2
+      utc_window: 12:00-20:00
+  allowed_variants: []
+  status: active
+- id: H225
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: CA-1 + OI quality gate (oi_btc_pct >= 0.80).
+  rationale: Test whether requiring elevated open interest at CA-1 slope flip entries
+    improves edge by filtering to high-participation regime changes only.
+  WHY: OI-gated slope flips (H176/OI-1) showed strong edge. Applying the same OI
+    gate to CA-1 (broader, more frequent signal) tests whether OI is a universal
+    quality filter for slope-based entries.
+  RULES:
+  - ETH slope flip (sign changes AND non-zero) AND oi_btc_pct >= 0.80.
+  - Trade BTC in ETH slope direction. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_btc_pct_min: 0.80
+  allowed_variants: []
+  status: active
+- id: H226
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: CA-1 + funding contrarian gate (funding opposes slope direction).
+  rationale: Test whether CA-1 slope flips are higher quality when funding rate
+    opposes the direction — a contrarian positioning signal suggesting crowded trades
+    are about to be squeezed out.
+  WHY: Bullish slope flip with negative funding means bears are dominant in perps
+    but trend is turning up — a squeeze setup. Bearish flip with positive funding
+    means longs are crowded as trend turns down. Both are contrarian-confirmation entries.
+  RULES:
+  - ETH slope flip (sign changes AND non-zero) AND funding_btc_sign opposes slope direction.
+  - Trade BTC in ETH slope direction. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      funding_gate: contrarian
+  allowed_variants: []
+  status: active
+- id: H227
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 + slope confirmation (cascade onset AND ETH slope already bearish).
+  rationale: Test whether requiring the ETH slope to already be bearish at LQ-1
+    entry improves returns by only trading cascades that align with trend direction.
+  WHY: LQ-1 fires on any long liquidation onset. Adding slope confirmation filters
+    to cascades where the market was already trending down — the thesis is doubly
+    confirmed. Counter-trend cascades (slope bullish, long liq spike) may be noise.
+  RULES:
+  - Onset of long_liq_btc_pct >= 0.90 AND eth_slope_sign_1h == -1 at entry.
+  - Direction = -1 (short). Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.90
+      slope_confirmation: bearish
+  allowed_variants: []
+  status: active
+- id: H228
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-2 + slope confirmation (squeeze onset AND ETH slope already bullish).
+  rationale: Test whether requiring the ETH slope to already be bullish at LQ-2
+    entry improves returns by only trading squeezes that align with trend direction.
+  WHY: LQ-2 fires on any short liquidation onset. Adding slope confirmation filters
+    to squeezes where the market was already trending up — the squeeze amplifies
+    existing momentum rather than fighting a downtrend.
+  RULES:
+  - Onset of short_liq_btc_pct >= 0.90 AND eth_slope_sign_1h == +1 at entry.
+  - Direction = +1 (long). Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      short_liq_btc_pct_min: 0.90
+      slope_confirmation: bullish
+  allowed_variants: []
+  status: active

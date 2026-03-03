@@ -32,6 +32,7 @@ SUPPORTED_FAMILIES = {
     "volume_state",
     "oi_liq",
     "exit_logic",
+    "direction_split",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -108,7 +109,12 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
                      "H164", "H165", "H166", "H167", "H168",
                      "H169", "H170", "H171", "H172", "H173"},
     "oi_liq": {"H176", "H177", "H178", "H179", "H180",
-               "H181", "H182", "H183", "H184", "H185", "H186", "H187"},
+               "H181", "H182", "H183", "H184", "H185", "H186", "H187",
+               "H221", "H222", "H223", "H224",
+               "H225", "H226", "H227", "H228"},
+    "direction_split": {
+        "H215", "H216", "H217", "H218", "H219", "H220",
+    },
     "exit_logic": {
         "H198", "H199", "H200", "H201", "H202", "H203", "H204", "H205",
         "H206", "H207", "H208", "H209", "H210", "H211", "H212", "H213", "H214",
@@ -1539,6 +1545,49 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
+    if family == "direction_split":
+        require_columns(x, hypothesis_id, ["eth_slope_sign_1h"])
+        eth_sign = x["eth_slope_sign_1h"]
+        vol_pct = x["volume_btc_pct"]
+
+        if hypothesis_id in {"H215", "H216"}:
+            # CA-1 direction splits: slope flip, non-zero
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            candidate = slope_flip & (eth_sign.gt(0) if hypothesis_id == "H215" else eth_sign.lt(0))
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H217", "H218"}:
+            # VS-2 direction splits: slope flip AND vol_pct >= 0.80
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol & (eth_sign.gt(0) if hypothesis_id == "H217" else eth_sign.lt(0))
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H219", "H220"}:
+            # VS-3 direction splits: slope flip AND vol p80 AND total_liq p70
+            require_columns(x, hypothesis_id, ["total_liq_btc_pct"])
+            total_liq_pct = x["total_liq_btc_pct"]
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            liq_active = total_liq_pct.ge(0.70)
+            candidate = slope_flip & high_vol & liq_active & (eth_sign.gt(0) if hypothesis_id == "H219" else eth_sign.lt(0))
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
     if family == "exit_logic":
         require_columns(x, hypothesis_id, ["eth_slope_sign_1h"])
         eth_sign = x["eth_slope_sign_1h"]
@@ -1617,6 +1666,80 @@ def build_signal(
             if idx:
                 out_idx = np.asarray(idx, dtype=int)
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H221", "H222"}:
+            # LQ-1 ToD variants: signal identical to LQ-1; time filter applied in build_events.
+            condition = long_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H223", "H224"}:
+            # LQ-2 ToD variants: signal identical to LQ-2; time filter applied in build_events.
+            condition = short_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H225":
+            # CA-1 + OI gate: slope flip AND oi_btc_pct >= 0.80
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_oi = oi_pct.ge(0.80)
+            candidate = slope_flip & high_oi
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H226":
+            # CA-1 + funding contrarian gate: slope flip AND funding opposes direction.
+            # Bullish flip with negative funding (bears being squeezed out → more upside).
+            # Bearish flip with positive funding (longs overextended → more downside).
+            require_columns(x, hypothesis_id, ["funding_btc_sign"])
+            f_sign = x["funding_btc_sign"]
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            funding_contrarian = f_sign.ne(eth_sign) & f_sign.ne(0)
+            candidate = slope_flip & funding_contrarian
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H227":
+            # LQ-1 + slope confirmation: long liq cascade onset AND slope already bearish.
+            # Only trade the cascade when trend already agrees — highest conviction shorts.
+            condition = long_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            slope_bearish = eth_sign.eq(-1)
+            candidate = onset & slope_bearish
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H228":
+            # LQ-2 + slope confirmation: short liq cascade onset AND slope already bullish.
+            # Only trade the squeeze when trend already agrees — highest conviction longs.
+            condition = short_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            slope_bullish = eth_sign.eq(1)
+            candidate = onset & slope_bullish
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
             return pd.Series(out, index=x.index)
 
     raise ValueError(
@@ -1875,6 +1998,11 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         base = base[base["dt"].dt.day % 2 == 1].copy()
     if hypothesis_id == "H182":
         base = base[base["dt"].dt.day % 2 == 0].copy()
+    # LQ-1/LQ-2 time-of-day session splits.
+    if hypothesis_id in {"H221", "H223"}:
+        base = base[(base["dt"].dt.hour >= 0) & (base["dt"].dt.hour < 8)].copy()
+    if hypothesis_id in {"H222", "H224"}:
+        base = base[(base["dt"].dt.hour >= 12) & (base["dt"].dt.hour < 20)].copy()
 
     # Exit logic override: replace fixed-horizon exit prices with early exits.
     if hypothesis_id in EXIT_LOGIC_IDS:
