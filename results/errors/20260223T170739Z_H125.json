@@ -1,0 +1,14 @@
+{
+  "context": {
+    "batch_ids": [
+      "H125"
+    ],
+    "completed": [],
+    "next_index": 0,
+    "targeted_mode": true
+  },
+  "error": "Runner failed for H125 all-modes rc=1 stdout= stderr=Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 1508, in <module>\n    main()\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 1422, in main\n    raise ValueError(\"Standard runner expects horizon in {4,6,8,10}.\")\nValueError: Standard runner expects horizon in {4,6,8,10}.\n",
+  "hypothesis_id": "H125",
+  "timestamp_utc": "2026-02-23T17:07:39+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 802, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 653, in run_one_hypothesis\n    raise RuntimeError(\nRuntimeError: Runner failed for H125 all-modes rc=1 stdout= stderr=Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 1508, in <module>\n    main()\n  File \"/home/charlie/workspace/regime-crypto/scripts/research_family_runner.py\", line 1422, in main\n    raise ValueError(\"Standard runner expects horizon in {4,6,8,10}.\")\nValueError: Standard runner expects horizon in {4,6,8,10}.\n\n"
+}

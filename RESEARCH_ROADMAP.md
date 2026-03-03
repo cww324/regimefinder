@@ -160,6 +160,142 @@ Priority order based on expected edge and data readiness:
 
 ---
 
+## 9. Exit Logic Hypotheses — UNTESTED TRACK (HIGH PRIORITY)
+
+**Current state:** Every hypothesis from H1–H197 uses a fixed time exit. Exit logic has
+never been treated as a variable. This is a significant gap — smarter exits could
+meaningfully improve already-confirmed signals without changing entry logic at all.
+
+**Methodology:** Each exit variant is a new hypothesis with its own H-number.
+Pre-commit the exit rule before running. Use the same WF framework. Test on the
+confirmed signal's entries — do NOT change entry conditions at the same time.
+
+### Exit types to test
+
+**1. Opposite signal exit** — if you entered LONG on a slope flip and the slope flips
+bearish again, exit immediately. The trade thesis is literally invalidated.
+
+**2. Trailing stop** — exit if price moves X bps against you from the highest point
+reached since entry. Locks in gains on extended moves, cuts losses on reversals.
+
+**3. Take profit** — exit early once a fixed bps target is hit (e.g. 30bps). Don't
+give gains back waiting for time exit.
+
+**4. ATR stop** — dynamic stop distance based on market volatility at entry.
+Wide stops in volatile conditions, tight in calm conditions.
+
+**5. Combo exit** — hold up to N bars BUT exit early on stop OR take profit,
+whichever comes first. Most realistic deployment scenario.
+
+### ⚠️ Critical mechanic: slope only updates hourly
+
+CA-1 and all slope-flip signals fire on bar 1 of a new hour (when slope updates).
+The NEXT slope update is bar 13 (one hour later). CA-1's 8-bar hold closes at bar 8
+— 5 bars (25 min) BEFORE the next slope reading. **The slope literally cannot flip
+again within a CA-1 trade.** Opposite signal exit for CA-1 will never trigger.
+
+VS-2's 12-bar hold closes at bar 12, exactly one bar before the next slope update.
+Same story — slope flip exit for VS-2 is nearly equivalent to the time exit.
+
+**Conclusion:** For slope-based signals, skip the opposite signal exit and focus on
+ATR stops, trailing stops, and take profit exits instead. Opposite signal exit is
+genuinely useful for LQ signals (liq data updates hourly and could drop mid-trade).
+
+### Hypotheses (pre-committed, run one at a time)
+
+| H# | Signal | Exit rule | Type |
+|----|--------|-----------|------|
+| H198 | CA-1 | ATR stop loss (1.5× ATR from entry) | ATR stop |
+| H199 | CA-1 | Take profit at +25bps | Take profit |
+| H200 | CA-1 | Trailing stop (15bps trail from peak) | Trailing stop |
+| H201 | CA-1 | Combo: 8-bar max OR ATR stop OR +25bps TP | Combo |
+| H202 | VS-2 | ATR stop loss (1.5× ATR from entry) | ATR stop |
+| H203 | VS-2 | Take profit at +35bps | Take profit |
+| H204 | VS-2 | Trailing stop (20bps trail from peak) | Trailing stop |
+| H205 | VS-2 | Combo: 12-bar max OR ATR stop OR +35bps TP | Combo |
+| H206 | LQ-1 | Exit early if long_liq_btc_pct drops below p50 | Opposite signal |
+| H207 | LQ-1 | ATR stop loss | ATR stop |
+| H208 | LQ-2 | Exit early if short_liq_btc_pct drops below p50 | Opposite signal |
+| H209 | LQ-3 | Exit early if slope flips bullish OR liq drops below p50 | Opposite signal |
+| H210 | VS-3 | Exit early if total_liq drops below p50 OR slope reverses | Opposite signal |
+
+**Run order:** Start with CA-1 exits (H198–H201) since it has the most trades (~4/day)
+and will give statistically meaningful results fastest. Then VS-2, then LQ signals.
+
+---
+
+## 10. Critical Validation Gaps — Things We MUST Test
+
+These are not new signal ideas — they are gaps in how we've validated existing signals.
+Each one could materially change our confidence in the confirmed signal set.
+
+### 10a. Long Side vs Short Side Asymmetry
+
+**The problem:** The 365d dataset (Feb 2025–Feb 2026) was predominantly a bull market.
+We've never split signal performance by direction. If CA-1 LONGs are driving all the
+edge and CA-1 SHORTs are flat or negative, that's critical to know before deployment.
+
+**What to do:**
+- For every confirmed signal that trades both directions (CA-1, CA-2, VS-2, VS-3):
+  re-run the WF backtest splitting LONG trades vs SHORT trades separately.
+- Report gross mean, P>0, WF fold count for each direction independently.
+- If SHORT side fails: the signal is effectively LONG-only and should only fire on
+  bullish flips in the paper trader.
+- Next unused H-numbers for this track: H206 (CA-1 LONG only), H207 (CA-1 SHORT only),
+  H208 (VS-2 LONG only), H209 (VS-2 SHORT only).
+
+### 10b. HMM Regime Conditioning on Confirmed Signals
+
+**The problem:** We built the HMM regime model (RANGING 41%, TRENDING 25%, VOLATILE 34%)
+and it's in the DB — but we've never used it to ask whether confirmed signals perform
+differently across regimes. If CA-1 is great in TRENDING regimes but flat in RANGING,
+we should suppress it during RANGING.
+
+**What to do:**
+- For each confirmed signal, break WF results into regime buckets: TRENDING / RANGING / VOLATILE.
+- Report per-regime gross mean and P>0.
+- If a regime shows P>0 < 0.6 or negative gross: gate the signal on that regime.
+- This is not a new hypothesis — it's a diagnostic on existing signals.
+
+### 10c. Multiple Testing Correction (FDR)
+
+**The problem:** We've run 197 hypotheses. With no correction for multiple comparisons,
+some "passes" may be false discoveries. At p=0.05 per test, you'd expect ~10 false
+positives in 197 tests by chance alone.
+
+**What to do:**
+- Apply Benjamini-Hochberg FDR correction across all tested hypotheses.
+- Signals with the strongest WF records (CA-1, VS-3, LQ-1, LQ-2) will survive easily.
+- Borderline signals (CA-4, CA-5, H124) may not — and that's useful information.
+- Documented as a gap in VALIDATION_IMPROVEMENTS.md. Actually do it now.
+
+### 10d. True Out-of-Sample Holdout Block
+
+**The problem:** Every hypothesis has been tested using walk-forward on the same
+365-day dataset. WF is good, but it's not a true holdout. The last 60 days of data
+have been "seen" in at least some WF folds.
+
+**What to do:**
+- Designate the last 60 days as a permanent holdout — never used in any WF fold.
+- Re-run all confirmed signals with WF on days 1–305 only.
+- Then run a SINGLE evaluation on the holdout block.
+- If signals hold on the holdout: confidence increases significantly.
+- This is a one-time irreversible action — once the holdout is evaluated, it's used.
+
+### 10e. Transaction Cost Sensitivity
+
+**The problem:** All signals were validated at 8bps round-trip cost. But actual costs
+depend on spread, slippage, and queue position — and could be 10–14bps in practice,
+especially for CA-1 which fires ~4/day and may face adverse queue position.
+
+**What to do:**
+- Re-run confirmed signals at 10bps, 12bps, 14bps cost assumptions.
+- Report which signals survive each cost level.
+- CA-1 at 34bps gross should survive even 14bps. LQ-2 at 16bps would fail at 10bps.
+- This tells you which signals are robust to execution quality and which are fragile.
+
+---
+
 ## 6. Things NOT to Do (Guardrails)
 
 - Do not generate hypotheses from RF on the same data used for validation
