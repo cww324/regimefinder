@@ -33,6 +33,7 @@ SUPPORTED_FAMILIES = {
     "oi_liq",
     "exit_logic",
     "direction_split",
+    "regime_conditioning",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -97,7 +98,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     },
     "shock_structure": {"H27", "H42", "H43", "H44", "H45", "H46"},
     "volatility_conditioning": {"H47", "H48", "H49", "H50"},
-    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53", "H130", "H131"},
+    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53", "H130", "H131", "H235", "H236"},
     "range_structure": {"H28", "H54", "H55", "H56", "H113"},
     "volatility_state": {"H101", "H102", "H103", "H104", "H112", "H128", "H129", "H133", "H134", "H138"},
     "efficiency_mean_reversion": {"H105", "H106", "H107"},
@@ -110,10 +111,15 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
                      "H169", "H170", "H171", "H172", "H173"},
     "oi_liq": {"H176", "H177", "H178", "H179", "H180",
                "H181", "H182", "H183", "H184", "H185", "H186", "H187",
+               "H188", "H189", "H190", "H191", "H192", "H193", "H194",
+               "H195", "H196", "H197",
                "H221", "H222", "H223", "H224",
                "H225", "H226", "H227", "H228"},
     "direction_split": {
         "H215", "H216", "H217", "H218", "H219", "H220",
+    },
+    "regime_conditioning": {
+        "H229", "H230", "H231", "H232", "H233", "H234",
     },
     "exit_logic": {
         "H198", "H199", "H200", "H201", "H202", "H203", "H204", "H205",
@@ -920,6 +926,92 @@ def build_signal(
             sig = sig.where(~(vwap_z_pct.le(0.30) & ranging), -1.0)
             return sig
 
+        if hypothesis_id == "H235":
+            # VWAP z-score extreme pullback LONG: vwap_z < -2.0 → LONG 6 bars.
+            # Revisit of H157 on full 365d dataset (no regime gate).
+            mask = x["vwap_z"].le(-2.0)
+            return pd.Series(np.where(mask, 1.0, 0.0), index=x.index)
+
+        if hypothesis_id == "H236":
+            # VWAP z-score extreme extension SHORT: vwap_z > +2.0 → SHORT 6 bars.
+            # Revisit of H158 on full 365d dataset (no regime gate).
+            mask = x["vwap_z"].ge(2.0)
+            return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
+
+    if family == "regime_conditioning":
+        require_columns(x, hypothesis_id, ["eth_slope_sign_1h"])
+        eth_sign = x["eth_slope_sign_1h"]
+        vol_pct = x["volume_btc_pct"]
+        hmm = x.get("hmm_regime", pd.Series("", index=x.index))
+
+        slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+
+        if hypothesis_id == "H229":
+            # CA-1 in TRENDING regime only.
+            candidate = slope_flip & hmm.eq("TRENDING")
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H230":
+            # CA-1 in RANGING regime only (expected failure — control hypothesis).
+            candidate = slope_flip & hmm.eq("RANGING")
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H231":
+            # CA-1 in VOLATILE regime only.
+            candidate = slope_flip & hmm.eq("VOLATILE")
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H232":
+            # VS-2 in TRENDING regime only.
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol & hmm.eq("TRENDING")
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H233":
+            # VS-2 in VOLATILE regime only.
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol & hmm.eq("VOLATILE")
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H234":
+            # VS-3 in TRENDING regime only — highest conviction hypothesis.
+            require_columns(x, hypothesis_id, ["total_liq_btc_pct"])
+            total_liq_pct = x["total_liq_btc_pct"]
+            high_vol = vol_pct.ge(0.80)
+            liq_active = total_liq_pct.ge(0.70)
+            candidate = slope_flip & high_vol & liq_active & hmm.eq("TRENDING")
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
     if family == "volatility_state":
         if hypothesis_id == "H101":
             require_columns(x, hypothesis_id, ["atr14_pct", "rv48_pct", "dist_to_vwap48"])
@@ -1494,9 +1586,9 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id in {"H177", "H184"}:
+        if hypothesis_id in {"H177", "H184", "H191"}:
             # Long liquidation cascade → SHORT continuation.
-            # H184: 1-bar execution lag robustness check for H177 (LQ-1).
+            # H184: 1-bar execution lag. H191: same signal, h=12 hold.
             condition = long_liq_pct.ge(0.90)
             onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
@@ -1505,15 +1597,102 @@ def build_signal(
                 out[np.asarray(idx, dtype=int)] = -1.0
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id in {"H178", "H185"}:
+        if hypothesis_id in {"H178", "H185", "H192"}:
             # Short liquidation squeeze → LONG continuation.
-            # H185: 1-bar execution lag robustness check for H178 (LQ-2).
+            # H185: 1-bar execution lag. H192: same signal, h=12 hold.
             condition = short_liq_pct.ge(0.90)
             onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
             out = np.zeros(len(x), dtype=float)
             if idx:
                 out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H188":
+            # LQ-1 at p80 threshold: lower bar, more frequent entries.
+            condition = long_liq_pct.ge(0.80)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H189":
+            # LQ-1 at p95 threshold: rarer, higher per-trade expected edge.
+            condition = long_liq_pct.ge(0.95)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H190":
+            # LQ-2 at p80 threshold: more frequent short squeeze entries.
+            condition = short_liq_pct.ge(0.80)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H193":
+            # ETH long liquidation cascade → SHORT BTC.
+            require_columns(x, hypothesis_id, ["long_liq_eth_pct"])
+            condition = x["long_liq_eth_pct"].ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H194":
+            # ETH short liquidation squeeze → LONG BTC.
+            require_columns(x, hypothesis_id, ["short_liq_eth_pct"])
+            condition = x["short_liq_eth_pct"].ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H195":
+            # Liq imbalance: long-side dominates >= 80% of total liq → SHORT.
+            require_columns(x, hypothesis_id, ["liq_imbalance_btc"])
+            condition = x["liq_imbalance_btc"].ge(0.80)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H196":
+            # Cross-asset liq cascade: BTC long liq >= p90 AND ETH long liq >= p70 → SHORT.
+            require_columns(x, hypothesis_id, ["long_liq_eth_pct"])
+            both_liq = long_liq_pct.ge(0.90) & x["long_liq_eth_pct"].ge(0.70)
+            onset = both_liq & (~both_liq.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H197":
+            # OI-1 + liq confirmation: slope flip AND oi >= p80 AND total_liq >= p70.
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_oi = oi_pct.ge(0.80)
+            liq_active = total_liq_pct.ge(0.70)
+            candidate = slope_flip & high_oi & liq_active
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
         if hypothesis_id in {"H179", "H186"}:

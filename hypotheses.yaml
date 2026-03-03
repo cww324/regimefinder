@@ -6663,3 +6663,315 @@ hypotheses:
       slope_confirmation: bullish
   allowed_variants: []
   status: active
+- id: H188
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 at p80 threshold — lower bar, higher frequency test.
+  rationale: LQ-1 fires at p90 (~4/day). Lowering to p80 doubles frequency but
+    tests if the edge degrades. Builds the frequency/edge tradeoff curve.
+  RULES:
+  - Onset of long_liq_btc_pct >= 0.80. Direction = -1. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.80
+  allowed_variants: []
+  status: active
+- id: H189
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 at p95 threshold — higher bar, rarer but stronger cascades.
+  rationale: Only the most extreme long liquidation cascades. Expect higher per-trade
+    edge but fewer trades. Tests whether rarity improves quality.
+  RULES:
+  - Onset of long_liq_btc_pct >= 0.95. Direction = -1. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.95
+  allowed_variants: []
+  status: active
+- id: H190
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-2 at p80 threshold — lower bar, higher frequency short squeeze test.
+  rationale: LQ-2 fires at p90. Lowering to p80 increases frequency. Tests if
+    short squeeze edge degrades at a lower extremity threshold.
+  RULES:
+  - Onset of short_liq_btc_pct >= 0.80. Direction = +1. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      short_liq_btc_pct_min: 0.80
+  allowed_variants: []
+  status: active
+- id: H191
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 with extended hold (h=12 bars, 60 minutes).
+  rationale: LQ-1 at h=8 passes. Test whether the cascade effect sustains over
+    60 minutes or whether the edge is front-loaded in the first 40 minutes.
+  RULES:
+  - Same signal as LQ-1 (onset of long_liq_btc_pct >= 0.90, direction=-1).
+  - Hold 12 bars instead of 8.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      long_liq_btc_pct_min: 0.90
+  allowed_variants: []
+  status: active
+- id: H192
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-2 with extended hold (h=12 bars, 60 minutes).
+  rationale: LQ-2 at h=8 passes. Test whether the short squeeze effect sustains
+    over 60 minutes or whether upside is captured in the first 40 minutes.
+  RULES:
+  - Same signal as LQ-2 (onset of short_liq_btc_pct >= 0.90, direction=+1).
+  - Hold 12 bars instead of 8.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      short_liq_btc_pct_min: 0.90
+  allowed_variants: []
+  status: active
+- id: H193
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: ETH long liquidation cascade predicts BTC SHORT.
+  rationale: ETH and BTC liquidations are correlated but not identical. ETH liq
+    may lead BTC moves. Tests cross-asset liquidation signal — if ETH longs get
+    wiped, does BTC follow?
+  RULES:
+  - Onset of long_liq_eth_pct >= 0.90. Direction = -1 (short BTC). Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_eth_pct_min: 0.90
+  allowed_variants: []
+  status: active
+- id: H194
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: ETH short liquidation squeeze predicts BTC LONG.
+  rationale: Mirror of H193. If ETH shorts get squeezed, does BTC rally?
+    Cross-asset liquidation signal — ETH squeeze as a BTC entry trigger.
+  RULES:
+  - Onset of short_liq_eth_pct >= 0.90. Direction = +1 (long BTC). Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      short_liq_eth_pct_min: 0.90
+  allowed_variants: []
+  status: active
+- id: H195
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: Liquidation imbalance >= 0.80 (long-side dominant) → SHORT.
+  rationale: Tests whether the ratio of long-to-total liquidations is more
+    informative than raw magnitude. A skewed imbalance (80%+ of liq is longs)
+    suggests one-sided forced selling independent of total volume.
+  RULES:
+  - Onset of liq_imbalance_btc >= 0.80 (long liq / total liq). Direction = -1. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      liq_imbalance_btc_min: 0.80
+  allowed_variants: []
+  status: active
+- id: H196
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: Cross-asset liq cascade — BTC AND ETH long liq both elevated → SHORT.
+  rationale: When both BTC and ETH long liquidations spike simultaneously, the
+    cascade is market-wide rather than asset-specific. Test if joint confirmation
+    produces a stronger/more reliable SHORT signal than BTC alone.
+  RULES:
+  - Onset of long_liq_btc_pct >= 0.90 AND long_liq_eth_pct >= 0.70.
+  - Direction = -1. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      long_liq_btc_pct_min: 0.90
+      long_liq_eth_pct_min: 0.70
+  allowed_variants: []
+  status: active
+- id: H197
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: OI-gated slope flip + liq confirmation (OI-1 + liq gate).
+  rationale: OI-1 (H176) has day-asymmetric edge. Adding total liquidation
+    confirmation filters to bars where leveraged positions are being forced out,
+    potentially removing the regime-asymmetry weakness.
+  RULES:
+  - ETH slope flip AND oi_btc_pct >= 0.80 AND total_liq_btc_pct >= 0.70.
+  - Trade in ETH slope direction. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_btc_pct_min: 0.80
+      total_liq_btc_pct_min: 0.70
+  allowed_variants: []
+  status: active
+- id: H229
+  family: regime_conditioning
+  class: tradeable_hypothesis
+  description: CA-1 conditioned on TRENDING HMM regime.
+  rationale: Slope flips during a trending regime should be the highest-quality
+    entries — the market has directional momentum and the flip is a continuation
+    signal, not noise in a choppy environment.
+  WHY: If CA-1 edge is concentrated in TRENDING, gate the paper trader to only
+    fire CA-1 during TRENDING regime. Could dramatically improve Sharpe.
+  RULES:
+  - Same signal as CA-1 (ETH slope flip, non-zero) AND hmm_regime == TRENDING.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: CA-1
+      regime_gate: TRENDING
+  allowed_variants: []
+  status: active
+- id: H230
+  family: regime_conditioning
+  class: tradeable_hypothesis
+  description: CA-1 conditioned on RANGING HMM regime (expected failure — control).
+  rationale: In a ranging market slope flips are noise — price oscillates without
+    follow-through. This is the control hypothesis; expected to fail.
+  WHY: If H230 fails and H229 passes, regime gating is valid and the RANGING regime
+    should suppress CA-1 entries in the paper trader.
+  RULES:
+  - Same signal as CA-1 (ETH slope flip, non-zero) AND hmm_regime == RANGING.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: CA-1
+      regime_gate: RANGING
+  allowed_variants: []
+  status: active
+- id: H231
+  family: regime_conditioning
+  class: tradeable_hypothesis
+  description: CA-1 conditioned on VOLATILE HMM regime.
+  rationale: VOLATILE regime is ambiguous — high vol could amplify slope flip edge
+    (big moves follow flips) or destroy it (noisy, fast reversals). Must test.
+  WHY: If VOLATILE regime is where CA-1 makes or loses most of its money, that
+    changes risk management and position sizing decisions.
+  RULES:
+  - Same signal as CA-1 (ETH slope flip, non-zero) AND hmm_regime == VOLATILE.
+  - Hold 8 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      base_signal: CA-1
+      regime_gate: VOLATILE
+  allowed_variants: []
+  status: active
+- id: H232
+  family: regime_conditioning
+  class: tradeable_hypothesis
+  description: VS-2 conditioned on TRENDING HMM regime.
+  rationale: VS-2 adds volume confirmation to CA-1. In a TRENDING regime with
+    elevated volume, a slope flip should be extremely high conviction.
+  WHY: VS-3 is the best signal at 60bps. VS-2 in TRENDING might approach that
+    level without requiring liquidation data, making it more robust.
+  RULES:
+  - Same signal as VS-2 (slope flip AND vol_btc_pct >= 0.80) AND hmm_regime == TRENDING.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-2
+      regime_gate: TRENDING
+  allowed_variants: []
+  status: active
+- id: H233
+  family: regime_conditioning
+  class: tradeable_hypothesis
+  description: VS-2 conditioned on VOLATILE HMM regime.
+  rationale: VS-2 already uses a volume gate (p80). VOLATILE regime is also
+    high-volume by definition. Test whether VS-2 in VOLATILE double-counts the
+    volume signal or uncovers regime-specific edge.
+  WHY: If VOLATILE + high volume + slope flip is better than TRENDING + high volume
+    + slope flip, that changes when to size up VS-2 entries.
+  RULES:
+  - Same signal as VS-2 (slope flip AND vol_btc_pct >= 0.80) AND hmm_regime == VOLATILE.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-2
+      regime_gate: VOLATILE
+  allowed_variants: []
+  status: active
+- id: H234
+  family: regime_conditioning
+  class: tradeable_hypothesis
+  description: VS-3 conditioned on TRENDING HMM regime — highest conviction hypothesis.
+  rationale: VS-3 is the best signal (60bps, triple-gated). Restricting to TRENDING
+    regime adds a fourth gate — only trade when market structure, volume, liquidations,
+    AND slope all align. Potentially the strongest signal in the entire catalog.
+  WHY: If VS-3 already works everywhere, TRENDING-only may reduce trade count too
+    much. But if edge is regime-concentrated, this unlocks a very high Sharpe subset.
+  RULES:
+  - Same signal as VS-3 (slope flip AND vol p80 AND total_liq p70) AND hmm_regime == TRENDING.
+  - Hold 12 bars, trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      base_signal: VS-3
+      regime_gate: TRENDING
+  allowed_variants: []
+  status: active
+- id: H235
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: VWAP z-score extreme pullback LONG on 365d dataset.
+  rationale: Pure VWAP mean reversion has never been tested on the full 365d
+    dataset. When BTC price is more than 2 standard deviations below the session
+    VWAP, test if it reverts over 6 bars (~30 min).
+  WHY: Mean reversion worked in some 180d windows but was inconclusive. 365d provides
+    more statistical power. No regime gate — tests the raw mechanism first.
+  RULES:
+  - vwap_z < -2.0. Direction = +1 (long). Hold 6 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 6
+    fixed:
+      vwap_z_entry_max: -2.0
+  allowed_variants: []
+  status: active
+- id: H236
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: VWAP z-score extreme extension SHORT on 365d dataset.
+  rationale: Mirror of H235. When price is more than 2 standard deviations above
+    the session VWAP, test if it reverts (shorts) over 6 bars.
+  WHY: Paired control for H235. Together they reveal whether VWAP MR is symmetric
+    or direction-biased on the 365d bull-market-dominated dataset.
+  RULES:
+  - vwap_z > +2.0. Direction = -1 (short). Hold 6 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 6
+    fixed:
+      vwap_z_entry_min: 2.0
+  allowed_variants: []
+  status: active
