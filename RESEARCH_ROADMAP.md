@@ -1,5 +1,5 @@
 # Research Roadmap
-**Last Updated:** 2026-02-23
+**Last Updated:** 2026-03-03
 **Status:** Active guidance document — update as hypotheses are tested and findings evolve.
 
 ---
@@ -132,31 +132,31 @@ For each anchor candidate above:
 
 ## 8. New Hypothesis Backlog — H188+ (LQ/OI Extensions)
 
-Priority order based on expected edge and data readiness:
+**Status as of 2026-03-03: ALL IMPLEMENTED AND QUEUED. Not yet run.**
 
-### LQ Family Extensions (high priority — data already loaded)
-- **H188**: LQ-1 at p80 threshold (long_liq_btc_pct >= 0.80). More frequent (~8/day), test if edge holds at lower bar. Pre-commit horizon=8.
-- **H189**: LQ-1 at p95 threshold. Rarer (~2/day), expect higher per-trade edge. Pre-commit horizon=8.
-- **H190**: LQ-2 at p80 (short_liq_btc_pct >= 0.80). Frequency/edge tradeoff for LONG squeeze.
-- **H191**: LQ-1 at h=12 (hold 60 min instead of 40 min). Test if cascade sustains longer.
-- **H192**: LQ-2 at h=12. Test if squeeze sustains longer.
-- **H193**: ETH liq variant — long_liq_eth_pct >= 0.90 → SHORT. Is ETH liq independently predictive?
-- **H194**: ETH liq variant — short_liq_eth_pct >= 0.90 → LONG.
-- **H195**: Liq imbalance — liq_imbalance_btc >= 0.80 (long-side dominant) → SHORT. Tests whether imbalance ratio adds over raw magnitude.
-- **H196**: Combined BTC+ETH liq — long_liq_btc_pct >= 0.90 AND long_liq_eth_pct >= 0.70 → SHORT. Both markets liquidating simultaneously = stronger signal?
+### LQ Family Extensions (family: oi_liq)
+| H# | Rule | Status |
+|----|------|--------|
+| H188 | LQ-1 at p80 threshold | Queued |
+| H189 | LQ-1 at p95 threshold | Queued |
+| H190 | LQ-2 at p80 threshold | Queued |
+| H191 | LQ-1 hold h=12 | Queued |
+| H192 | LQ-2 hold h=12 | Queued |
+| H193 | ETH long liq >= p90 → SHORT BTC | Queued |
+| H194 | ETH short liq >= p90 → LONG BTC | Queued |
+| H195 | liq_imbalance_btc >= 0.80 → SHORT | Queued |
+| H196 | BTC long liq >= p90 AND ETH long liq >= p70 → SHORT | Queued |
+| H197 | Slope flip + OI >= p80 + total_liq >= p70 | Queued |
 
-### OI + Liq Combined (medium priority)
-- **H197**: H176 variant + liq confirmation. OI >= p80 AND total_liq >= p70 AND slope flip. Addresses H176's weakness (day-asymmetric edge) by requiring liq confirmation. Expect similar to LQ-3 structure.
-
-### LQ Threshold Sensitivity (after H188-H192 anchors run)
-- Test p75, p80, p85, p90, p95 for LQ-1 and LQ-2 to build the frequency/edge curve.
-- Pre-commit to not testing more than 3 variants.
-
-### Design Rules for LQ Extensions
-- Always pre-commit horizon before running
-- Default horizon: 8 bars (LQ-1/LQ-2 anchor). Justify h=12 independently (H191/H192)
-- Frequency floor: need at least 30 trades in worst WF fold (means ~2+/day minimum)
-- For ETH liq variants: expect lower frequency than BTC (ETH liq < BTC liq in USD terms)
+### Additional new hypothesis tracks (also implemented and queued)
+| Block | H-numbers | Description |
+|-------|-----------|-------------|
+| Exit logic | H198–H214 | ATR/TP/trailing/breakeven/liq/vol exits on CA-1, VS-2, LQ-1/2/3, VS-3 |
+| Direction splits | H215–H220 | CA-1/VS-2/VS-3 long-only vs short-only (addresses critical gap 10a) |
+| LQ time-of-day | H221–H224 | LQ-1/LQ-2 Asia (00-08 UTC) vs US (12-20 UTC) session gating |
+| Multi-confirm | H225–H228 | OI gate, funding contrarian, slope+liq combo gates |
+| Regime conditioning | H229–H234 | CA-1/VS-2/VS-3 × TRENDING/RANGING/VOLATILE (addresses critical gap 10b) |
+| VWAP MR 365d | H235–H236 | vwap_z < -2.0 → LONG, vwap_z > +2.0 → SHORT on full 365d |
 
 ---
 
@@ -239,14 +239,19 @@ Each one could materially change our confidence in the confirmed signal set.
 We've never split signal performance by direction. If CA-1 LONGs are driving all the
 edge and CA-1 SHORTs are flat or negative, that's critical to know before deployment.
 
-**What to do:**
-- For every confirmed signal that trades both directions (CA-1, CA-2, VS-2, VS-3):
-  re-run the WF backtest splitting LONG trades vs SHORT trades separately.
-- Report gross mean, P>0, WF fold count for each direction independently.
-- If SHORT side fails: the signal is effectively LONG-only and should only fire on
-  bullish flips in the paper trader.
-- Next unused H-numbers for this track: H206 (CA-1 LONG only), H207 (CA-1 SHORT only),
-  H208 (VS-2 LONG only), H209 (VS-2 SHORT only).
+**Status: ADDRESSED — H215–H220 implemented and queued (family: direction_split)**
+
+| H# | Signal | Split |
+|----|--------|-------|
+| H215 | CA-1 | LONG only (bullish slope flips only) |
+| H216 | CA-1 | SHORT only (bearish slope flips only) |
+| H217 | VS-2 | LONG only |
+| H218 | VS-2 | SHORT only |
+| H219 | VS-3 | LONG only |
+| H220 | VS-3 | SHORT only |
+
+**Expected outcome:** If LONG side vastly outperforms SHORT, suppress the SHORT direction
+in the paper trader and re-evaluate position sizing assuming bull-market-only edge.
 
 ### 10b. HMM Regime Conditioning on Confirmed Signals
 
@@ -255,11 +260,20 @@ and it's in the DB — but we've never used it to ask whether confirmed signals 
 differently across regimes. If CA-1 is great in TRENDING regimes but flat in RANGING,
 we should suppress it during RANGING.
 
-**What to do:**
-- For each confirmed signal, break WF results into regime buckets: TRENDING / RANGING / VOLATILE.
-- Report per-regime gross mean and P>0.
-- If a regime shows P>0 < 0.6 or negative gross: gate the signal on that regime.
-- This is not a new hypothesis — it's a diagnostic on existing signals.
+**Status: ADDRESSED — H229–H234 implemented and queued (family: regime_conditioning)**
+
+| H# | Signal | Regime gate |
+|----|--------|-------------|
+| H229 | CA-1 | TRENDING only |
+| H230 | CA-1 | RANGING only |
+| H231 | VS-2 | TRENDING only |
+| H232 | VS-2 | RANGING only |
+| H233 | VS-3 | TRENDING only |
+| H234 | VS-3 | VOLATILE only |
+
+**Expected outcome:** If a signal is regime-dependent, the paper trader can filter entries
+using the current HMM state. Regime labels must be refreshed periodically as new candle
+data accumulates (re-run `hmm_regime_discovery.py`).
 
 ### 10c. Multiple Testing Correction (FDR)
 

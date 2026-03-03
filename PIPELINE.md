@@ -1,6 +1,6 @@
 # Pipeline Overview
-**Updated:** 2026-02-23
-**Era:** Phase 2 — ML-assisted hypothesis discovery (HMM + RF)
+**Updated:** 2026-03-03
+**Era:** Phase 3 — Exit logic, regime conditioning, signal expansion (H188–H236 queued)
 
 This document is the orientation guide. Read it to understand which scripts are active,
 which are reference material, and where new work lives.
@@ -24,11 +24,23 @@ which are reference material, and where new work lives.
 | `scripts/run_hypothesis_batch.py` | Batch runner — runs multiple H-numbers in sequence |
 | `scripts/run_batch_pg.sh` | Shell wrapper for unattended batch execution |
 
-### ML Pipeline (Phase 2 — new)
+**Supported families in research_family_runner.py (as of 2026-03-03):**
+`cross_asset_regime`, `shock_structure`, `volatility_conditioning`, `mean_reversion`,
+`range_structure`, `volatility_state`, `efficiency_mean_reversion`, `cross_asset_divergence`,
+`funding_regime`, `momentum`, `cross_asset`, `volume_state`, `oi_liq`,
+`exit_logic` *(new — H198–H214, apply_exit_logic() scanner)*,
+`direction_split` *(new — H215–H220, long/short asymmetry splits)*,
+`regime_conditioning` *(new — H229–H234, HMM regime gates on confirmed signals)*
+
+**Key new function:** `apply_exit_logic()` — scans intra-hold bars for early exits
+(ATR stop, take profit, trailing stop, breakeven, liq invalidation, slope reversal,
+volume collapse). Called inside `build_events()` for all exit_logic IDs.
+
+### ML Pipeline (Phase 2 — complete)
 | Script | Purpose |
 |--------|---------|
-| `scripts/ml/hmm_regime_discovery.py` | Stage 1: HMM regime labeling at 1h → rc.regime_labels *(not yet built)* |
-| `scripts/ml/rf_hypothesis_generator.py` | Stage 2: XGBoost + SHAP walk-forward → hypothesis candidates *(not yet built)* |
+| `scripts/hmm_regime_discovery.py` | Stage 1: HMM regime labeling at 1h → rc.regime_labels ✓ DONE (6,364 rows) |
+| `scripts/ml/rf_hypothesis_generator.py` | Stage 2: XGBoost + SHAP walk-forward → hypothesis candidates ✓ DONE (H124–H139) |
 
 ### Live Paper Trading
 | Script | Purpose |
@@ -77,11 +89,27 @@ when building new ML components.
 
 ---
 
+## Database Status
+
+| Environment | Status | Notes |
+|-------------|--------|-------|
+| Desktop Postgres | ✓ Active | All data + HMM labels. Paper trader runs here. |
+| Laptop | ⚠ No DB | Cloned repo, .venv installed. Needs DB to run hypotheses. |
+| Neon/Supabase (planned) | TODO | Migrate desktop DB for laptop access. Free tier sufficient (~150MB). |
+
+**To resume on laptop:** Set `RC_DB_DSN` in `.env`, then:
+```bash
+source .venv/bin/activate
+python -m scripts.run_hypothesis_batch --dsn $RC_DB_DSN
+```
+
 ## Output Directories
 
 | Directory | Contents |
 |-----------|---------|
-| `results/archive/` | All hypothesis run JSONs (H1–H123 era) |
+| `results/runs/` | All hypothesis run JSONs (current era, H39+) |
+| `results/archive/` | Older hypothesis run JSONs (H1–H123 era) |
+| `results/errors/` | Error artifacts from failed runs |
 | `results/ml/hmm/` | HMM regime discovery outputs |
 | `results/ml/rf/` | RF hypothesis generator outputs |
 | `logs/` | Active logs (backfill, live paper trading) |
@@ -107,4 +135,19 @@ when building new ML components.
 | Phase | Era | Description |
 |-------|-----|-------------|
 | Phase 1 | H1–H123 | Manual hypothesis design. 25 PASS signals found, all CA-family. Tagged: `phase1-end` |
-| Phase 2 | H124+ | ML-assisted discovery via HMM + RF. Regime-aware three-layer architecture. |
+| Phase 2 | H124–H187 | ML-assisted discovery (HMM + RF). Found VS-1/2/3, LQ-1/2/3 signals. 6 new PASS signals deployed to paper trader. |
+| Phase 3 | H188–H236 | Exit logic, direction splits, regime conditioning, LQ extensions, VWAP MR. 49 hypotheses queued, none yet run. |
+
+## Current Queue (49 hypotheses — H198–H236 + H188–H197)
+
+Run when DB is accessible: `python -m scripts.run_hypothesis_batch --dsn $RC_DB_DSN`
+
+| Block | H-numbers | Track | Count |
+|-------|-----------|-------|-------|
+| Exit logic | H198–H214 | ATR/TP/trailing/breakeven/liq/vol exits on confirmed signals | 17 |
+| Direction splits | H215–H220 | CA-1/VS-2/VS-3 long-only vs short-only | 6 |
+| LQ time-of-day | H221–H224 | LQ-1/LQ-2 Asia (00-08) vs US (12-20) session | 4 |
+| Multi-confirm | H225–H228 | OI gate, funding contrarian, slope+liq combo | 4 |
+| LQ extensions | H188–H197 | Threshold variants, ETH liq, imbalance, cross-asset | 10 |
+| Regime conditioning | H229–H234 | CA-1/VS-2/VS-3 × TRENDING/RANGING/VOLATILE | 6 |
+| VWAP MR 365d | H235–H236 | vwap_z extremes on full dataset | 2 |
