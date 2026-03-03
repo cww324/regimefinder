@@ -201,26 +201,30 @@ Same story — slope flip exit for VS-2 is nearly equivalent to the time exit.
 ATR stops, trailing stops, and take profit exits instead. Opposite signal exit is
 genuinely useful for LQ signals (liq data updates hourly and could drop mid-trade).
 
-### Hypotheses (pre-committed, run one at a time)
+### Hypotheses (pre-committed, run as batch H198–H214)
 
-| H# | Signal | Exit rule | Type |
-|----|--------|-----------|------|
-| H198 | CA-1 | ATR stop loss (1.5× ATR from entry) | ATR stop |
-| H199 | CA-1 | Take profit at +25bps | Take profit |
-| H200 | CA-1 | Trailing stop (15bps trail from peak) | Trailing stop |
-| H201 | CA-1 | Combo: 8-bar max OR ATR stop OR +25bps TP | Combo |
-| H202 | VS-2 | ATR stop loss (1.5× ATR from entry) | ATR stop |
-| H203 | VS-2 | Take profit at +35bps | Take profit |
-| H204 | VS-2 | Trailing stop (20bps trail from peak) | Trailing stop |
-| H205 | VS-2 | Combo: 12-bar max OR ATR stop OR +35bps TP | Combo |
-| H206 | LQ-1 | Exit early if long_liq_btc_pct drops below p50 | Opposite signal |
-| H207 | LQ-1 | ATR stop loss | ATR stop |
-| H208 | LQ-2 | Exit early if short_liq_btc_pct drops below p50 | Opposite signal |
-| H209 | LQ-3 | Exit early if slope flips bullish OR liq drops below p50 | Opposite signal |
-| H210 | VS-3 | Exit early if total_liq drops below p50 OR slope reverses | Opposite signal |
+| H# | Signal | Exit rule | Type | Params | Status |
+|----|--------|-----------|------|--------|--------|
+| H198 | CA-1 | ATR stop loss (1.5× ATR14) | ATR stop | `atr_stop_mult: 1.5` | TODO |
+| H199 | CA-1 | Take profit at +25bps | Take profit | `tp_bps: 25.0` | TODO |
+| H200 | CA-1 | Trailing stop (15bps trail from peak) | Trailing stop | `trail_bps: 15.0` | TODO |
+| H201 | CA-1 | Combo: 8-bar max OR ATR stop OR +25bps TP | Combo | `atr_stop_mult: 1.5, tp_bps: 25.0` | TODO |
+| H202 | VS-2 | ATR stop loss (1.5× ATR14) | ATR stop | `atr_stop_mult: 1.5` | TODO |
+| H203 | VS-2 | Take profit at +35bps | Take profit | `tp_bps: 35.0` | TODO |
+| H204 | VS-2 | Trailing stop (20bps trail from peak) | Trailing stop | `trail_bps: 20.0` | TODO |
+| H205 | VS-2 | Combo: 12-bar max OR ATR stop OR +35bps TP | Combo | `atr_stop_mult: 1.5, tp_bps: 35.0` | TODO |
+| H206 | LQ-1 | Exit if long_liq_btc_pct < p50 | Liq invalidation | `liq_exit_col: long_liq_btc_pct, liq_exit_threshold: 0.5` | TODO |
+| H207 | LQ-1 | ATR stop loss | ATR stop | `atr_stop_mult: 1.5` | TODO |
+| H208 | LQ-2 | Exit if short_liq_btc_pct < p50 | Liq invalidation | `liq_exit_col: short_liq_btc_pct, liq_exit_threshold: 0.5` | TODO |
+| H209 | LQ-3 | Exit if slope flips bullish OR liq < p50 | Combo | `liq_exit_col: long_liq_btc_pct, liq_exit_threshold: 0.5, slope_exit: true` | TODO |
+| H210 | VS-3 | Exit if total_liq < p50 OR slope reverses | Combo | `liq_exit_col: total_liq_btc_pct, liq_exit_threshold: 0.5, slope_exit: true` | TODO |
+| H211 | CA-1 | Breakeven stop after +15bps gain | Breakeven | `breakeven_trigger_bps: 15.0` | TODO |
+| H212 | VS-2 | Breakeven stop after +20bps gain | Breakeven | `breakeven_trigger_bps: 20.0` | TODO |
+| H213 | LQ-1 | Combo: ATR stop OR liq invalidation, 8-bar max | Combo | `atr_stop_mult: 1.5, liq_exit_col: long_liq_btc_pct, liq_exit_threshold: 0.5` | TODO |
+| H214 | CA-1 | Volume collapse exit (vol_btc_pct < p30 for 2 bars) | Vol collapse | `vol_collapse_col: volume_btc_pct, vol_collapse_threshold: 0.3, vol_collapse_bars: 2` | TODO |
 
-**Run order:** Start with CA-1 exits (H198–H201) since it has the most trades (~4/day)
-and will give statistically meaningful results fastest. Then VS-2, then LQ signals.
+**Run order:** Full batch H198–H214 via `run_hypothesis_batch`. CA-1 exits first
+(most trades, ~4/day), then VS-2, then LQ/VS-3 variants.
 
 ---
 

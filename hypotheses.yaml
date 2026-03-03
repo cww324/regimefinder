@@ -6046,3 +6046,347 @@ hypotheses:
     P>0=1.000 folds 15/17. VS-3 edge barely affected by 1-bar lag (60.5 → 54.1bps,
     fold structure identical). EXECUTION REALISTIC. Paper trade ready."
   source: Robustness check for H180 (VS-3).
+- id: H198
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: CA-1 + ATR stop loss (1.5× ATR14 from entry price).
+  rationale: Test whether a dynamic volatility-scaled stop loss improves CA-1 net
+    returns by cutting losses earlier on adverse moves while leaving winning trades
+    to run to the 8-bar time exit.
+  WHY: CA-1 has strong gross edge (34bps) but fixed-time exit surrenders gains on
+    reversals. ATR stop provides volatility-adaptive downside protection.
+  RULES:
+  - Same entry as CA-1 (ETH slope flip, non-zero sign).
+  - Exit early if price moves 1.5 × ATR14 against entry direction.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      atr_stop_mult: 1.5
+  allowed_variants: []
+  status: active
+- id: H199
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: CA-1 + Take profit at +25 basis points.
+  rationale: Test whether locking in gains at 25bps improves CA-1 net returns
+    by avoiding the give-back that occurs when strong moves reverse before the 8-bar
+    time exit.
+  WHY: CA-1 mean gross is 34bps but many trades overshoot then retrace. Taking
+    profit at 25bps captures the bulk of typical moves without holding through reversals.
+  RULES:
+  - Same entry as CA-1 (ETH slope flip, non-zero sign).
+  - Exit early when unrealized P&L reaches +25bps from entry.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      tp_bps: 25.0
+  allowed_variants: []
+  status: active
+- id: H200
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: CA-1 + Trailing stop (15bps trail from running peak).
+  rationale: Test whether a trailing stop improves CA-1 net returns by capturing
+    extended moves while cutting losses when the market reverses from the trade peak.
+  WHY: CA-1 trades trend ETH slope flips. Extended moves may overshoot; trailing
+    stop locks in gains dynamically without capping upside.
+  RULES:
+  - Same entry as CA-1 (ETH slope flip, non-zero sign).
+  - Track running best price since entry. Exit when price pulls back 15bps × entry_px
+    from the peak.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      trail_bps: 15.0
+  allowed_variants: []
+  status: active
+- id: H201
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: CA-1 + Combo exit (ATR stop OR take profit, 8-bar max).
+  rationale: Test whether combining ATR stop loss with take profit (whichever fires
+    first) outperforms either alone by providing both downside protection and gain
+    capture.
+  WHY: Realistic deployment scenario — cut losers via ATR stop, lock winners via
+    TP. Most practical combo for CA-1.
+  RULES:
+  - Same entry as CA-1 (ETH slope flip, non-zero sign).
+  - Exit early on ATR stop (1.5× ATR14) OR take profit (+25bps), whichever fires first.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      atr_stop_mult: 1.5
+      tp_bps: 25.0
+  allowed_variants: []
+  status: active
+- id: H202
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: VS-2 + ATR stop loss (1.5× ATR14 from entry price).
+  rationale: Test whether a dynamic ATR stop improves VS-2 net returns by cutting
+    losses on the minority of trades that reverse hard after the high-volume slope flip.
+  WHY: VS-2 has excellent gross (50bps) but 12-bar hold exposes trades to reversal
+    risk. ATR stop provides volatility-adaptive downside protection.
+  RULES:
+  - Same entry as VS-2 (ETH slope flip AND volume_btc_pct ≥ 0.80).
+  - Exit early if price moves 1.5 × ATR14 against entry direction.
+  - Otherwise hold up to 12 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      atr_stop_mult: 1.5
+  allowed_variants: []
+  status: active
+- id: H203
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: VS-2 + Take profit at +35 basis points.
+  rationale: Test whether locking in gains at 35bps improves VS-2 net returns
+    by capturing the majority of the expected move before potential give-back.
+  WHY: VS-2 mean gross is ~50bps over 12 bars; many trades likely reach 35bps
+    well before bar 12. Early lock-in could improve Sharpe.
+  RULES:
+  - Same entry as VS-2 (ETH slope flip AND volume_btc_pct ≥ 0.80).
+  - Exit early when unrealized P&L reaches +35bps from entry.
+  - Otherwise hold up to 12 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      tp_bps: 35.0
+  allowed_variants: []
+  status: active
+- id: H204
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: VS-2 + Trailing stop (20bps trail from running peak).
+  rationale: Test whether a trailing stop improves VS-2 net returns by locking
+    in extended moves while cutting losses on reversals.
+  WHY: VS-2 trades high-conviction slope flips backed by volume. A trailing stop
+    could capture the full momentum move without capping upside.
+  RULES:
+  - Same entry as VS-2 (ETH slope flip AND volume_btc_pct ≥ 0.80).
+  - Track running best price since entry. Exit when price pulls back 20bps × entry_px
+    from the peak.
+  - Otherwise hold up to 12 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      trail_bps: 20.0
+  allowed_variants: []
+  status: active
+- id: H205
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: VS-2 + Combo exit (ATR stop OR take profit, 12-bar max).
+  rationale: Test whether combining ATR stop and take profit improves VS-2 by
+    providing both downside protection and gain capture in a single realistic strategy.
+  WHY: Most realistic VS-2 deployment scenario. ATR stop limits drawdown; TP locks
+    in gains. The 12-bar window provides full thesis-verification time if neither fires.
+  RULES:
+  - Same entry as VS-2 (ETH slope flip AND volume_btc_pct ≥ 0.80).
+  - Exit early on ATR stop (1.5× ATR14) OR take profit (+35bps), whichever fires first.
+  - Otherwise hold up to 12 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      atr_stop_mult: 1.5
+      tp_bps: 35.0
+  allowed_variants: []
+  status: active
+- id: H206
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: LQ-1 + Opposite signal exit (exit when long_liq_btc_pct drops below p50).
+  rationale: Test whether exiting LQ-1 trades early when the liquidation thesis
+    invalidates (long liq percentile drops below median) improves net returns.
+  WHY: LQ-1 shorts on long liquidation cascades. If liquidations subside mid-trade
+    (liq_pct < p50), the cascade is over — the short thesis is invalidated.
+  RULES:
+  - Same entry as LQ-1 (onset of long_liq_btc_pct ≥ 0.90, direction=-1).
+  - Exit early if long_liq_btc_pct drops below 0.50 during the hold.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      liq_exit_col: long_liq_btc_pct
+      liq_exit_threshold: 0.5
+  allowed_variants: []
+  status: active
+- id: H207
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: LQ-1 + ATR stop loss (1.5× ATR14).
+  rationale: Test whether ATR-based stops improve LQ-1 returns by cutting losses
+    when the cascade fails to produce the expected downward continuation.
+  WHY: LQ-1 shorts are high-conviction but occasionally fail when cascades resolve
+    quickly. ATR stop limits downside on failed cascade entries.
+  RULES:
+  - Same entry as LQ-1 (onset of long_liq_btc_pct ≥ 0.90, direction=-1).
+  - Exit early if price moves 1.5 × ATR14 against the short direction.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      atr_stop_mult: 1.5
+  allowed_variants: []
+  status: active
+- id: H208
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: LQ-2 + Opposite signal exit (exit when short_liq_btc_pct drops below p50).
+  rationale: Test whether exiting LQ-2 trades early when the short liquidation
+    thesis invalidates (short liq percentile drops below median) improves net returns.
+  WHY: LQ-2 longs on short liquidation cascades. If liquidations subside (short_liq_pct
+    < p50), the squeeze is over — the long thesis is invalidated.
+  RULES:
+  - Same entry as LQ-2 (onset of short_liq_btc_pct ≥ 0.90, direction=+1).
+  - Exit early if short_liq_btc_pct drops below 0.50 during the hold.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      liq_exit_col: short_liq_btc_pct
+      liq_exit_threshold: 0.5
+  allowed_variants: []
+  status: active
+- id: H209
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: LQ-3 + Combo exit (slope reversal OR long liq thesis invalidation).
+  rationale: Test whether exiting LQ-3 when slope flips bullish OR long liquidations
+    subside below p50 improves net returns over the fixed 8-bar exit.
+  WHY: LQ-3 shorts on slope-flip-down + high long liquidations. Two thesis legs —
+    exit when either leg is invalidated (slope recovers or cascade ends).
+  RULES:
+  - Same entry as LQ-3 (slope flip down AND long_liq_btc_pct ≥ 0.70, direction=-1).
+  - Exit early if eth_slope_sign_1h flips positive OR long_liq_btc_pct drops below 0.50.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      liq_exit_col: long_liq_btc_pct
+      liq_exit_threshold: 0.5
+      slope_exit: true
+  allowed_variants: []
+  status: active
+- id: H210
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: VS-3 + Combo exit (total liq thesis invalidation OR slope reversal).
+  rationale: Test whether exiting VS-3 when total liquidations subside OR slope
+    reverses improves net returns over the fixed 12-bar exit.
+  WHY: VS-3 uses slope + volume + total liquidations for entry. Either leg reversing
+    mid-trade invalidates the thesis — exit rather than hold to time.
+  RULES:
+  - Same entry as VS-3 (slope flip AND vol_btc_pct ≥ 0.80 AND total_liq_btc_pct ≥ 0.70).
+  - Exit early if total_liq_btc_pct drops below 0.50 OR eth_slope_sign_1h reverses.
+  - Otherwise hold up to 12 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      liq_exit_col: total_liq_btc_pct
+      liq_exit_threshold: 0.5
+      slope_exit: true
+  allowed_variants: []
+  status: active
+- id: H211
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: CA-1 + Breakeven stop (move stop to entry after +15bps gain).
+  rationale: Test whether locking in a free trade once CA-1 is up 15bps improves
+    risk-adjusted returns by eliminating the chance of a winner turning into a loser.
+  WHY: CA-1 trades often move strongly in favor before reversing. Breakeven stop
+    prevents giving back gains on trades that initially went well.
+  RULES:
+  - Same entry as CA-1 (ETH slope flip, non-zero sign).
+  - Once unrealized P&L reaches +15bps, move stop-loss to entry price (breakeven).
+  - Exit early if price reverses to entry price after breakeven is triggered.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      breakeven_trigger_bps: 15.0
+  allowed_variants: []
+  status: active
+- id: H212
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: VS-2 + Breakeven stop (move stop to entry after +20bps gain).
+  rationale: Test whether locking in a free trade once VS-2 is up 20bps improves
+    risk-adjusted returns without significantly reducing trade expectancy.
+  WHY: VS-2 trades have high conviction but 12-bar holds can give back early gains.
+    Breakeven stop after +20bps eliminates zero-sum holds.
+  RULES:
+  - Same entry as VS-2 (ETH slope flip AND volume_btc_pct ≥ 0.80).
+  - Once unrealized P&L reaches +20bps, move stop-loss to entry price (breakeven).
+  - Exit early if price reverses to entry price after breakeven is triggered.
+  - Otherwise hold up to 12 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    fixed:
+      breakeven_trigger_bps: 20.0
+  allowed_variants: []
+  status: active
+- id: H213
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: LQ-1 + Combo exit (ATR stop OR liq thesis invalidation, 8-bar max).
+  rationale: Test whether combining ATR stop with liquidation-thesis exit improves
+    LQ-1 returns by protecting against both technical stop-outs and fundamental
+    thesis invalidation.
+  WHY: LQ-1 faces two failure modes — price reversal (ATR stop) and cascade resolution
+    (liq exit). Covering both should reduce tail losses.
+  RULES:
+  - Same entry as LQ-1 (onset of long_liq_btc_pct ≥ 0.90, direction=-1).
+  - Exit early on ATR stop (1.5× ATR14) OR if long_liq_btc_pct drops below 0.50,
+    whichever fires first.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      atr_stop_mult: 1.5
+      liq_exit_col: long_liq_btc_pct
+      liq_exit_threshold: 0.5
+  allowed_variants: []
+  status: active
+- id: H214
+  family: exit_logic
+  class: tradeable_hypothesis
+  description: CA-1 + Volume collapse exit (exit if volume_btc_pct stays below p30 for 2 bars).
+  rationale: Test whether exiting CA-1 trades when trading volume collapses below
+    p30 for two consecutive bars improves returns by avoiding low-liquidity drift.
+  WHY: CA-1 slope flips are driven by ETH momentum. Volume collapse during the
+    hold suggests the momentum is exhausted — exit rather than holding for noise.
+  RULES:
+  - Same entry as CA-1 (ETH slope flip, non-zero sign).
+  - Exit early if volume_btc_pct stays below 0.30 for 2 consecutive bars.
+  - Otherwise hold up to 8 bars (time exit).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      vol_collapse_col: volume_btc_pct
+      vol_collapse_threshold: 0.3
+      vol_collapse_bars: 2
+  allowed_variants: []
+  status: active

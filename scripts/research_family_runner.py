@@ -31,6 +31,7 @@ SUPPORTED_FAMILIES = {
     "cross_asset",
     "volume_state",
     "oi_liq",
+    "exit_logic",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -108,7 +109,13 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
                      "H169", "H170", "H171", "H172", "H173"},
     "oi_liq": {"H176", "H177", "H178", "H179", "H180",
                "H181", "H182", "H183", "H184", "H185", "H186", "H187"},
+    "exit_logic": {
+        "H198", "H199", "H200", "H201", "H202", "H203", "H204", "H205",
+        "H206", "H207", "H208", "H209", "H210", "H211", "H212", "H213", "H214",
+    },
 }
+
+EXIT_LOGIC_IDS = frozenset(SUPPORTED_IDS_BY_FAMILY["exit_logic"])
 
 
 def parse_args() -> argparse.Namespace:
@@ -1532,10 +1539,241 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
+    if family == "exit_logic":
+        require_columns(x, hypothesis_id, ["eth_slope_sign_1h"])
+        eth_sign = x["eth_slope_sign_1h"]
+
+        if hypothesis_id in {"H198", "H199", "H200", "H201", "H211", "H214"}:
+            # CA-1: ETH slope flip (sign changes AND is non-zero)
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            idx = dedup_idx(slope_flip, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H202", "H203", "H204", "H205", "H212"}:
+            # VS-2: slope flip AND volume_btc_pct ≥ 0.80
+            vol_pct = x["volume_btc_pct"]
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            candidate = slope_flip & high_vol
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H206", "H207", "H213"}:
+            # LQ-1: onset of long_liq_btc_pct ≥ 0.90 → direction=-1
+            require_columns(x, hypothesis_id, ["long_liq_btc_pct"])
+            long_liq_pct = x["long_liq_btc_pct"]
+            condition = long_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H208":
+            # LQ-2: onset of short_liq_btc_pct ≥ 0.90 → direction=+1
+            require_columns(x, hypothesis_id, ["short_liq_btc_pct"])
+            short_liq_pct = x["short_liq_btc_pct"]
+            condition = short_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H209":
+            # LQ-3: slope flip DOWN AND long_liq_btc_pct ≥ 0.70 → direction=-1
+            require_columns(x, hypothesis_id, ["long_liq_btc_pct"])
+            long_liq_pct = x["long_liq_btc_pct"]
+            slope_flip_down = eth_sign.eq(-1) & eth_sign.shift(1).eq(1)
+            high_long_liq = long_liq_pct.ge(0.70)
+            candidate = slope_flip_down & high_long_liq
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H210":
+            # VS-3: slope flip AND vol p80 AND total_liq p70
+            require_columns(x, hypothesis_id, ["total_liq_btc_pct"])
+            total_liq_pct = x["total_liq_btc_pct"]
+            vol_pct = x["volume_btc_pct"]
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_vol = vol_pct.ge(0.80)
+            liq_active = total_liq_pct.ge(0.70)
+            candidate = slope_flip & high_vol & liq_active
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
     raise ValueError(
         f"Unsupported hypothesis/family route: {hypothesis_id} ({family}). "
         f"Known IDs for family: {sorted(SUPPORTED_IDS_BY_FAMILY.get(family, set()))}"
     )
+
+
+def apply_exit_logic(
+    close_arr: np.ndarray,
+    entry_indices: list[int],
+    sig_arr: np.ndarray,
+    entry_offset: int,
+    horizon: int,
+    atr_arr: np.ndarray,
+    exit_params: dict,
+    extra_cols: dict[str, np.ndarray] | None = None,
+) -> np.ndarray:
+    """Scan bars within hold window and return effective exit prices.
+
+    exit_params keys (all optional, 0/falsy = disabled):
+        atr_stop_mult         — exit if price moves mult × ATR14 against trade
+        tp_bps                — take profit when P&L exceeds this many basis points
+        trail_bps             — trailing stop: pull back trail_bps/10000 × ep from peak
+        breakeven_trigger_bps — once up this many bps, move stop to entry price
+        liq_exit_col          — column name to watch for thesis invalidation
+        liq_exit_threshold    — exit early if liq_exit_col value drops below this
+        slope_exit            — bool; exit if eth_slope_sign_1h reverses during hold
+        vol_collapse_col      — column to watch for volume collapse
+        vol_collapse_threshold— exit if column stays below threshold for N bars
+        vol_collapse_bars     — consecutive bars below threshold before exit (default 2)
+    """
+    extra = extra_cols or {}
+    atr_stop_mult = float(exit_params.get("atr_stop_mult", 0) or 0)
+    tp_bps = float(exit_params.get("tp_bps", 0) or 0)
+    trail_bps = float(exit_params.get("trail_bps", 0) or 0)
+    be_trigger_bps = float(exit_params.get("breakeven_trigger_bps", 0) or 0)
+    liq_exit_col = str(exit_params.get("liq_exit_col", "") or "")
+    liq_exit_threshold = float(exit_params.get("liq_exit_threshold", 0) or 0)
+    slope_exit = bool(exit_params.get("slope_exit", False))
+    vol_collapse_col = str(exit_params.get("vol_collapse_col", "") or "")
+    vol_collapse_threshold = float(exit_params.get("vol_collapse_threshold", 0) or 0)
+    vol_collapse_bars = int(exit_params.get("vol_collapse_bars", 2) or 2)
+
+    n = len(close_arr)
+    eff_exits = np.full(len(entry_indices), np.nan, dtype=float)
+    eth_slope_arr = extra.get("eth_slope_sign_1h")
+    liq_arr = extra.get(liq_exit_col) if liq_exit_col else None
+    vol_arr = extra.get(vol_collapse_col) if vol_collapse_col else None
+
+    for j, i in enumerate(entry_indices):
+        i = int(i)
+        direction = float(sig_arr[i]) if i < n else 0.0
+        if direction == 0.0:
+            continue
+        ent_i = i + entry_offset
+        if ent_i < 0 or ent_i >= n:
+            continue
+        ep = close_arr[ent_i]
+        if not np.isfinite(ep) or ep == 0:
+            continue
+
+        atr_at_entry = float(atr_arr[ent_i]) if ent_i < len(atr_arr) and np.isfinite(atr_arr[ent_i]) else 0.0
+        entry_slope = (
+            float(eth_slope_arr[ent_i])
+            if eth_slope_arr is not None and ent_i < len(eth_slope_arr)
+            else 0.0
+        )
+        running_peak = ep
+        be_stop_active = False
+        vol_collapse_count = 0
+        exit_px = np.nan
+
+        for k in range(ent_i + 1, min(ent_i + horizon + 1, n)):
+            px = close_arr[k]
+            if not np.isfinite(px):
+                continue
+
+            signed_pnl = direction * (px / ep - 1.0)
+            if direction > 0:
+                running_peak = max(running_peak, px)
+            else:
+                running_peak = min(running_peak, px)
+
+            # Activate breakeven stop once trade is sufficiently profitable
+            if be_trigger_bps > 0 and not be_stop_active:
+                if signed_pnl >= be_trigger_bps / 10000.0:
+                    be_stop_active = True
+
+            # 1. ATR stop
+            if atr_stop_mult > 0 and atr_at_entry > 0:
+                stop_dist = atr_stop_mult * atr_at_entry
+                if direction > 0 and px <= ep - stop_dist:
+                    exit_px = px
+                    break
+                if direction < 0 and px >= ep + stop_dist:
+                    exit_px = px
+                    break
+
+            # 2. Take profit
+            if tp_bps > 0 and signed_pnl >= tp_bps / 10000.0:
+                exit_px = px
+                break
+
+            # 3. Trailing stop
+            if trail_bps > 0:
+                trail_dist = trail_bps / 10000.0 * ep
+                if direction > 0 and px <= running_peak - trail_dist:
+                    exit_px = px
+                    break
+                if direction < 0 and px >= running_peak + trail_dist:
+                    exit_px = px
+                    break
+
+            # 4. Breakeven stop
+            if be_stop_active:
+                if direction > 0 and px <= ep:
+                    exit_px = px
+                    break
+                if direction < 0 and px >= ep:
+                    exit_px = px
+                    break
+
+            # 5. Liquidation exit
+            if liq_arr is not None and liq_exit_threshold > 0 and k < len(liq_arr):
+                liq_val = float(liq_arr[k])
+                if np.isfinite(liq_val) and liq_val < liq_exit_threshold:
+                    exit_px = px
+                    break
+
+            # 6. Slope reversal exit
+            if slope_exit and eth_slope_arr is not None and k < len(eth_slope_arr):
+                cur_slope = float(eth_slope_arr[k])
+                if np.isfinite(cur_slope) and cur_slope != 0 and cur_slope != entry_slope:
+                    exit_px = px
+                    break
+
+            # 7. Volume collapse exit
+            if vol_arr is not None and vol_collapse_threshold > 0 and k < len(vol_arr):
+                vol_val = float(vol_arr[k])
+                if np.isfinite(vol_val) and vol_val < vol_collapse_threshold:
+                    vol_collapse_count += 1
+                else:
+                    vol_collapse_count = 0
+                if vol_collapse_count >= vol_collapse_bars:
+                    exit_px = px
+                    break
+
+        # Fall back to time exit if no early-exit triggered
+        if not np.isfinite(exit_px):
+            time_exit_i = ent_i + horizon
+            if time_exit_i < n:
+                exit_px = close_arr[time_exit_i]
+
+        eff_exits[j] = exit_px
+
+    return eff_exits
 
 
 def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: str = "") -> pd.DataFrame:
@@ -1637,6 +1875,39 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         base = base[base["dt"].dt.day % 2 == 1].copy()
     if hypothesis_id == "H182":
         base = base[base["dt"].dt.day % 2 == 0].copy()
+
+    # Exit logic override: replace fixed-horizon exit prices with early exits.
+    if hypothesis_id in EXIT_LOGIC_IDS:
+        close_arr_exit = close_s.to_numpy(dtype=float)
+        atr_arr_exit = x["atr14_btc"].to_numpy(dtype=float) if "atr14_btc" in x.columns else np.zeros(len(x))
+        sig_arr_exit = x["signal_dir"].to_numpy(dtype=float)
+        extra_cols_exit: dict[str, np.ndarray] = {}
+        for col in ["long_liq_btc_pct", "short_liq_btc_pct", "total_liq_btc_pct",
+                    "volume_btc_pct", "eth_slope_sign_1h"]:
+            if col in x.columns:
+                extra_cols_exit[col] = x[col].to_numpy(dtype=float)
+        eff_exits = apply_exit_logic(
+            close_arr=close_arr_exit,
+            entry_indices=idx,
+            sig_arr=sig_arr_exit,
+            entry_offset=entry_offset,
+            horizon=horizon,
+            atr_arr=atr_arr_exit,
+            exit_params=fixed_params,
+            extra_cols=extra_cols_exit,
+        )
+        idx_to_exit = {idx[j]: eff_exits[j] for j in range(len(idx))}
+        for row_label in list(base.index):
+            exit_px = idx_to_exit.get(row_label, np.nan)
+            entry_px = base.at[row_label, "entry_px"]
+            if np.isfinite(entry_px) and entry_px != 0 and np.isfinite(exit_px):
+                fwd_r = exit_px / entry_px - 1.0
+                base.at[row_label, "fwd_r"] = fwd_r
+                base.at[row_label, "gross_r"] = base.at[row_label, "signal_dir"] * fwd_r
+            else:
+                base.at[row_label, "fwd_r"] = np.nan
+                base.at[row_label, "gross_r"] = np.nan
+        base = base.dropna(subset=["gross_r"])
 
     # MAE proxy using close-path from entry to horizon.
     close_arr = close_s.to_numpy(dtype=float)
