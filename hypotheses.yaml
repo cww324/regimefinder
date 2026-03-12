@@ -6975,3 +6975,520 @@ hypotheses:
       vwap_z_entry_min: 2.0
   allowed_variants: []
   status: active
+- id: H237
+  family: vol_compression
+  class: tradeable_hypothesis
+  description: Vol compression breakout gate — CA-1 gated by BTC RV compressed 4+ hours.
+  rationale: When BTC realized volatility has been below its p20 for 4+ consecutive
+    hours, price is coiling. The next directional move (triggered by ETH slope flip)
+    should be stronger than average because suppressed vol releases suddenly. Tests
+    whether vol compression is an independent quality gate on CA-1, similar to how
+    volume (VS-1) and liquidations (LQ-3) improved the base slope flip signal.
+  WHY: If vol compression is just a proxy for low volume, it adds nothing beyond
+    VS-1. Expected failure mode — but if RV compression captures a different regime
+    than volume (e.g. thin-book coiling vs genuine low participation), it may select
+    higher-conviction entries independently.
+  RULES:
+  - BTC 1h realized vol (RV) has been below the rolling p20 for 4 or more consecutive hours.
+  - AND ETH 1h EMA20 slope changes direction (same trigger as CA-1).
+  - Trade in direction of slope flip. Hold 8 bars (40 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      rv_compressed_hours: 4
+      rv_percentile_threshold: 20
+      slope_signal: CA-1
+  allowed_variants: []
+  status: active
+- id: H238
+  family: funding_regime
+  class: tradeable_hypothesis
+  description: Sustained funding persistence SHORT — crowded-long unwind signal.
+  rationale: When BTC perpetual funding has been continuously positive for 6+ hours,
+    the market is structurally crowded long. Everyone is paying to hold longs. Any
+    weakness triggers cascading exits — not just forced liquidations, but voluntary
+    position closures too. Tests whether sustained funding persistence is an
+    independent directional predictor, entirely separate from momentum signals.
+  WHY: |
+    Previous funding tests (H121-H144) used instantaneous funding extremes.
+    This is different — it tests the PERSISTENCE of positive funding as a crowding
+    signal. Expected failure mode: funding can stay positive for days in a bull
+    trend, firing into the trend and losing. This is the cleanest test of whether
+    crowded-long positioning predicts mean reversion at 40-minute horizons.
+  RULES:
+  - BTC perpetual funding rate has been positive for 6 or more consecutive hours.
+  - No slope or volume gate — funding persistence alone is the signal.
+  - Direction = SHORT (fading the crowded long). Hold 8 bars (40 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      funding_positive_hours: 6
+  allowed_variants: []
+  status: active
+- id: H239
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: OI expansion trend cascade — active leverage buildup + bearish slope flip.
+  rationale: OI actively growing for 3+ consecutive hours means new leveraged positions
+    are being opened continuously — not just that leverage exists, but that it is
+    actively accumulating. When that OI expansion coincides with a bearish ETH slope
+    flip, those newly-added longs are immediately offside and the cascade is more
+    violent. Tests OI trend (slope of OI) rather than OI level, which failed in H176
+    due to day-asymmetry.
+  WHY: |
+    H176 (OI level gate) failed even-day robustness. The hypothesis here is that
+    OI expansion TREND is a different and cleaner signal than OI level — it captures
+    the dynamic of leverage actively building rather than leverage sitting static.
+    Expected failure mode: same Gate.io OI data quality issues as H176.
+  RULES:
+  - BTC OI has increased in each of the last 3 consecutive 1-hour periods (OI expanding trend).
+  - AND ETH 1h EMA20 slope flips to bearish (same trigger as CA-1 SHORT side).
+  - Direction = SHORT. Hold 8 bars (40 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      oi_expanding_hours: 3
+      slope_signal: CA-1
+      direction: SHORT
+  allowed_variants: []
+  status: active
+- id: H240
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-1 h=12 — 1-bar execution lag replication.
+  rationale: H191 (LQ-1 extended to 12-bar hold) passed at 31.0bps bps8 WF (16/17
+    folds). This is the execution lag replication — confirms edge survives next-bar
+    entry, making it deployment-realistic. Required before LQ-4 shortcode is assigned.
+  WHY: LQ-1 at h=8 already survived lag (H184). H191 extends the hold. If the
+    cascade continues for 60 minutes, the 1-bar lag cost should be small relative
+    to the extended edge capture.
+  RULES:
+  - Same as H191 (long_liq_btc_pct >= 0.90, onset, SHORT) but entry on the bar
+    AFTER the signal fires (1-bar execution lag).
+  - Hold 12 bars (60 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 1
+    fixed:
+      base_signal: LQ-1
+      hold_bars: 12
+  allowed_variants: []
+  status: active
+- id: H241
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-2 h=12 — 1-bar execution lag replication.
+  rationale: H192 (LQ-2 extended to 12-bar hold) passed at 21.2bps bps8 WF (17/17
+    folds). Execution lag replication required before LQ-5 shortcode is assigned.
+  WHY: LQ-2 at h=8 survived lag (H185, marginal). H192 extends the hold to 12 bars.
+    The extended capture window should absorb the 1-bar lag cost more easily than
+    the h=8 version did.
+  RULES:
+  - Same as H192 (short_liq_btc_pct >= 0.90, onset, LONG) but entry on the bar
+    AFTER the signal fires (1-bar execution lag).
+  - Hold 12 bars (60 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 1
+    fixed:
+      base_signal: LQ-2
+      hold_bars: 12
+  allowed_variants: []
+  status: active
+- id: H243
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: Long-liq-dominant cascade → SHORT (ML-surfaced liq_imbalance_dir signal).
+  rationale: |
+    XGBoost round 2 (2026-03-11) ranked liq_imbalance_dir #4 (CV=0.22, BEARISH),
+    the strongest NEW ★ feature. The feature = (long_liq / total_liq) - 0.5.
+    When long liquidations dominate the cascade, selling pressure persists.
+    Distinct from LQ-1 which fires at cascade COMPLETION (extreme event, bounce
+    incoming). This tests cascade PERSISTENCE: while longs are still getting
+    forced out, keep shorting.
+  WHY: |
+    Mechanism: when the bulk of liquidations are forced long-sellers (not short
+    covers), the waterfall of margin calls has not yet exhausted itself. Forced
+    sellers do not care about price — they must exit. The ML found this as the
+    most consistent new predictor of negative 40-min returns.
+  RULES:
+  - total_liq_btc_pct >= 0.70 (above-average liquidation activity, not noise).
+  - liq_imbalance_btc >= 0.65 (>=65% of liq is long-side = dominant selling).
+  - Onset: condition becomes true (not continuous). Direction = SHORT (-1).
+  - Hold 8 bars. Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+  allowed_variants: []
+  status: active
+- id: H244
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: OI acceleration (velocity spike) → LONG (ML-surfaced oi_velocity signal).
+  rationale: |
+    XGBoost round 2 (2026-03-11) ranked oi_velocity #10 (CV=0.33, BULLISH).
+    oi_velocity = rate of change of OI change = second derivative of OI. When
+    OI is not just growing but growing FASTER, fresh speculative leverage is
+    entering at an accelerating pace. This is distinct from H239 (OI trending
+    up 3 consecutive hours, failed) — velocity captures the burst, not the trend.
+  WHY: |
+    Mechanism: accelerating OI = a rush of new leveraged longs entering the
+    market. These buyers are committed and add upward pressure. Trend continuation
+    is likely while the burst persists. The 40-min window captures the immediate
+    momentum before positions stabilize. Pure standalone test — no slope gate —
+    to see if the ML finding reflects a real mechanism or noise.
+  RULES:
+  - oi_velocity = (OI_now - OI_1h_ago) - (OI_1h_ago - OI_2h_ago).
+  - oi_velocity onset: crosses above its 80th percentile rolling threshold (288-bar window).
+  - Direction = LONG (+1). Hold 8 bars. Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+  allowed_variants: []
+  status: active
+- id: H245
+  family: cross_asset_divergence
+  class: tradeable_hypothesis
+  description: BTC leads ETH on 1h return → LONG (ML-surfaced btc_eth_div_1h signal).
+  rationale: |
+    XGBoost round 2 (2026-03-11) ranked btc_eth_div_1h #11 (CV=0.35, BULLISH).
+    btc_eth_div_1h = BTC 1h return - ETH 1h return. When BTC outperforms ETH on
+    the prior hour, the next 40 minutes are bullish. This is the REVERSE of the
+    CA family (which uses ETH leading BTC). BTC leadership may signal institutional
+    flow or index-driven buying — a cleaner, more committed move.
+  WHY: |
+    Mechanism: when BTC leads ETH to the upside, it suggests large-cap
+    buyers are driving the market (ETH follows later). When ETH leads, it
+    is more often retail/speculative. BTC leadership → stronger continuation.
+    This is a NEW mechanism independent of ETH slope flip — tests whether
+    the leadership DIRECTION matters, not just the direction itself.
+  RULES:
+  - btc_eth_div_1h = (close_btc / close_btc.shift(12)) - (close_eth / close_eth.shift(12)).
+  - Onset: btc_eth_div_1h flips from <= 0 to > 0 AND btc_eth_div_1h > 0.001 (0.1% divergence threshold).
+  - Direction = LONG (+1). Hold 8 bars. Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+  allowed_variants: []
+  status: active
+- id: H242
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: CA-1 (ETH slope flip) gated by BTC below 48h VWAP — ML-surfaced filter test.
+  rationale: |
+    XGBoost discovery (2026-03-11) ranked dist_to_vwap48_z_btc as the #2 most
+    consistently predictive feature (CV=0.23, BULLISH direction), independent of
+    all CA/VS/LQ proxies. ML is saying "lower BTC VWAP deviation -> better forward
+    returns." This hypothesis tests whether that signal improves CA-1 when used as
+    a simple ENTRY GATE: only trade CA-1 when BTC is below its 48h VWAP (z < 0).
+  WHY: |
+    Mechanism: BTC consolidating below VWAP suggests the prior trend has not fully
+    played out. An ETH slope flip in this context may signal resumption of that
+    unfulfilled move, rather than a random flip from an extended position. When BTC
+    is extended above VWAP (z > 0), the flip may be local exhaustion instead.
+  OVER_MINING_WARNING: |
+    HIGH RISK of over-mining. This is CA-1 with one additional gate. The CA family
+    has been mined extensively (H59-H99+). This test is justified ONLY because the
+    gate was surfaced by an independent ML run on held-out data, not by looking at
+    CA-1 returns directly. If this fails, do not iterate on VWAP thresholds. One
+    test is sufficient to answer whether VWAP-gating improves CA-1.
+  RULES:
+  - ETH slope flips (eth_slope_sign_1h changes sign, != 0). Direction follows flip.
+  - ONLY fire when dist_to_vwap48_z_btc < 0 (BTC below its 48-bar VWAP).
+  - Hold 8 bars. Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+    fixed:
+      vwap_gate: below_zero
+      base_signal: CA-1
+  allowed_variants: []
+  status: active
+- id: H259
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: H252 (OI velocity gate on CA-1, h=24) — 1-bar execution lag replication.
+  rationale: |
+    H252 (OI velocity gate on CA-1, h=24) PASSed 17/19 folds at 18.4 bps net.
+    H251 (h=12) also PASSed 16/19 at 16.8 bps. h=24 is stronger and more consistent.
+    Lag replication required before shortcode assignment.
+  WHY: Same mechanism as H250/H251/H252. Tests execution realism only.
+  RULES:
+  - Same as H252: oi_velocity > 0 AND ETH slope flip. Direction follows flip.
+  - Entry on bar AFTER signal fires (1-bar execution lag). Hold 24 bars (2h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+    entry_lag: 1
+  allowed_variants: []
+  status: active
+- id: H261
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: ETH 4h return exhaustion SHORT, h=48 (4h hold). ML-surfaced via XGBoost SHAP round 3.
+  rationale: |
+    XGBoost SHAP ranked ret_4h_eth #7 at h=4, #9 at h=8, #14 at h=48 across multi-horizon run.
+    Direction: BULLISH at short horizons (h=4/8) but BEARISH at longer horizons (h=16/48, CV=0.45).
+    The BEARISH direction at h=48 = exhaustion thesis: when ETH has rallied strongly over the past
+    4 hours, the move tends to reverse over the following 4 hours. Different from H253-H255 which
+    tested BTC 4h return at h=8/12/24 (all failed) — this uses ETH return at a longer 4h hold.
+    ETH often leads BTC on directional moves; ETH exhaustion may be a cleaner reversal signal.
+  WHY: One test only per ML policy. If this fails, 4h exhaustion thesis is dead for both BTC and ETH.
+  RULES:
+  - Compute ETH 4h return = (close_eth - close_eth.shift(48)) / close_eth.shift(48)
+  - When ret_4h_eth >= rolling p80 (1-year lookback), go BTC SHORT for 48 bars (4 hours).
+  - No other filters.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 48
+    entry_lag: 0
+  allowed_variants: []
+  status: active
+
+- id: H260
+  family: cross_asset_divergence
+  class: tradeable_hypothesis
+  description: H257 (BTC-ETH corr decoupling + ETH flip, h=12) — 1-bar execution lag replication.
+  rationale: |
+    H257 (corr decoupling + ETH slope flip, h=12) PASSed 15/18 folds at 14.1 bps net.
+    Lag replication required before shortcode assignment.
+  WHY: Same mechanism as H256/H257/H258. Tests execution realism only.
+  RULES:
+  - Same as H257: btc_eth_corr_2h < p20 AND ETH slope flip. Direction follows flip.
+  - Entry on bar AFTER signal fires (1-bar execution lag). Hold 12 bars (60 min).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 1
+  allowed_variants: []
+  status: active
+- id: H250
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: OI velocity gate on CA-1, h=8 (40 min).
+  rationale: |
+    XGBoost multi-horizon (2026-03-11): oi_velocity ranked 4/4 horizons consistent
+    (avg rank 12, only feature hitting ALL horizons). H244 tested oi_velocity as
+    standalone LONG and failed. The signal may only work WITH a directional trigger.
+    This tests OI acceleration as a GATE on CA-1: only trade the slope flip when OI
+    is accelerating (fresh leverage entering faster and faster).
+  WHY: |
+    Accelerating OI = a burst of new leveraged longs entering right now. Combined
+    with an ETH slope flip (directional trigger), these new participants add fuel
+    to the move. Standalone OI velocity has no direction — it needs CA-1 to supply
+    the direction filter.
+  RULES:
+  - ETH slope flips (eth_slope_sign_1h changes, != 0). Direction follows flip.
+  - oi_velocity > 0: OI change in last hour exceeds OI change in prior hour.
+  - Both conditions true simultaneously = entry. Hold 8 bars.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+  allowed_variants: []
+  status: active
+- id: H251
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: OI velocity gate on CA-1, h=12 (60 min).
+  rationale: H250 at h=12. Horizon sweep from launch — liq signals got stronger at h=12.
+  WHY: Same as H250. Only horizon changes.
+  RULES:
+  - Same as H250. Hold 12 bars (60 min).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+  allowed_variants: []
+  status: active
+- id: H252
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: OI velocity gate on CA-1, h=24 (2h).
+  rationale: H250 at h=24. Horizon sweep from launch.
+  WHY: Same as H250. Only horizon changes.
+  RULES:
+  - Same as H250. Hold 24 bars (2h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+  allowed_variants: []
+  status: active
+- id: H253
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: 4h BTC return exhaustion SHORT, h=8 (40 min).
+  rationale: |
+    XGBoost multi-horizon (2026-03-11): ret_4h_btc ranked consistently BEARISH
+    at h4=#8, h8=#9, h16=#11, h48=#11 (3/4 consistent). When BTC has a strong
+    4h upward run, the next intraday move tends negative — momentum exhaustion /
+    mean reversion at the 4h timeframe. Never directly tested in this pipeline.
+  WHY: |
+    After a large 4h up-move, leveraged longs are extended and profit-taking
+    sellers appear. The market tends to retrace part of the move. The 5m signal
+    fires at the peak of the 4h move — before the retrace has started.
+  RULES:
+  - ret_4h_btc = BTC 4h return (pct_change(48)).
+  - Onset: ret_4h_btc enters top quintile (> rolling 80th percentile, 288-bar window).
+  - Direction = SHORT (-1). Hold 8 bars. Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+  allowed_variants: []
+  status: active
+- id: H254
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: 4h BTC return exhaustion SHORT, h=12 (60 min).
+  rationale: H253 at h=12. Horizon sweep from launch.
+  WHY: Same as H253. Only horizon changes.
+  RULES:
+  - Same as H253. Hold 12 bars (60 min).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+  allowed_variants: []
+  status: active
+- id: H255
+  family: mean_reversion
+  class: tradeable_hypothesis
+  description: 4h BTC return exhaustion SHORT, h=24 (2h).
+  rationale: H253 at h=24. Horizon sweep from launch.
+  WHY: Same as H253. Only horizon changes.
+  RULES:
+  - Same as H253. Hold 24 bars (2h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+  allowed_variants: []
+  status: active
+- id: H256
+  family: cross_asset_divergence
+  class: tradeable_hypothesis
+  description: BTC-ETH 2h correlation decoupling + ETH slope flip, h=8 (40 min).
+  rationale: |
+    XGBoost multi-horizon (2026-03-11): btc_eth_corr_2h ranked 3/4 horizons
+    consistent (avg rank 16.5, BEARISH). When BTC and ETH decouple (2h rolling
+    correlation drops to its own low), it signals unusual conditions. Combined with
+    an ETH slope flip, it may indicate ETH is making an idiosyncratic move that BTC
+    has not yet confirmed — a leading indicator of a sharper-than-normal follow.
+  WHY: |
+    When BTC and ETH are highly correlated (normal), an ETH flip just means noise.
+    When they decouple, ETH is moving for a specific reason (large ETH-native event,
+    funding imbalance, liquidation cascade on one asset only). A slope flip during
+    decoupling is a higher-conviction signal than a normal flip.
+  RULES:
+  - btc_eth_corr_2h = rolling 24-bar (2h) correlation of 5m returns.
+  - Decoupling: btc_eth_corr_2h < its own rolling 30d 20th percentile.
+  - ETH slope flips (eth_slope_sign_1h changes, != 0). Direction follows flip.
+  - Both true simultaneously = entry. Hold 8 bars. Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 8
+  allowed_variants: []
+  status: active
+- id: H257
+  family: cross_asset_divergence
+  class: tradeable_hypothesis
+  description: BTC-ETH 2h correlation decoupling + ETH slope flip, h=12 (60 min).
+  rationale: H256 at h=12. Horizon sweep from launch.
+  WHY: Same as H256. Only horizon changes.
+  RULES:
+  - Same as H256. Hold 12 bars (60 min).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+  allowed_variants: []
+  status: active
+- id: H258
+  family: cross_asset_divergence
+  class: tradeable_hypothesis
+  description: BTC-ETH 2h correlation decoupling + ETH slope flip, h=24 (2h).
+  rationale: H256 at h=24. Horizon sweep from launch.
+  WHY: Same as H256. Only horizon changes.
+  RULES:
+  - Same as H256. Hold 24 bars (2h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+  allowed_variants: []
+  status: active
+- id: H249
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: H247 (liq imbalance SHORT h=12) — 1-bar execution lag replication.
+  rationale: |
+    H247 (long-liq-dominant cascade SHORT, h=12) PASSed 17/17 folds at 27.4 bps
+    net. Before assigning shortcode LQ-6, must verify signal survives realistic
+    execution: enter on the bar AFTER the signal fires (1-bar lag = 5 min delay).
+    LQ-1 through LQ-5 all required this step.
+  WHY: Same mechanism as H243/H247. Tests execution realism only.
+  RULES:
+  - Same as H247: total_liq_btc_pct >= 0.70, liq_imbalance_btc >= 0.65, SHORT onset.
+  - Entry on bar AFTER signal fires (1-bar execution lag).
+  - Hold 12 bars (60 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 1
+    fixed:
+      base_signal: H247
+      hold_bars: 12
+  allowed_variants: []
+  status: active
+- id: H246
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: H243 horizon sensitivity — liq imbalance SHORT at h=4 (20 min).
+  rationale: |
+    H243 (liq_imbalance_dir, h=8) PASSed with 16/17 folds positive, 9.8 bps net.
+    Horizon sensitivity test: does the selling pressure from a long-dominant
+    liquidation cascade resolve in 20 minutes, or does it need longer?
+    A real mechanism should work across a range of hold periods.
+  WHY: Same signal as H243. Only horizon changes.
+  RULES:
+  - Same as H243: total_liq_btc_pct >= 0.70, liq_imbalance_btc >= 0.65, SHORT onset.
+  - Hold 4 bars (20 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 4
+  allowed_variants: []
+  status: active
+- id: H247
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: H243 horizon sensitivity — liq imbalance SHORT at h=12 (60 min).
+  rationale: |
+    H243 (liq_imbalance_dir, h=8) PASSed with 16/17 folds positive, 9.8 bps net.
+    Horizon sensitivity test: does the cascade persist for a full hour?
+    If it does, the signal has a longer window of opportunity and is more robust.
+  WHY: Same signal as H243. Only horizon changes.
+  RULES:
+  - Same as H243: total_liq_btc_pct >= 0.70, liq_imbalance_btc >= 0.65, SHORT onset.
+  - Hold 12 bars (60 min). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+  allowed_variants: []
+  status: active
+- id: H248
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: H243 horizon sensitivity — liq imbalance SHORT at h=24 (2h).
+  rationale: |
+    H243 (liq_imbalance_dir, h=8) PASSed with 16/17 folds positive, 9.8 bps net.
+    Horizon sensitivity test: does the cascade have a 2-hour shadow?
+    Liquidation cascades on leveraged crypto can take hours to fully unwind.
+    If h=24 also PASSes, the signal is robustly useful, not a 40-min artefact.
+  WHY: Same signal as H243. Only horizon changes.
+  RULES:
+  - Same as H243: total_liq_btc_pct >= 0.70, liq_imbalance_btc >= 0.65, SHORT onset.
+  - Hold 24 bars (2h). Trade BTC.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+  allowed_variants: []
+  status: active

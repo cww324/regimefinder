@@ -1,7 +1,26 @@
 # SIGNAL_REGISTRY.md
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-03-11
 **Purpose:** Human-readable registry of confirmed signals. H-numbers remain the canonical pipeline IDs.
 Only hypotheses that PASS the full validation gate (gross + bps8, WF 20/20 or near) earn a signal shortcode.
+
+---
+
+## Next Available Shortcodes (authoritative — update when a new shortcode is assigned)
+
+| Family | Last assigned | **Next** |
+|--------|--------------|---------|
+| CA (Cross-Asset) | CA-5 (H99) | **CA-6** |
+| VS (Volatility State) | VS-3 (H180) | **VS-4** |
+| LQ (Liquidation) | LQ-6 (H247/H249) | **LQ-7** |
+| OV (OI Velocity) | OV-1 (H252/H259) | **OV-2** |
+| CD (Correlation Decoupling) | CD-1 (H257/H260) | **CD-2** |
+| FR (Funding Regime) | — | **FR-1** |
+| MR (Mean Reversion) | — | **MR-1** |
+| OI (Open Interest) | blocked (see H176) | **OI-1** (reserved, blocked) |
+| MS (Microstructure) | — | **MS-1** |
+| ST (Session/Time) | — | **ST-1** |
+
+**Rule:** When a new hypothesis passes and earns a shortcode, update this table first, then add the signal block below.
 
 ---
 
@@ -21,9 +40,10 @@ Only hypotheses that PASS the full validation gate (gross + bps8, WF 20/20 or ne
 | `MR` | Mean Reversion | VWAP-z pullbacks, spread reversion |
 | `MS` | Microstructure | Intraday order flow, VWAP deviations, bar structure |
 | `ST` | Session/Time | UTC session effects, day-of-week, open/close transitions |
-| `CD` | Cross-exchange Divergence | Coinbase vs Binance price leadership |
 | `LQ` | Liquidation | Forced position closures (cascades + squeezes), Gate.io data |
 | `OI` | Open Interest | Leveraged positioning levels, OI-gated slope flips |
+| `OV` | OI Velocity | OI acceleration (second derivative) as momentum gate |
+| `CD` | Correlation Decoupling | BTC-ETH correlation regime shifts as signal qualifier |
 
 **Multi-regime hypotheses** use a primary label + secondary tag:
 - `CA-1` = core ETH slope flip, no filter
@@ -55,6 +75,8 @@ for 8 bars (40 minutes). The strongest and most replicated signal in the researc
 
 **Key insight:** CA-1 works across all UTC sessions (Asia/EU/US), all lookback windows, and
 next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single variant at +0.38%/trade.
+
+**Direction validation (2026-03-11):** H215 (LONG only, 8.2bps WF bps8, 15/19) and H216 (SHORT only, 8.3bps, 15/19) both PASS independently. CA-1 is direction-symmetric — no bull-market bias. Deploy both directions.
 
 ---
 
@@ -165,6 +187,8 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 
 **All 5 robustness checks pass.** VS-2 at p85 (H173) was the highest-performing single variant in all research at 45bps gross — now surpassed by VS-3 (H180) at 60.5bps.
 
+**Direction validation (2026-03-11):** H217 (LONG only, 31.3bps WF bps8, 17/17) and H218 (SHORT only, 21.8bps, 13/17) both PASS independently. LONG has higher edge but SHORT is independently solid. Deploy both directions.
+
 ---
 
 #### VS-3 — VS-2 with Liquidation Confirmation ★ NEW ALL-TIME BEST (2026-02-24)
@@ -178,6 +202,10 @@ next-bar execution. H84 (EU/US overlap, 08-16 UTC) is the strongest single varia
 **Why it works:** Adding the liq confirmation layer filters VS-2 entries to those where forced liquidations are also occurring simultaneously. This selects the highest-conviction momentum events — where price momentum (slope), capital flows (volume), and mechanical deleveraging (liq) all align. The triple-gated signal has the highest gross return per trade in all research history.
 
 **Trade-off:** Lower frequency (0.26/day vs 0.4/day for VS-2). At ~85 trades/year and ~5 trades/fold, WF statistics are still meaningful but fold-level variance is elevated.
+
+**Direction validation (2026-03-11):** H219 (LONG only, 55.8bps WF bps8, 15/16) and H220 (SHORT only, 44.0bps, 11/16) are **INCONCLUSIVE** — artifact classification, not PASS. VS-3 fires ~0.26/day; splitting in half gives n=35/40 per direction, both below the n≥50 threshold. The edge profile looks symmetric and strong, but formal confirmation requires more data. **Deploy both directions; no suppression warranted.**
+
+**Deployment exit note:** H210 (VS-3 + liq-invalidation exit) passes with 49.6bps bps8 WF — essentially matching VS-3 anchor (48.0bps). Liq-drop or slope-reversal exit can be used in live deployment without degrading edge. Not a new shortcode — requires replication first.
 
 ---
 
@@ -207,6 +235,8 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 
 **Why it works:** Extreme long liquidations are mechanical — margin systems force position closure regardless of price. Top-10% liq hours represent genuine deleveraging events with three-phase continuation: initial cascade → more stops triggered → price discovery overshoot.
 
+**Deployment exit note:** H206 (LQ-1 + liq-invalidation exit) passes with 13.1bps bps8 WF, slightly above LQ-1 anchor (11.7bps). Exiting when long_liq_btc_pct drops below p50 is mechanistically correct and doesn't hurt the edge. Not a new shortcode — requires replication first.
+
 ---
 
 #### LQ-2 — Short Liquidation Squeeze LONG ★ ANCHOR
@@ -219,6 +249,8 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 
 **Why it works:** Symmetric to LQ-1. Short squeeze buying pressure can propagate through voluntary capitulation and new longs piling on after the forced covering. 17/18 WF bps8 folds positive makes this the most consistent liq signal at cost.
 
+**Deployment exit note:** H208 (LQ-2 + liq-invalidation exit) passes with 7.8bps bps8 WF, slightly above LQ-2 anchor (6.8bps). Exiting when short_liq_btc_pct drops below p50 is safe. Not a new shortcode — requires replication first.
+
 ---
 
 #### LQ-3 — Liq-Gated ETH Slope Flip SHORT
@@ -230,6 +262,52 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 | H186 | 1-bar execution lag | 31.3 | 17/17 | PASS (15/17, 20.9bps mean) | 0.51 | LQ-3 replication — execution realistic ✓ |
 
 **Why it works:** The CA slope flip (CA-1) fires ~4/day. The p70 liq gate selects the subset where forced liquidations are also present — adding a second independent bearish mechanism to the momentum signal.
+
+**Deployment exit note:** H209 (LQ-3 + combo exit) passes with 19.1bps bps8 WF, matching LQ-3 anchor (18.7bps). Both slope-reversal and liq-drop exits can be used. Not a new shortcode — requires replication first.
+
+---
+
+#### LQ-4 — Long Liquidation Cascade SHORT, h=12 ★ NEW (2026-03-11)
+**What it is:** LQ-1 with extended 60-minute hold (12 bars) instead of 40-minute (8 bars). Cascade follow-through sustains for longer than previously tested.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| **H191** | Base (long_liq_btc_pct >= 0.90, h=12) | **37.7** | **17/17** | **PASS (16/17, 31.0bps mean)** | 4.31 | **LQ-4** |
+| H240 | 1-bar execution lag | 33.5 | 17/17 | PASS (16/17, 26.9bps mean) | 4.31 | LQ-4 replication — execution realistic ✓ |
+
+**Why it works:** LQ-1's cascade continues beyond 40 minutes. Extending to 60-minute hold captures the full continuation window — roughly doubles per-trade edge vs LQ-1 (31.0bps vs 13.1bps bps8). Same mechanism, longer capture window.
+
+---
+
+#### LQ-5 — Short Liquidation Squeeze LONG, h=12 ★ NEW (2026-03-11)
+**What it is:** LQ-2 with extended 60-minute hold (12 bars). Short squeeze buying pressure sustains beyond 40 minutes.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| **H192** | Base (short_liq_btc_pct >= 0.90, h=12) | **29.2** | **17/17** | **PASS (17/17, 21.2bps mean)** | 4.44 | **LQ-5** |
+| H241 | 1-bar execution lag | 27.7 | 17/17 | PASS (17/17, 17.3bps mean) | 4.44 | LQ-5 replication — execution realistic ✓ |
+
+**Why it works:** LQ-2's squeeze momentum carries for 60 minutes. 17/17 perfect WF fold consistency on both anchor and lag — most consistent liq signal in the catalog.
+
+---
+
+#### LQ-6 — Liquidation Imbalance SHORT, h=12 ★ NEW (2026-03-11, ML-surfaced)
+**What it is:** When short-side liquidations dominate long-side liquidations (liq_imbalance_dir, ML-surfaced feature via XGBoost SHAP), go SHORT for 12 bars (60 minutes). The directional imbalance of forced closures creates sustained directional follow-through beyond the initial event.
+
+**Discovery path:** XGBoost SHAP across 4 horizons (h=4, 8, 16, 48) ranked `liq_imbalance_dir` #4 overall (CV=0.22, consistent 3/4 horizons). Economic interpretation: liq imbalance direction captures which side of the book is being mechanically cleared. Horizon sweep confirmed edge strengthens with hold length — a multi-horizon validated feature.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| H247 | Base signal (h=12) | ~30bps | 17/17 | **PASS (17/17, 27.4bps mean)** | — | **LQ-6** |
+| H249 | 1-bar execution lag (h=12) | ~26bps | 17/17 | **PASS (17/17, 22.8bps mean)** | — | LQ-6 replication ✓ |
+
+**Horizon sweep (H243–H248):**
+- h=4 (H246): 3.8bps, 12/17 folds — weak, cost-constrained
+- h=8 (H243): 9.8bps, 16/17 folds — PASS but baseline
+- **h=12 (H247): 27.4bps, 17/17 folds — ANCHOR ★** — momentum sustains to 60 min
+- h=24 (H248): 30.6bps, 17/17 folds — PASS (longer hold, similar edge, less capital efficient)
+
+Edge strengthens monotonically from h=4 to h=24 — not an artifact of a specific hold length. Both LONG and SHORT direction tested; SHORT direction is the cleaner signal. 1-bar lag confirmed (H249).
 
 ---
 
@@ -248,12 +326,53 @@ Session filtering on VS signals leaves too few trades per fold for reliable WF a
 
 ---
 
+### OI Velocity (OV) — NEW 2026-03-11, ML-surfaced
+
+#### OV-1 — OI Acceleration Gate on CA-1, h=24 ★ NEW (2026-03-11)
+**What it is:** CA-1 signal (ETH slope flip) gated by OI acceleration — OI must be growing faster in the current 1h window than the prior 1h window. When the slope flip is accompanied by accelerating OI growth (new money entering), the directional momentum is more sustained.
+
+**Discovery path:** XGBoost SHAP ranked `oi_velocity` #10 overall (CV=0.33), consistent 4/4 horizons — the only feature consistent at every tested horizon. Economic mechanism: OI acceleration means new leveraged positions are opening, not just existing positions flipping. This represents fresh directional commitment.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| H252 | Base (CA-1 + OI accel, h=24) | ~20bps | 17/19 | **PASS (17/19, 18.4bps mean)** | — | **OV-1** |
+| H259 | 1-bar execution lag (h=24) | ~17bps | 17/19 | **PASS (17/19, 15.8bps mean)** | — | OV-1 replication ✓ |
+
+**Horizon sweep (H250–H252):**
+- h=8 (H250): 8.8bps, 15/19 folds — PASS but weak
+- h=12 (H251): 16.8bps, 16/19 folds — PASS
+- **h=24 (H252): 18.4bps, 17/19 folds — ANCHOR ★** — edge peaks at 2h hold
+
+Edge improves monotonically with hold length. OI acceleration predicts sustained 2h+ follow-through, not 40-minute moves. 1-bar lag confirmed (H259).
+
+---
+
+### Correlation Decoupling (CD) — NEW 2026-03-11, ML-surfaced
+
+#### CD-1 — BTC-ETH Correlation Decoupling + ETH Flip, h=12 ★ NEW (2026-03-11)
+**What it is:** ETH slope flip (CA-1 trigger) gated by BTC-ETH 2h rolling correlation being in its bottom quintile (historically low correlation). When BTC and ETH decouple, ETH slope flips reflect idiosyncratic ETH momentum rather than just BTC following. These are higher-conviction ETH directional moves.
+
+**Discovery path:** XGBoost SHAP ranked `btc_eth_corr_2h` #3 overall (CV=0.35), consistent 3/4 horizons. Economic mechanism: normal BTC-ETH correlation is ~0.8+. Decoupling below p20 signals ETH is trading on its own fundamentals. A slope flip in this context captures ETH-specific momentum that isn't explained by BTC.
+
+| H-number | Variant | gross_bps | WF gross | WF bps8 | n/day | Label |
+|----------|---------|-----------|----------|---------|-------|-------|
+| H257 | Base (corr < p20 + ETH flip, h=12) | ~15bps | 15/18 | **PASS (15/18, 14.1bps mean)** | — | **CD-1** |
+| H260 | 1-bar execution lag (h=12) | ~16bps | 15/18 | **PASS (15/18, 15.2bps mean)** | — | CD-1 replication ✓ |
+
+**Horizon sweep (H256–H258):**
+- h=8 (H256): 6.4bps, 10/18 folds — BORDERLINE
+- **h=12 (H257): 14.1bps, 15/18 folds — ANCHOR ★** — sweet spot for ETH idiosyncratic momentum
+- h=24 (H258): 17.6bps, 11/18 folds — PASS but fold support drops
+
+h=12 is the optimal hold — fold support stronger than h=24, edge substantially better than h=8. 1-bar lag confirmed (H260).
+
+---
+
 ### Other Families (No Confirmed Signals Yet)
 
 | Family | H-numbers tested | Outcome | Notes |
 |--------|-----------------|---------|-------|
-| MR (Mean Reversion) | H15, H18, H22-H26 | INCONCLUSIVE | Insufficient folds even on 365d |
-| CD (Cross-Asset Divergence) | H102-H113 | FAIL | No Binance data yet |
+| MR (Mean Reversion) | H15, H18, H22-H26, H235-H236 | FAIL | VWAP MR dead at 5m — BTC trends through extensions |
 
 ---
 

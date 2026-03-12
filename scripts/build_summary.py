@@ -17,6 +17,15 @@ def parse_artifact_ts(path: Path, payload: dict[str, Any]) -> str:
     return str(payload.get("timestamp_utc", ""))
 
 
+def _baseline_ci(b: dict[str, Any]) -> tuple:
+    """Return (ci_low, ci_high) from baseline dict, handling both field name conventions."""
+    # New format: mean_ci_low / mean_ci_high
+    # Old format: ci_low / ci_high
+    ci_low = b.get("mean_ci_low") if b.get("mean_ci_low") is not None else b.get("ci_low")
+    ci_high = b.get("mean_ci_high") if b.get("mean_ci_high") is not None else b.get("ci_high")
+    return ci_low, ci_high
+
+
 def classify_mode(baseline: dict[str, Any], wf_mode: dict[str, Any]) -> tuple[str, str, str, str]:
     n = int(baseline.get("n", 0) or 0)
     agg = wf_mode.get("aggregate", {})
@@ -25,7 +34,7 @@ def classify_mode(baseline: dict[str, Any], wf_mode: dict[str, Any]) -> tuple[st
     positive_fold_pct = float(folds.get("pct", 0.0) or 0.0)
 
     b_mean = baseline.get("mean")
-    b_ci_low = baseline.get("ci_low")
+    b_ci_low, _ = _baseline_ci(baseline)
     wf_mean = agg.get("mean")
     wf_ci_low = agg.get("mean_ci_low")
 
@@ -74,6 +83,43 @@ def combine_status(statuses: list[str]) -> str:
     return "PASS"
 
 
+def extract_wf_data(payload: dict[str, Any]) -> tuple[dict, dict, dict]:
+    """Return (wf_modes, wf_split, mode_classification) from either artifact format.
+
+    New format (H174+, research_family_runner.py): wf_by_mode key.
+    Old format (H15-H173): walkforward.modes / walkforward.split keys.
+    """
+    if "wf_by_mode" in payload:
+        wf_modes = payload["wf_by_mode"]
+        config = payload.get("config", {})
+        wf_split = config.get("wf", {})
+        mode_classification = {}
+    else:
+        walkforward = payload.get("walkforward", {})
+        wf_modes = walkforward.get("modes", {}) if isinstance(walkforward, dict) else {}
+        wf_split = walkforward.get("split", {}) if isinstance(walkforward, dict) else {}
+        mode_classification = payload.get("mode_classification", {})
+    return wf_modes, wf_split, mode_classification
+
+
+def extract_dataset(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return dataset fingerprint dict from either artifact format."""
+    if "dataset" in payload:
+        return payload["dataset"]
+    # New format: no dataset key — pull what we can from config
+    config = payload.get("config", {})
+    return {
+        "primary_symbols": None,
+        "secondary_symbols": None,
+        "timeframe": config.get("timeframe"),
+        "start_ts": None,
+        "end_ts": None,
+        "bar_count": None,
+        "db_path": None,
+        "db_last_modified": None,
+    }
+
+
 def load_runs() -> dict[str, tuple[Path, dict[str, Any], str]]:
     latest: dict[str, tuple[Path, dict[str, Any], str]] = {}
     for path in sorted(RUNS_DIR.glob("*.json")):
@@ -94,12 +140,9 @@ def build_summary() -> dict[str, Any]:
 
     for hyp_id in sorted(latest.keys()):
         path, payload, _ts = latest[hyp_id]
-        dataset = payload.get("dataset", {})
+        dataset = extract_dataset(payload)
         baseline = payload.get("baseline", {})
-        walkforward = payload.get("walkforward", {})
-        wf_modes = walkforward.get("modes", {}) if isinstance(walkforward, dict) else {}
-        wf_split = walkforward.get("split", {}) if isinstance(walkforward, dict) else {}
-        mode_classification = payload.get("mode_classification", {})
+        wf_modes, wf_split, mode_classification = extract_wf_data(payload)
 
         mode_summary: dict[str, Any] = {}
         statuses: list[str] = []
@@ -115,6 +158,7 @@ def build_summary() -> dict[str, Any]:
 
             agg = w.get("aggregate", {}) if isinstance(w, dict) else {}
             pos = w.get("positive_folds", {}) if isinstance(w, dict) else {}
+            b_ci_low, b_ci_high = _baseline_ci(b)
 
             mode_summary[mode] = {
                 "baseline_status": baseline_status,
@@ -125,8 +169,8 @@ def build_summary() -> dict[str, Any]:
                     "baseline": {
                         "n": b.get("n"),
                         "mean": b.get("mean"),
-                        "ci_low": b.get("ci_low"),
-                        "ci_high": b.get("ci_high"),
+                        "ci_low": b_ci_low,
+                        "ci_high": b_ci_high,
                         "p_mean_gt_0": b.get("p_mean_gt_0"),
                     },
                     "walkforward": {
@@ -143,9 +187,7 @@ def build_summary() -> dict[str, Any]:
             }
 
         out[hyp_id] = {
-            "hypothesis_id": hyp_id,
-            "latest_artifact": path.name,
-            "timestamp_utc": payload.get("timestamp_utc"),
+            "artifact_format": "new" if "wf_by_mode" in payload else "old",
             "dataset": {
                 "primary_symbols": dataset.get("primary_symbols"),
                 "secondary_symbols": dataset.get("secondary_symbols"),
@@ -156,13 +198,17 @@ def build_summary() -> dict[str, Any]:
                 "db_path": dataset.get("db_path"),
                 "db_last_modified": dataset.get("db_last_modified"),
             },
+            "family": payload.get("family"),
+            "final_status": combine_status(statuses),
+            "hypothesis_id": hyp_id,
+            "latest_artifact": path.name,
+            "timestamp_utc": payload.get("timestamp_utc"),
             "walkforward_split": {
                 "train_days": wf_split.get("train_days"),
                 "test_days": wf_split.get("test_days"),
                 "step_days": wf_split.get("step_days"),
             },
             "cost_modes": mode_summary,
-            "final_status": combine_status(statuses),
         }
 
     return out
@@ -174,6 +220,13 @@ def main() -> None:
     SUMMARY_PATH.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"summary_path={SUMMARY_PATH}")
     print(f"hypothesis_count={len(summary)}")
+    # Print quick status breakdown
+    statuses: dict[str, int] = {}
+    for entry in summary.values():
+        s = entry["final_status"]
+        statuses[s] = statuses.get(s, 0) + 1
+    for s, count in sorted(statuses.items()):
+        print(f"  {s}: {count}")
 
 
 if __name__ == "__main__":

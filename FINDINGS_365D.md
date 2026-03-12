@@ -250,6 +250,148 @@ Both h and volume threshold independently increase edge — they compound. VS-2 
 
 ---
 
+## Family: exit_logic (H198–H214) — WF 120/20/20, 11 folds
+
+**Context:** First-ever test of exit logic on confirmed signals. All exits are early-exit variants
+within the fixed hold window. CA-1 baseline: ~34bps gross, ~26bps bps8 (fixed 8-bar hold).
+
+**Key finding:** Early exits systematically reduce CA-1 performance by ~50–60%. The fixed
+8-bar hold is near-optimal — CA-1's return accrues throughout the full window, not front-loaded.
+Exits are not a research tool in this framework; they are a deployment consideration.
+
+### CA-1 Exit Variants (H198–H201) — all FAIL
+
+| H# | Exit type | n | gross (bps) | P>0 | WF gross | bps8 (bps) | WF bps8 | Verdict | Artifact |
+|----|-----------|---|------------|-----|----------|------------|---------|---------|----------|
+| H198 | ATR stop 1.5× | 655 | 14.7 | 1.000 | 11/11 | 6.7 | 9/11 | **FAIL** | 20260311T154618Z_H198.json |
+| H199 | TP +25bps | 655 | 12.8 | 1.000 | 11/11 | 4.8 | 9/11 | **FAIL** | 20260311T154625Z_H199.json |
+| H200 | Trail 15bps | 655 | 11.0 | 1.000 | 10/11 | 3.0 | 8/11 | **FAIL** | 20260311T154631Z_H200.json |
+| H201 | ATR+TP combo | 655 | 11.0 | 1.000 | 10/11 | 3.0 | 7/11 | **FAIL** | 20260311T154637Z_H201.json |
+
+Notes:
+- n=655 for all variants (exits ARE firing — they just cut winners, not losers)
+- ATR stop (H198) is least bad — only fires on adverse moves, but even those recover within 8 bars
+- TP at +25bps (H199) clips the right tail — many CA-1 trades exceed 25bps and are cut short
+- Trailing + combo worst (~11bps) — trigger on normal intra-hold noise
+- WF gross folds 10–11/11: directional signal intact. bps8 folds 7–9/11: well below threshold
+- **Conclusion: do not add early exits to CA-1 in paper trader. 8-bar fixed hold is correct.**
+
+### VS-2 Exit Variants (H202–H205, H212) — FAIL vs anchor
+
+VS-2 anchor: 35.2bps gross / 27.2bps bps8 WF (17/18 folds), fixed 12-bar hold.
+
+| H# | Exit type | n | WF gross (bps) | WF folds | WF bps8 (bps) | bps8 folds | CI bps8 | Verdict |
+|----|-----------|---|----------------|----------|---------------|------------|---------|---------|
+| H202 | ATR stop 1.5× | 133 | 28.9 | 15/17 | 20.9 | 12/17 (71%) | [7.3, 35.2] | **FAIL vs anchor** |
+| H203 | TP +35bps | 133 | 24.6 | 17/17 | 16.6 | 16/17 (94%) | [8.3, 25.1] | **FAIL vs anchor** |
+| H204 | Trail 20bps | 133 | 15.3 | 14/17 | 7.3 | 11/17 (65%) | [-2.5, 17.0] | **FAIL** |
+| H205 | ATR+TP combo | 133 | 19.0 | 15/17 | 11.0 | 13/17 (76%) | [2.2, 19.5] | **FAIL vs anchor** |
+
+Artifacts: 20260311T165912Z_H202.json through 20260311T165931Z_H205.json
+
+Notes:
+- All exits reduce VS-2 from ~27bps bps8 to 7–21bps. Same pattern as CA-1 exits.
+- H204 (trailing) CI crosses zero — truly BORDERLINE absolute, not just vs anchor.
+- Conclusion: VS-2 12-bar fixed hold is near-optimal. Do not add price-based exits.
+
+### LQ/VS-3 Thesis-Invalidation Exits (H206–H210) — PASS ✓
+
+**Key finding: thesis-invalidation exits preserve or slightly improve cascade signals.**
+When the liquidation cascade ends (liq drops below p50) or slope reverses mid-trade, exiting
+early is mechanistically correct — the thesis is gone. Unlike price-based exits, these don't
+cut winners; they exit when the expected continuation has already been invalidated.
+
+| H# | Signal | Exit type | n | WF gross (bps) | WF folds | WF bps8 (bps) | bps8 folds | CI bps8 | vs anchor | Verdict |
+|----|--------|-----------|---|----------------|----------|---------------|------------|---------|-----------|---------|
+| H206 | LQ-1 | liq exit (long_liq < p50) | 1357 | 21.1 | 17/17 | 13.1 | 15/17 (88%) | [9.5, 17.0] | +1.4bps vs 11.7 | **PASS** |
+| H207 | LQ-1 | ATR stop 1.5× | 1357 | 17.6 | 17/17 | 9.6 | 13/17 (76%) | [5.9, 13.5] | -2.1bps vs 11.7 | **PASS** |
+| H208 | LQ-2 | liq exit (short_liq < p50) | 1400 | 15.8 | 17/17 | 7.8 | 16/17 (94%) | [4.1, 11.3] | +1.0bps vs 6.8 | **PASS** |
+| H209 | LQ-3 | slope OR liq exit | 155 | 27.1 | 15/16 | 19.1 | 13/16 (81%) | [11.6, 27.0] | +0.4bps vs 18.7 | **PASS** |
+| H210 | VS-3 | slope OR liq exit | 75 | 57.6 | 15/16 | 49.6 | 15/16 (94%) | [29.8, 69.6] | +1.6bps vs 48.0 | **PASS** |
+
+Artifacts: 20260311T165937Z_H206.json through 20260311T170005Z_H210.json
+
+**Deployment implication:** LQ-1/LQ-2/LQ-3/VS-3 paper trader can use liq-invalidation exits
+without hurting edge. Reduces overnight hold risk by exiting when cascade ends.
+
+### CA-1 Breakeven Stop (H211) — FAIL vs anchor
+
+| H# | Exit type | n | WF gross (bps) | WF folds | WF bps8 (bps) | bps8 folds | CI bps8 | Verdict |
+|----|-----------|---|----------------|----------|---------------|------------|---------|---------|
+| H211 | Breakeven at +15bps | 655 | 15.5 | 19/19 | 7.5 | 16/19 (84%) | [4.4, 10.7] | **FAIL vs anchor** |
+
+Artifact: 20260311T170012Z_H211.json
+
+Notes:
+- CA-1 anchor: 31.9bps gross / 23.9bps bps8 WF. Breakeven cuts to 7.5bps.
+- Positive absolute edge (CI > 0) but dramatically below CA-1 fixed hold.
+- Confirms: CA-1 winners accrue past the breakeven trigger — cutting them is costly.
+
+### Exit Logic — Overall Conclusion
+
+**Two distinct exit classes with opposite effects:**
+1. **Price-based exits** (ATR stop, TP, trailing, breakeven) → **always reduce performance** for slope-flip signals. Do not add to CA-1 or VS-2.
+2. **Thesis-invalidation exits** (liq drops, slope reversal) → **preserve or improve performance** for cascade signals. Safe to use in live deployment for LQ-1, LQ-2, LQ-3, VS-3.
+
+### Exit Logic Completeness (H212–H214)
+
+| H# | Signal | Exit type | n | WF bps8 | folds | CI_low | vs anchor | Verdict |
+|----|--------|-----------|---|---------|-------|--------|-----------|---------|
+| H212 | VS-2 | Breakeven +20bps | 133 | 22.5 | 16/17 (94%) | 10.0 | -4.7bps vs 27.2 | **FAIL vs anchor** |
+| H213 | LQ-1 | ATR + liq combo | 1357 | 10.6 | 15/17 (88%) | 6.9 | -1.1bps vs 11.7 | **PASS** |
+| H214 | CA-1 | Volume collapse exit | 655 | 5.6 | 15/19 (79%) | 2.6 | -18.3bps vs 23.9 | **FAIL vs anchor** |
+
+Artifacts: 20260311T170516Z_H212.json, 20260311T170522Z_H213.json, 20260311T170529Z_H214.json
+
+- H213 LQ-1 ATR+liq combo is slightly below H206 (liq-only: 13.1bps) — adding ATR stop doesn't help. Liq-exit alone is sufficient.
+- H214 volume collapse exit is another price-pattern exit on CA-1 — same FAIL pattern.
+
+---
+
+## Family: direction_split (H215–H220) — WF 120/20/20, 365d
+
+**Context:** Tests whether confirmed signals have directional bias. The 365d dataset (Feb 2025–Feb 2026)
+was predominantly bullish. If SHORT entries were systematically weaker, they should be suppressed
+in the paper trader. This resolves Critical Validation Gap 10a.
+
+**RESULT: ALL SIGNALS ARE DIRECTION-SYMMETRIC. BOTH LONG AND SHORT INDEPENDENTLY PASS.**
+
+| H# | Signal | Direction | n | WF gross (bps) | WF folds | WF bps8 | bps8 folds | CI bps8 | Verdict |
+|----|--------|-----------|---|----------------|----------|---------|------------|---------|---------|
+| H215 | CA-1 | LONG only | 328 | 16.2 | 17/19 (89%) | 8.2 | 15/19 (79%) | [4.2, 12.3] | **PASS** |
+| H216 | CA-1 | SHORT only | 328 | 16.3 | 18/19 (95%) | 8.3 | 15/19 (79%) | [3.5, 12.7] | **PASS** |
+| H217 | VS-2 | LONG only | 61 | 39.3 | 17/17 (100%) | 31.3 | 17/17 (100%) | [14.5, 48.1] | **PASS** |
+| H218 | VS-2 | SHORT only | 72 | 29.8 | 14/17 (82%) | 21.8 | 13/17 (76%) | [2.1, 41.7] | **PASS** |
+| H219 | VS-3 | LONG only | 35 | 63.8 | 15/16 (94%) | 55.8 | 15/16 (94%) | [31.5, 79.6] | **INCONCLUSIVE** (n=35 < 50) |
+| H220 | VS-3 | SHORT only | 40 | 52.0 | 11/16 (69%) | 44.0 | 11/16 (69%) | [15.4, 72.2] | **INCONCLUSIVE** (n=40 < 50) |
+
+Artifacts: 20260311T170536Z_H215.json through 20260311T170608Z_H220.json
+
+Key observations:
+- **CA-1 is perfectly symmetric**: LONG=8.2bps, SHORT=8.3bps. ETH slope flip works in both directions equally.
+- **VS-2 has mild LONG bias**: 31.3bps vs 21.8bps. Both PASS strongly but LONG has higher edge.
+- **VS-3 INCONCLUSIVE on both splits** (n=35/40, both <50). The edge profile looks real and symmetric (63.8bps vs 52.0bps gross, 15/16 and 11/16 folds) but formal classification requires n≥50. VS-3 fires ~0.26/day — splitting in half gives ~47 trades/year each, just under threshold. Research verdict: direction symmetry likely, same as CA-1/VS-2, but cannot be formally confirmed until more data.
+- No signal fails on the SHORT side. The bull market did not introduce directional distortion.
+- **Deployment decision: no direction gating needed for CA-1 or VS-2. VS-3 deploy both directions pending more data.**
+
+---
+
+## Family: oi_liq (H221) — LQ-1 Time-of-Day Gate
+
+| H# | Signal | Variant | n | WF gross (bps) | WF folds | WF bps8 | bps8 folds | CI bps8 | Verdict |
+|----|--------|---------|---|----------------|----------|---------|------------|---------|---------|
+| H221 | LQ-1 | Asia session (00:00–08:00 UTC) | 330 | 15.5 | 15/16 (94%) | 7.5 | 11/16 (69%) | [2.9, 12.1] | **BORDERLINE** |
+
+Artifact: 20260311T170615Z_H221.json
+
+Notes:
+- H221 restricts LQ-1 to Asia session only. bps8 fold support drops to 11/16 (69%) — below the 76%+ we want for PASS.
+- LQ-1 baseline already fires across all sessions with strong consistency. Session gating reduces n and fold stability without improving per-trade edge.
+- Same finding as VS session gates: LQ-1's quality gate already captures session effects. ToD filtering is mining.
+- **No shortcode assigned. Do not iterate further on ToD gates for LQ signals.**
+
+---
+
 ## Classification Guide (365d Era)
 
 | Classification | Criteria |
@@ -265,9 +407,216 @@ Both h and volume threshold independently increase edge — they compound. VS-2 
 
 ---
 
-## Next Steps
+## Family: oi_liq extensions (H188–H197, H222–H228) — 2026-03-11
 
-1. H176 robustness checks done — OI-1 NOT assigned (H181-H183)
-2. All lag tests complete: LQ-1 ✓, LQ-2 (borderline) ✓, LQ-3 ✓, VS-3 ✓ (H184-H187)
-3. Next: paper trader (AWS/EC2 + SQLite + Coinbase/Gate.io polling), new hypothesis generation (LQ extensions, OI+liq combined, higher horizons)
-4. Next H-number: H188
+### LQ Threshold + Hold Extensions (H188–H197)
+
+| H# | What | n | WF gross | WF bps8 | folds | Verdict |
+|----|------|---|----------|---------|-------|---------|
+| H188 | LQ-1 at p80 | 2641 | 12.8bps | 4.8bps | 12/17 | PASS (too thin after costs) |
+| H189 | LQ-1 at p95 | 706 | 24.6bps | 16.6bps | 14/16 | **PASS ★ LQ-4 candidate** |
+| H190 | LQ-2 at p80 | 2674 | 9.4bps | 1.4bps | 14/17 | FAIL |
+| H191 | LQ-1 h=12 | 776 | 39.0bps | 31.0bps | 16/17 | **PASS ★ LQ-4 candidate** |
+| H192 | LQ-2 h=12 | 783 | 29.2bps | 21.2bps | 17/17 | **PASS ★ LQ-5 candidate** |
+| H193 | ETH long liq → BTC SHORT | 1383 | 18.1bps | 10.1bps | 15/16 | PASS |
+| H194 | ETH short liq → BTC LONG | 1402 | 11.8bps | 3.8bps | 13/17 | BORDERLINE |
+| H195 | Liq imbalance ≥ 0.80 → SHORT | 5316 | 10.5bps | 2.5bps | 11/19 | FAIL |
+| H196 | BTC+ETH both long liq → SHORT | 1247 | 21.6bps | 13.6bps | 16/17 | PASS |
+| H197 | OI-1 + liq gate combo | 60 | 32.2bps | 24.2bps | 10/16 | PASS (n too low, fold support weak) |
+
+Artifacts: 20260311T182003Z_H188.json through 20260311T182303Z_H197.json
+
+**Key findings:**
+- **H191 (LQ-1 h=12): 31.0bps bps8, 16/17 folds** — extending hold from 8→12 bars on LQ-1 roughly doubles per-trade edge. Strongest single finding in this batch. Needs replication to earn LQ-4.
+- **H192 (LQ-2 h=12): 21.2bps bps8, 17/17 folds** — same result for short squeeze. 17/17 folds = perfect WF consistency. Needs replication to earn LQ-5.
+- H189 (LQ-1 p95): 16.6bps with tighter threshold. Fewer trades but cleaner cascade events.
+- H193 cross-asset liq (ETH liq → BTC SHORT): independently passes. Liq cascades are cross-market.
+- H197 OI+liq combo: only 60 trades — INCONCLUSIVE-adjacent despite PASS classification.
+
+### LQ Time-of-Day + Gate Variations (H222–H228)
+
+| H# | What | n | WF bps8 | folds | Verdict |
+|----|------|---|---------|-------|---------|
+| H222 | LQ-1 US session | 700 | 17.3bps | 15/17 | PASS (slightly above LQ-1 but not better enough for shortcode) |
+| H223 | LQ-2 Asia session | 352 | 7.6bps | 11/16 | BORDERLINE |
+| H224 | LQ-2 US session | 677 | 4.9bps | 13/17 | BORDERLINE |
+| H225 | CA-1 + OI gate | 206 | 6.8bps | 12/17 | BORDERLINE |
+| H226 | CA-1 + funding contrarian gate | 312 | 8.7bps | 15/19 | PASS (not better than CA-1) |
+| H227 | LQ-1 + slope confirmation | 1018 | 12.5bps | 15/17 | PASS (not better than LQ-1) |
+| H228 | LQ-2 + slope confirmation | 930 | 12.5bps | 15/17 | PASS (not better than LQ-2) |
+
+Artifacts: 20260311T181904Z_H222.json through 20260311T181955Z_H228.json
+
+No new shortcodes. ToD gating reduces n without improving edge (same lesson as VS session gates). Additional gates (OI, funding, slope) don't beat the simple liquidation-only signal.
+
+---
+
+## Family: regime_conditioning (H229–H234) — 2026-03-11
+
+| H# | Signal | Regime gate | n | WF bps8 | folds | Verdict |
+|----|--------|------------|---|---------|-------|---------|
+| H229 | CA-1 | TRENDING | 109 | 4.8bps | 6/11 | BORDERLINE |
+| H230 | CA-1 | RANGING | 214 | 4.0bps | 8/13 | BORDERLINE |
+| H231 | CA-1 | VOLATILE | 145 | 19.8bps | 8/13 | PASS |
+| H232 | VS-2 | TRENDING | 31 | 7.6bps | 4/10 | INCONCLUSIVE (n<50) |
+| H233 | VS-2 | VOLATILE | 45 | 74.1bps | 9/13 | INCONCLUSIVE (n<50) |
+| H234 | VS-3 | TRENDING | 17 | 20.3bps | 5/10 | INCONCLUSIVE (n<50) |
+
+Artifacts: 20260311T182311Z_H229.json through 20260311T182424Z_H234.json
+
+**Key findings:**
+- H231 (CA-1 volatile regime) passes at 19.8bps but 8/13 fold support is borderline and this is confirmed-signal mining. No shortcode.
+- H233 (VS-2 volatile regime) shows eye-catching 74.1bps WF gross but n=45 — cannot classify. With 365d data, regime splits produce too few trades.
+- Regime conditioning is confirmed as LOW-value mining: reduces n dramatically, same underlying edge.
+
+---
+
+## Family: mean_reversion (H235–H236) — 2026-03-11
+
+| H# | What | n | WF gross | WF bps8 | folds pos | Verdict |
+|----|------|---|----------|---------|-----------|---------|
+| H235 | VWAP z < -2.0 → LONG | 1687 | 0.1bps | -7.9bps | 1/18 | **FAIL** |
+| H236 | VWAP z > +2.0 → SHORT | 1908 | -0.1bps | -8.1bps | 0/18 | **FAIL** |
+
+Artifacts: 20260311T182433Z_H235.json, 20260311T182442Z_H236.json
+
+**VWAP mean reversion is dead on 5-minute BTC.** Both directions fail badly — negative bps8, essentially zero positive WF folds. BTC at 5m trends through VWAP extensions rather than reverting. This rules out MR as a viable second-edge mechanism at this frequency.
+
+---
+
+## Family: vol_compression + pre-committed economic hypotheses (H237–H239) — 2026-03-11
+
+These three were written from economic logic alone, before any ML runs, as pre-committed hypotheses.
+
+| H# | What | n | WF gross | WF bps8 | folds | Verdict |
+|----|------|---|----------|---------|-------|---------|
+| H237 | Vol compression gate on CA-1 (RV < p20 for 4h+) | 103 | 9.2bps | 1.2bps | 7/17 | **FAIL** |
+| H238 | Funding persistence SHORT (positive 6h+) | 9627 | 0.9bps | -7.1bps | 0/19 | **FAIL** |
+| H239 | OI expansion trend + bearish slope flip | 37 | 25.9bps | 17.9bps | 8/18 | INCONCLUSIVE (n<50) |
+
+Artifacts: 20260311T192042Z_H237.json, 20260311T192053Z_H238.json, 20260311T192101Z_H239.json
+
+**Findings:**
+- H237: Vol compression is a proxy for low volume — VS-1 already captures this better. Reducing CA-1 to 103 trades (from 655) without edge improvement confirms no independent mechanism.
+- H238: Funding positive 6h+ fires 9,627 times (essentially always true). Zero positive WF bps8 folds. Funding persistence at 6h doesn't predict mean reversion at 40-min horizons — the market trends through it.
+- H239: Only 37 trades (OI expansion 3h+ + bearish flip is rare). Inconclusive — same Gate.io OI data quality constraint as H176. Edge may be real but can't confirm at 365d.
+
+**Queue complete. All H198–H239 run. Next: ML-assisted discovery pipeline.**
+
+---
+
+## ML Discovery Session — LQ-4, LQ-5, LQ-6, OV-1, CD-1 (H240–H260, 2026-03-11)
+
+XGBoost SHAP pipeline run with 3 rounds of features at 4 horizons simultaneously (h=4, 8, 16, 48).
+Top multi-horizon consistent features: `liq_imbalance_dir` (3/4 horizons), `oi_velocity` (4/4), `btc_eth_corr_2h` (3/4).
+
+### LQ-4 and LQ-5 Execution Lag Replications (H240–H241)
+
+| H# | Signal | Variant | n | WF bps8 | folds | Verdict |
+|----|--------|---------|---|---------|-------|---------|
+| H240 | LQ-4 | 1-bar execution lag (h=12) | 776 | 26.9bps | 16/17 | **PASS ✓ LQ-4 replication** |
+| H241 | LQ-5 | 1-bar execution lag (h=12) | 783 | 17.3bps | 17/17 | **PASS ✓ LQ-5 replication** |
+
+Both replications pass with strong fold consistency. LQ-4 and LQ-5 shortcodes now confirmed (anchor = H191/H192, lag = H240/H241).
+
+---
+
+### ML-surfaced + Pre-committed Hypotheses (H242–H245) — Mixed Results
+
+| H# | What | n | WF bps8 | folds | Verdict |
+|----|------|---|---------|-------|---------|
+| H242 | CA-1 + dist_to_vwap48_z < 0 gate (h=8) | — | 7.7bps | 12/17 | **FAIL vs CA-1** (CA-1 = 34bps; VWAP gate hurts) |
+| H243 | Liq imbalance direction SHORT (h=8) | — | 9.8bps | 16/17 | PASS (baseline horizon, weak) |
+| H244 | OI velocity standalone LONG (h=8) | — | -8.6bps | 0/19 | **FAIL** |
+| H245 | BTC leads ETH 1h return divergence LONG (h=8) | — | -10.0bps | 0/19 | **FAIL** |
+
+Notes:
+- H242: Over-mining flag confirmed. dist_to_vwap48_z_btc was ML's #2 SHAP feature but adding VWAP gate reduces CA-1 from 34bps to 7.7bps. The feature was measuring state, not predicting improvement. Do not iterate on VWAP threshold.
+- H244: OI velocity as standalone signal (no slope context) has no edge. Must be combined with a directional trigger (CA-1 gate).
+- H245: BTC return leading ETH (1h divergence → LONG) doesn't work at h=8. The 1h divergence is mean-reverting at short horizons.
+
+---
+
+### LQ-6 — Liq Imbalance SHORT Horizon Sweep (H246–H249) → CONFIRMED ★
+
+| H# | Hold | n | WF bps8 | folds | Verdict | Notes |
+|----|------|---|---------|-------|---------|-------|
+| H246 | h=4 (20 min) | — | 3.8bps | 12/17 | PASS (weak) | Cost-constrained at short hold |
+| H243 | h=8 (40 min) | — | 9.8bps | 16/17 | PASS | Baseline |
+| **H247** | **h=12 (60 min)** | — | **27.4bps** | **17/17** | **PASS ★ ANCHOR** | **LQ-6 anchor** |
+| H248 | h=24 (2h) | — | 30.6bps | 17/17 | PASS | Slightly better but 2h hold less capital-efficient |
+| **H249** | **h=12 + 1-bar lag** | — | **22.8bps** | **17/17** | **PASS ★ REPLICATION** | **LQ-6 confirmed ✓** |
+
+**LQ-6 shortcode assigned.** Edge monotonically strengthens from h=4 to h=24 — confirms a real momentum mechanism, not an artifact of a specific hold length. 17/17 fold perfection at both h=12 and h=24. Lag replication passes. **Economic rationale:** Directional imbalance of forced closures creates sustained follow-through — whichever side is being mechanically cleared, price must move to find equilibrium.
+
+---
+
+### OV-1 — OI Velocity Gate on CA-1 Horizon Sweep (H250–H252, H259) → CONFIRMED ★
+
+| H# | Hold | n | WF bps8 | folds | Verdict | Notes |
+|----|------|---|---------|-------|---------|-------|
+| H250 | h=8 (40 min) | — | 8.8bps | 15/19 | PASS (weak) | Short-term: edge borderline vs costs |
+| H251 | h=12 (60 min) | — | 16.8bps | 16/19 | PASS | Intermediate hold |
+| **H252** | **h=24 (2h)** | — | **18.4bps** | **17/19** | **PASS ★ ANCHOR** | **OV-1 anchor** |
+| **H259** | **h=24 + 1-bar lag** | — | **15.8bps** | **17/19** | **PASS ★ REPLICATION** | **OV-1 confirmed ✓** |
+
+**OV-1 shortcode assigned (new OV family).** OI acceleration consistently signals 2h+ momentum. The only ML feature consistent at all 4 XGBoost horizons (4/4). **Economic rationale:** OI acceleration = new leveraged positions opening alongside the slope flip = fresh directional commitment. Existing-position flips are less reliable; new-money OI acceleration signals genuine conviction.
+
+---
+
+### 4h Return Exhaustion SHORT (H253–H255) — FAIL
+
+| H# | Hold | WF bps8 | folds | Verdict |
+|----|------|---------|-------|---------|
+| H253 | h=8 | -8.2bps | 1/19 | **FAIL** |
+| H254 | h=12 | -8.4bps | 1/19 | **FAIL** |
+| H255 | h=24 | -8.0bps | 2/19 | **FAIL** |
+
+BTC 4h return extremes → SHORT (mean reversion) fails at all hold lengths. Same result as VWAP MR (H235–H236). BTC at 5m horizons does not mean-revert after trend extensions.
+
+---
+
+### CD-1 — BTC-ETH Corr Decoupling + ETH Flip Horizon Sweep (H256–H258, H260) → CONFIRMED ★
+
+| H# | Hold | n | WF bps8 | folds | Verdict | Notes |
+|----|------|---|---------|-------|---------|-------|
+| H256 | h=8 (40 min) | — | 6.4bps | 10/18 | BORDERLINE | Weak fold support at short hold |
+| **H257** | **h=12 (60 min)** | — | **14.1bps** | **15/18** | **PASS ★ ANCHOR** | **CD-1 anchor** |
+| H258 | h=24 (2h) | — | 17.6bps | 11/18 | PASS | Higher bps but fold support drops |
+| **H260** | **h=12 + 1-bar lag** | — | **15.2bps** | **15/18** | **PASS ★ REPLICATION** | **CD-1 confirmed ✓** |
+
+**CD-1 shortcode assigned (new CD family — Correlation Decoupling).** h=12 is the sweet spot: stronger fold support than h=24, substantially better than h=8. 1-bar lag passes. **Economic rationale:** BTC-ETH correlation below p20 signals ETH is decoupled from BTC mechanical co-movement. ETH slope flips in this context reflect idiosyncratic ETH momentum, not BTC-driven noise — higher-conviction directional moves.
+
+---
+
+### ML Session Summary
+
+**New confirmed signals (2026-03-11 ML session):**
+| Shortcode | Anchor H# | Lag H# | bps8 (anchor) | folds | Mechanism |
+|-----------|-----------|--------|--------------|-------|-----------|
+| LQ-4 | H191 | H240 | 31.0bps | 16/17 | LQ-1 at h=12 (cascade sustains 60 min) |
+| LQ-5 | H192 | H241 | 21.2bps | 17/17 | LQ-2 at h=12 (squeeze sustains 60 min) |
+| **LQ-6** | H247 | H249 | 27.4bps | 17/17 | Liq imbalance direction → SHORT, h=12 |
+| **OV-1** | H252 | H259 | 18.4bps | 17/19 | OI velocity acceleration gate on CA-1, h=24 |
+| **CD-1** | H257 | H260 | 14.1bps | 15/18 | BTC-ETH corr decoupling + ETH flip, h=12 |
+
+OV and CD are genuinely new signal families — not ETH slope variations. This is the first session where ML-surfaced features led to confirmed signals with new economic mechanisms.
+
+**Failed hypotheses this session:** H242 (VWAP gate), H244 (OI velocity standalone), H245 (BTC-ETH 1h div), H253–H255 (4h exhaustion MR).
+
+---
+
+## Next Steps (as of 2026-03-11 post-ML session)
+
+**Next H-number: H261**
+
+**Confirmed signals portfolio (14 total):** CA-1 through CA-5, VS-1 through VS-3, LQ-1 through LQ-6, OV-1, CD-1.
+
+**Priority next steps:**
+1. Round 3 ML features (btc_eth_corr_2h, bar_dir_run, rv_chg_1h, eth/btc_slope_4h) — parquet built, multi-horizon run not yet executed. May surface additional new mechanisms.
+2. OV-1 and CD-1 odd/even day robustness checks (optional — lag replication already passes).
+3. Live paper trader deployment planning — portfolio of 14 signals with full lag confirmation.
+
+---
+
+## Classification Guide (365d Era)

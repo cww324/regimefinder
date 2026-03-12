@@ -34,6 +34,7 @@ SUPPORTED_FAMILIES = {
     "exit_logic",
     "direction_split",
     "regime_conditioning",
+    "vol_compression",
 }
 HYPOTHESES_PATH = Path("hypotheses.yaml")
 EPS = 1e-12
@@ -95,15 +96,18 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
         "H136",
         "H137",
         "H139",
+        "H242",
+        "H250", "H251", "H252", "H259",
     },
     "shock_structure": {"H27", "H42", "H43", "H44", "H45", "H46"},
     "volatility_conditioning": {"H47", "H48", "H49", "H50"},
-    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53", "H130", "H131", "H235", "H236"},
+    "mean_reversion": {"H15", "H18", "H22", "H23", "H26", "H51", "H52", "H53", "H130", "H131", "H235", "H236",
+                       "H253", "H254", "H255", "H261"},
     "range_structure": {"H28", "H54", "H55", "H56", "H113"},
     "volatility_state": {"H101", "H102", "H103", "H104", "H112", "H128", "H129", "H133", "H134", "H138"},
     "efficiency_mean_reversion": {"H105", "H106", "H107"},
-    "cross_asset_divergence": {"H108", "H109", "H110", "H111"},
-    "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144", "H174", "H175"},
+    "cross_asset_divergence": {"H108", "H109", "H110", "H111", "H245", "H256", "H257", "H258", "H260"},
+    "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144", "H174", "H175", "H238"},
     "momentum": {"H125"},
     "cross_asset": {"H126"},
     "volume_state": {"H145", "H146", "H147", "H159", "H160", "H161", "H162", "H163",
@@ -114,7 +118,9 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
                "H188", "H189", "H190", "H191", "H192", "H193", "H194",
                "H195", "H196", "H197",
                "H221", "H222", "H223", "H224",
-               "H225", "H226", "H227", "H228"},
+               "H225", "H226", "H227", "H228", "H239",
+               "H240", "H241", "H243", "H244", "H246", "H247", "H248", "H249"},
+    "vol_compression": {"H237"},
     "direction_split": {
         "H215", "H216", "H217", "H218", "H219", "H220",
     },
@@ -831,6 +837,42 @@ def build_signal(
             mask = x["rv48_pct_btc"].ge(0.70) & spread.le(0.30)
             return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
 
+        if hypothesis_id == "H242":
+            # CA-1 gated by BTC below 48h VWAP (dist_to_vwap48_z_btc < 0).
+            # ML-surfaced: dist_to_vwap48_z_btc was #2 feature (CV=0.23) in XGBoost
+            # discovery. Tests whether "below VWAP" improves CA-1 as an entry gate.
+            # OVER-MINING WARNING: this is a CA-1 variant. Do not iterate if it fails.
+            require_columns(x, hypothesis_id, ["eth_slope_sign_1h", "dist_to_vwap48_z_btc"])
+            eth_sign = x["eth_slope_sign_1h"]
+            flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            below_vwap = x["dist_to_vwap48_z_btc"].lt(0)
+            candidate = flip & below_vwap
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H250", "H251", "H252", "H259"}:
+            # OI velocity gate on CA-1. H250=h8, H251=h12, H252=h24.
+            # ML multi-horizon: oi_velocity 4/4 consistent. Standalone failed (H244).
+            # Gate: only trade CA-1 flip when OI is accelerating upward.
+            require_columns(x, hypothesis_id, ["eth_slope_sign_1h", "oi_contracts_btc"])
+            eth_sign = x["eth_slope_sign_1h"]
+            flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            oi = x["oi_contracts_btc"]
+            oi_chg_now = oi - oi.shift(12)
+            oi_chg_prev = oi.shift(12) - oi.shift(24)
+            oi_accelerating = oi_chg_now.gt(oi_chg_prev)
+            candidate = flip & oi_accelerating
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
     if family == "shock_structure":
         if hypothesis_id == "H27":
             tr = x["high_btc"] - x["low_btc"]
@@ -937,6 +979,40 @@ def build_signal(
             # Revisit of H158 on full 365d dataset (no regime gate).
             mask = x["vwap_z"].ge(2.0)
             return pd.Series(np.where(mask, -1.0, 0.0), index=x.index)
+
+        if hypothesis_id in {"H253", "H254", "H255"}:
+            # 4h BTC return exhaustion SHORT. H253=h8, H254=h12, H255=h24.
+            # ML multi-horizon: ret_4h_btc BEARISH at h4=#8, h8=#9, h16=#11, h48=#11.
+            # After a strong 4h up-move, profit-taking / mean reversion tendency.
+            require_columns(x, hypothesis_id, ["close_btc"])
+            ret_4h = x["close_btc"].pct_change(48).fillna(0)
+            _w = 288  # ~1 day rolling window for percentile
+            threshold = ret_4h.rolling(_w, min_periods=100).quantile(0.80)
+            above = ret_4h.gt(threshold)
+            onset = above & (~above.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H261":
+            # ETH 4h return exhaustion SHORT, h=48 (4h hold).
+            # ML round 3: ret_4h_eth BEARISH at h=16 (#19) and h=48 (#14), CV=0.45 — consistent.
+            # Direction flips from BULLISH (short horizons) to BEARISH (long horizons) = exhaustion.
+            # H253-H255 tested BTC version at h=8/12/24 — all failed. ETH version at h=48 untested.
+            # ONE TEST ONLY per ML policy. Do not iterate threshold or hold if it fails.
+            require_columns(x, hypothesis_id, ["close_eth"])
+            ret_4h_eth = x["close_eth"].pct_change(48).fillna(0)
+            _w = 288  # ~1 day rolling window for percentile
+            threshold = ret_4h_eth.rolling(_w, min_periods=100).quantile(0.80)
+            above = ret_4h_eth.gt(threshold)
+            onset = above & (~above.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
 
     if family == "regime_conditioning":
         require_columns(x, hypothesis_id, ["eth_slope_sign_1h"])
@@ -1164,6 +1240,45 @@ def build_signal(
                 out[out_idx] = np.asarray(direction, dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
+        if hypothesis_id == "H245":
+            # BTC leads ETH on 1h return → LONG.
+            # ML-surfaced: btc_eth_div_1h ranked #11 (CV=0.35, BULLISH).
+            # When BTC outperforms ETH over last hour, next 40-min tends bullish.
+            # Reverse of CA family (ETH leads BTC). BTC leadership = institutional flow.
+            require_columns(x, hypothesis_id, ["close_btc", "close_eth"])
+            ret_1h_btc = x["close_btc"].pct_change(12).fillna(0)
+            ret_1h_eth = x["close_eth"].pct_change(12).fillna(0)
+            div = ret_1h_btc - ret_1h_eth
+            # Onset: divergence flips from non-positive to positive with minimum magnitude
+            was_nonpositive = div.shift(1).fillna(0).le(0)
+            onset = was_nonpositive & div.gt(0.001)  # BTC outperforms ETH by >0.1% on 1h
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H256", "H257", "H258", "H260"}:
+            # BTC-ETH 2h correlation decoupling + ETH slope flip. H256=h8, H257=h12, H258=h24.
+            # ML multi-horizon: btc_eth_corr_2h ranked 3/4 consistent, BEARISH.
+            # Decoupling event (low corr) + ETH flip = higher-conviction directional signal.
+            require_columns(x, hypothesis_id, ["ret1_btc", "ret1_eth", "eth_slope_sign_1h"])
+            r_btc = x["ret1_btc"].fillna(0)
+            r_eth = x["ret1_eth"].fillna(0)
+            corr_2h = r_btc.rolling(24).corr(r_eth).fillna(0)
+            _w = 8640  # ~30d rolling window
+            corr_p20 = corr_2h.rolling(_w, min_periods=500).quantile(0.20)
+            decoupling = corr_2h.lt(corr_p20)
+            eth_sign = x["eth_slope_sign_1h"]
+            flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            candidate = flip & decoupling
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
     if family == "range_structure":
         if hypothesis_id == "H28":
             close = x["close_btc"]
@@ -1360,6 +1475,19 @@ def build_signal(
             crowded = f_pct.ge(0.80)
             candidate = slope_flip_down & crowded
             idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H238":
+            # Sustained funding persistence SHORT: crowded-long unwind signal.
+            # When BTC funding has been continuously positive for 6+ hours (72 5m bars),
+            # the market is structurally crowded long. Fire SHORT once on condition onset.
+            positive = f_sign.gt(0)
+            positive_6h = positive.rolling(72).min().fillna(0).gt(0)
+            onset = positive_6h & (~positive_6h.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
             out = np.zeros(len(x), dtype=float)
             if idx:
                 out[np.asarray(idx, dtype=int)] = -1.0
@@ -1586,9 +1714,9 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id in {"H177", "H184", "H191"}:
+        if hypothesis_id in {"H177", "H184", "H191", "H240"}:
             # Long liquidation cascade → SHORT continuation.
-            # H184: 1-bar execution lag. H191: same signal, h=12 hold.
+            # H184: 1-bar execution lag. H191: same signal, h=12 hold. H240: H191 + 1-bar lag.
             condition = long_liq_pct.ge(0.90)
             onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
@@ -1597,9 +1725,9 @@ def build_signal(
                 out[np.asarray(idx, dtype=int)] = -1.0
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id in {"H178", "H185", "H192"}:
+        if hypothesis_id in {"H178", "H185", "H192", "H241"}:
             # Short liquidation squeeze → LONG continuation.
-            # H185: 1-bar execution lag. H192: same signal, h=12 hold.
+            # H185: 1-bar execution lag. H192: same signal, h=12 hold. H241: H192 + 1-bar lag.
             condition = short_liq_pct.ge(0.90)
             onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
@@ -1722,6 +1850,136 @@ def build_signal(
             if idx:
                 out_idx = np.asarray(idx, dtype=int)
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H221", "H222"}:
+            # LQ-1 ToD variants: signal identical to LQ-1; time filter applied in build_events.
+            condition = long_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H223", "H224"}:
+            # LQ-2 ToD variants: signal identical to LQ-2; time filter applied in build_events.
+            condition = short_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H225":
+            # CA-1 + OI gate: slope flip AND oi_btc_pct >= 0.80
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            high_oi = oi_pct.ge(0.80)
+            candidate = slope_flip & high_oi
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H226":
+            # CA-1 + funding contrarian gate: slope flip AND funding opposes direction.
+            # Bullish flip with negative funding (bears being squeezed out → more upside).
+            # Bearish flip with positive funding (longs overextended → more downside).
+            require_columns(x, hypothesis_id, ["funding_btc_sign"])
+            f_sign = x["funding_btc_sign"]
+            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
+            funding_contrarian = f_sign.ne(eth_sign) & f_sign.ne(0)
+            candidate = slope_flip & funding_contrarian
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out_idx = np.asarray(idx, dtype=int)
+                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H227":
+            # LQ-1 + slope confirmation: long liq cascade onset AND slope already bearish.
+            # Only trade the cascade when trend already agrees — highest conviction shorts.
+            condition = long_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            slope_bearish = eth_sign.eq(-1)
+            candidate = onset & slope_bearish
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H228":
+            # LQ-2 + slope confirmation: short liq cascade onset AND slope already bullish.
+            # Only trade the squeeze when trend already agrees — highest conviction longs.
+            condition = short_liq_pct.ge(0.90)
+            onset = condition & (~condition.shift(1).fillna(False))
+            slope_bullish = eth_sign.eq(1)
+            candidate = onset & slope_bullish
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H239":
+            # OI expansion trend cascade: OI increasing in each of last 3 consecutive
+            # 1h periods AND ETH slope flips bearish → SHORT.
+            # At 5m resolution, 1h = 12 bars. Check each hourly step is higher than prior.
+            require_columns(x, hypothesis_id, ["oi_contracts_btc"])
+            oi = x["oi_contracts_btc"]
+            oi_expanding = (
+                oi.gt(oi.shift(12)) &
+                oi.shift(12).gt(oi.shift(24)) &
+                oi.shift(24).gt(oi.shift(36))
+            )
+            bearish_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.eq(-1)
+            candidate = bearish_flip & oi_expanding
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id in {"H243", "H246", "H247", "H248", "H249"}:
+            # Long-liq-dominant cascade → SHORT.
+            # H243=h8, H246=h4, H247=h12, H248=h24 — horizon sensitivity suite.
+            # ML-surfaced: liq_imbalance_dir ranked #4 (CV=0.22, BEARISH).
+            # When liquidations are active AND predominantly long-side, selling
+            # pressure persists. Tests cascade PERSISTENCE, not completion (vs LQ-1).
+            require_columns(x, hypothesis_id, ["total_liq_btc_pct", "liq_imbalance_btc"])
+            active_liq = total_liq_pct.ge(0.70)
+            long_dominant = x["liq_imbalance_btc"].ge(0.65)
+            condition = active_liq & long_dominant
+            onset = condition & (~condition.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = -1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H244":
+            # OI acceleration (velocity) → LONG.
+            # ML-surfaced: oi_velocity ranked #10 (CV=0.33, BULLISH).
+            # oi_velocity = second derivative of OI (OI growing faster than before).
+            # Accelerating OI = burst of fresh leveraged longs = trend continuation.
+            require_columns(x, hypothesis_id, ["oi_contracts_btc"])
+            oi = x["oi_contracts_btc"]
+            oi_chg_1h = oi - oi.shift(12)
+            oi_chg_prev = oi.shift(12) - oi.shift(24)
+            oi_vel = oi_chg_1h - oi_chg_prev
+            _w = 288  # ~1 day rolling window for percentile threshold
+            vel_threshold = oi_vel.rolling(_w, min_periods=100).quantile(0.80)
+            above_threshold = oi_vel.gt(vel_threshold)
+            onset = above_threshold & (~above_threshold.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
             return pd.Series(out, index=x.index)
 
     if family == "direction_split":
@@ -1847,78 +2105,24 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
-        if hypothesis_id in {"H221", "H222"}:
-            # LQ-1 ToD variants: signal identical to LQ-1; time filter applied in build_events.
-            condition = long_liq_pct.ge(0.90)
-            onset = condition & (~condition.shift(1).fillna(False))
-            idx = dedup_idx(onset, gap=int(horizon))
-            out = np.zeros(len(x), dtype=float)
-            if idx:
-                out[np.asarray(idx, dtype=int)] = -1.0
-            return pd.Series(out, index=x.index)
+    if family == "vol_compression":
+        require_columns(x, hypothesis_id, ["rv48_pct_btc", "eth_slope_sign_1h"])
+        eth_sign = x["eth_slope_sign_1h"]
+        rv_pct = x["rv48_pct_btc"]
 
-        if hypothesis_id in {"H223", "H224"}:
-            # LQ-2 ToD variants: signal identical to LQ-2; time filter applied in build_events.
-            condition = short_liq_pct.ge(0.90)
-            onset = condition & (~condition.shift(1).fillna(False))
-            idx = dedup_idx(onset, gap=int(horizon))
-            out = np.zeros(len(x), dtype=float)
-            if idx:
-                out[np.asarray(idx, dtype=int)] = 1.0
-            return pd.Series(out, index=x.index)
-
-        if hypothesis_id == "H225":
-            # CA-1 + OI gate: slope flip AND oi_btc_pct >= 0.80
+        if hypothesis_id == "H237":
+            # Vol compression breakout gate: CA-1 gated by BTC RV compressed < p20 for 4+ hours.
+            # "4+ hours" = 48 consecutive 5m bars all with rv48_pct_btc < 0.20.
+            # Then ETH slope flip → trade in flip direction for 8 bars.
+            compressed = rv_pct.lt(0.20)
+            compressed_4h = compressed.rolling(48).min().fillna(0).gt(0)
             slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
-            high_oi = oi_pct.ge(0.80)
-            candidate = slope_flip & high_oi
+            candidate = slope_flip & compressed_4h
             idx = dedup_idx(candidate, gap=int(horizon))
             out = np.zeros(len(x), dtype=float)
             if idx:
                 out_idx = np.asarray(idx, dtype=int)
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
-            return pd.Series(out, index=x.index)
-
-        if hypothesis_id == "H226":
-            # CA-1 + funding contrarian gate: slope flip AND funding opposes direction.
-            # Bullish flip with negative funding (bears being squeezed out → more upside).
-            # Bearish flip with positive funding (longs overextended → more downside).
-            require_columns(x, hypothesis_id, ["funding_btc_sign"])
-            f_sign = x["funding_btc_sign"]
-            slope_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.ne(0)
-            funding_contrarian = f_sign.ne(eth_sign) & f_sign.ne(0)
-            candidate = slope_flip & funding_contrarian
-            idx = dedup_idx(candidate, gap=int(horizon))
-            out = np.zeros(len(x), dtype=float)
-            if idx:
-                out_idx = np.asarray(idx, dtype=int)
-                out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
-            return pd.Series(out, index=x.index)
-
-        if hypothesis_id == "H227":
-            # LQ-1 + slope confirmation: long liq cascade onset AND slope already bearish.
-            # Only trade the cascade when trend already agrees — highest conviction shorts.
-            condition = long_liq_pct.ge(0.90)
-            onset = condition & (~condition.shift(1).fillna(False))
-            slope_bearish = eth_sign.eq(-1)
-            candidate = onset & slope_bearish
-            idx = dedup_idx(candidate, gap=int(horizon))
-            out = np.zeros(len(x), dtype=float)
-            if idx:
-                out[np.asarray(idx, dtype=int)] = -1.0
-            return pd.Series(out, index=x.index)
-
-        if hypothesis_id == "H228":
-            # LQ-2 + slope confirmation: short liq cascade onset AND slope already bullish.
-            # Only trade the squeeze when trend already agrees — highest conviction longs.
-            condition = short_liq_pct.ge(0.90)
-            onset = condition & (~condition.shift(1).fillna(False))
-            slope_bullish = eth_sign.eq(1)
-            candidate = onset & slope_bullish
-            idx = dedup_idx(candidate, gap=int(horizon))
-            out = np.zeros(len(x), dtype=float)
-            if idx:
-                out[np.asarray(idx, dtype=int)] = 1.0
             return pd.Series(out, index=x.index)
 
     raise ValueError(
@@ -2111,14 +2315,14 @@ def build_events(days: int, horizon: int, hypothesis_id: str, family: str, dsn: 
         # VS-1/VS-2 with 1-bar execution lag.
         trade_close_col = "close_btc"
         entry_offset = 1
-    elif hypothesis_id in {"H183", "H184", "H185", "H186", "H187"}:
+    elif hypothesis_id in {"H183", "H184", "H185", "H186", "H187", "H240", "H241", "H249", "H259", "H260"}:
         # OI-gated slope flip + LQ family + VS-3 1-bar execution lag robustness checks.
         trade_close_col = "close_btc"
         entry_offset = 1
     else:
         trade_close_col = "close_btc"
 
-    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171", "H183", "H184", "H185", "H186", "H187"}:
+    if hypothesis_id not in {"H61", "H76", "H77", "H161", "H171", "H183", "H184", "H185", "H186", "H187", "H240", "H241", "H249", "H259", "H260"}:
         entry_offset = 0
 
     effective_horizon = pd.Series(int(horizon), index=x.index, dtype=int)
@@ -2459,8 +2663,8 @@ def main() -> None:
     args = parse_args()
     if args.timeframe != "5m":
         raise ValueError("research_family_runner supports timeframe=5m only.")
-    if int(args.horizon) not in {4, 6, 8, 10, 12, 24}:
-        raise ValueError("Standard runner expects horizon in {4,6,8,10,12,24}.")
+    if int(args.horizon) not in {4, 6, 8, 10, 12, 24, 48}:
+        raise ValueError("Standard runner expects horizon in {4,6,8,10,12,24,48}.")
     if args.family not in SUPPORTED_FAMILIES:
         raise ValueError(f"Unsupported family: {args.family}")
 

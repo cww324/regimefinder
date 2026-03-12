@@ -1,12 +1,15 @@
 PYTHON := PYTHONPATH=. .venv/bin/python
 
-.PHONY: batch status db-seed db-migrate-derivatives backfill-derivatives backfill-oi-liq capture-snapshots
+.PHONY: batch status summary db-seed db-migrate-derivatives backfill-derivatives backfill-oi-liq capture-snapshots
 
 batch:
 	$(PYTHON) scripts/run_hypothesis_batch.py
 
 status:
 	$(PYTHON) scripts/render_summary_report.py
+
+summary:
+	$(PYTHON) scripts/build_summary.py
 
 db-seed:
 	$(PYTHON) scripts/db/seed.py --dsn "$(RC_DB_DSN)" --seed db/seed.sql

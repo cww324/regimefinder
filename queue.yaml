@@ -1,5 +1,5 @@
 batch_size: 10
-next_index: 0
+next_index: 73
 paused: false
 queue:
 - H198
@@ -51,3 +51,34 @@ queue:
 - H234
 - H235
 - H236
+- H237
+- H238
+- H239
+- H240
+- H241
+- H243
+- H244
+- H245
+- H246
+- H247
+- H248
+- H249
+- H242
+- H250
+- H251
+- H252
+- H253
+- H254
+- H255
+- H256
+- H257
+- H258
+- H259
+- H260
+- H261
+notes: "H237-H239 added 2026-03-11: pre-committed economic hypotheses (vol compression\n\
+  gate, funding persistence SHORT, OI expansion cascade). Written from economic logic\n\
+  only, independent of ML discovery track.\nH242 added 2026-03-11: ML-surfaced hypothesis.\
+  \ dist_to_vwap48_z_btc ranked #2 in\nXGBoost SHAP discovery (CV=0.23). Tests VWAP-below\
+  \ gate on CA-1. HIGH over-mining\nrisk \u2014 one test only, do not iterate on threshold\
+  \ if it fails.\n"

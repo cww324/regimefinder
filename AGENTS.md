@@ -1,6 +1,6 @@
 # AGENTS.md
 Regime Crypto Research Governance Constitution (Phase 3)
-Last Updated: 2026-02-18
+Last Updated: 2026-03-11
 
 ---------------------------------------------------------------------
 
@@ -27,9 +27,9 @@ Precedence rule:
 Before any action:
 
 1. Read `AGENTS.md`
-2. Read `AI_AGENT.md`
+2. Read `OPERATING_BRIEF_v3.md` (supersedes `AI_AGENT.md`)
 3. Read `results/summary.json` (if it exists)
-4. Tail latest section of `FINDINGS_TECHNICAL.md`
+4. Tail latest section of `FINDINGS_365D.md`
 
 If `results/summary.json` does not exist, Guardian must generate it from
 run artifacts before any promotions or freeze claims are made.
@@ -406,26 +406,29 @@ No silent hypothesis drift is permitted.
 
 ---------------------------------------------------------------------
 
-# 12) MACHINE LEARNING POLICY (CURRENTLY RESTRICTED)
+# 12) MACHINE LEARNING POLICY
 
-ML is currently DISABLED for signal generation and parameter selection.
+ML is permitted for feature ranking and regime discovery only. It may NOT generate
+trading signals directly.
 
-Permitted uses (future phases, research-only):
-- Regime clustering
-- Feature ranking
+Completed ML work:
+- HMM regime discovery (`scripts/ml/hmm_regime_discovery.py`) — DONE. Labels in `rc.regime_labels`.
+- RF hypothesis generator (`scripts/ml/rf_hypothesis_generator.py`) — DONE. Lessons documented.
+
+Permitted uses:
+- Regime clustering (done)
+- Feature ranking / importance (XGBoost SHAP — planned next phase)
 - Anomaly detection
 - Risk adjustment / allocation (after strategy survival)
 
 Forbidden uses:
 - Direct PnL optimization
 - Automatic parameter tuning
-- Generating live trading signals
+- Generating live trading signals directly from ML output
 - Bypassing full hypothesis pipeline
 
-Any ML-discovered pattern must become a NEW hypothesis ID and pass the
-full validation protocol like any other hypothesis.
-
-Any ML code path in execution runners must be disabled by default and fail closed.
+Key lesson: RF rule extraction on validation data hits a 5–6bps ceiling (H125–H139 all FAIL).
+Any ML-discovered pattern must become a NEW hypothesis ID and pass the full validation protocol.
 
 ---------------------------------------------------------------------
 
@@ -434,7 +437,7 @@ Any ML code path in execution runners must be disabled by default and fail close
 After every completed batch:
 
 1) Start a fresh session/chat
-2) Re-read `AGENTS.md` and `AI_AGENT.md`
+2) Re-read `AGENTS.md` and `OPERATING_BRIEF_v3.md`
 3) Review `results/summary.json` and tail Findings
 4) Continue from artifact-backed state only
 
