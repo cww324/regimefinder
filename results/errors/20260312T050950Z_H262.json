@@ -1,0 +1,14 @@
+{
+  "context": {
+    "batch_ids": [
+      "H262"
+    ],
+    "completed": [],
+    "next_index": 73,
+    "targeted_mode": true
+  },
+  "error": "Postgres DSN provided but psycopg is unavailable.",
+  "hypothesis_id": "H262",
+  "timestamp_utc": "2026-03-12T05:09:50+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 802, in main\n    result = run_one_hypothesis(\n             ^^^^^^^^^^^^^^^^^^^\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 614, in run_one_hypothesis\n    validate_data_source(dsn=dsn, dataset_defaults=dataset_defaults, lookback_days=days)\n  File \"/home/charlie/workspace/regime-crypto/scripts/run_hypothesis_batch.py\", line 206, in validate_data_source\n    raise RuntimeError(\"Postgres DSN provided but psycopg is unavailable.\")\nRuntimeError: Postgres DSN provided but psycopg is unavailable.\n"
+}

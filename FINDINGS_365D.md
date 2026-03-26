@@ -606,16 +606,37 @@ OV and CD are genuinely new signal families — not ETH slope variations. This i
 
 ---
 
-## Next Steps (as of 2026-03-11 post-ML session)
+---
 
-**Next H-number: H261**
+## LONG Counterpart Tests (H262–H264) — 2026-03-12
 
-**Confirmed signals portfolio (14 total):** CA-1 through CA-5, VS-1 through VS-3, LQ-1 through LQ-6, OV-1, CD-1.
+OV-1, CD-1, LQ-6 were all ML-surfaced as SHORT signals. Tested whether LONG side of each mechanism has independent edge (Coinbase spot-tradeable).
+
+| H# | Signal | n | Gross | bps8 | WF folds | Verdict |
+|----|--------|---|-------|------|----------|---------|
+| **H262** | OV-1 LONG — OI accel + ETH flip UP, h=24 | 167 | 26.3bps | 18.3bps | **13/19** | **PASS ★ ANCHOR** |
+| H263 | CD-1 LONG — corr decoupling + ETH flip UP, h=12 | 55 | 10.9bps | 2.9bps | 8/18 | **FAIL** |
+| **H264** | LQ-6 LONG — short-liq dominant, h=12 | 1025 | 35.2bps | 27.2bps | **17/17** | **PASS ★ ANCHOR** |
+
+**H262 PASS:** OV mechanism works both ways. OI acceleration + bullish ETH flip → LONG at h=24 is as real as the SHORT side. 18.3bps net, 13/19 WF. Lag replication pending (H265).
+
+**H264 PASS:** Short squeeze LONG mirror of LQ-6. Active liq + short-liq dominant → LONG at h=12. 27.2bps net, perfect 17/17 WF. Lag replication pending (H266).
+
+**H263 FAIL:** CD-1 LONG side has no edge (2.9bps net, 8/18 folds). Corr decoupling mechanism is SHORT-only — decoupling events are associated with panic selling, not rallying.
+
+---
+
+## Next Steps (as of 2026-03-12)
+
+**Next H-number: H265**
+
+**Confirmed signals portfolio (16 total):** CA-1 through CA-5, VS-1 through VS-3, LQ-1 through LQ-6, OV-1, CD-1.
+**Pending lag replication:** H262 (→ OV-2 if passes), H264 (→ LQ-7 if passes).
 
 **Priority next steps:**
-1. Round 3 ML features (btc_eth_corr_2h, bar_dir_run, rv_chg_1h, eth/btc_slope_4h) — parquet built, multi-horizon run not yet executed. May surface additional new mechanisms.
-2. OV-1 and CD-1 odd/even day robustness checks (optional — lag replication already passes).
-3. Live paper trader deployment planning — portfolio of 14 signals with full lag confirmation.
+1. Run H265 (H262 lag replication) and H266 (H264 lag replication).
+2. If both pass → OV-2 and LQ-7 confirmed, add to paper trader (Coinbase-tradeable LONGs).
+3. Pull Binance taker buy/sell volume + spot/perp basis data → round 5 ML (LONG-focused features).
 
 ---
 

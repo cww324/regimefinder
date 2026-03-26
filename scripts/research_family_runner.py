@@ -98,6 +98,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
         "H139",
         "H242",
         "H250", "H251", "H252", "H259",
+        "H262",
     },
     "shock_structure": {"H27", "H42", "H43", "H44", "H45", "H46"},
     "volatility_conditioning": {"H47", "H48", "H49", "H50"},
@@ -106,7 +107,7 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
     "range_structure": {"H28", "H54", "H55", "H56", "H113"},
     "volatility_state": {"H101", "H102", "H103", "H104", "H112", "H128", "H129", "H133", "H134", "H138"},
     "efficiency_mean_reversion": {"H105", "H106", "H107"},
-    "cross_asset_divergence": {"H108", "H109", "H110", "H111", "H245", "H256", "H257", "H258", "H260"},
+    "cross_asset_divergence": {"H108", "H109", "H110", "H111", "H245", "H256", "H257", "H258", "H260", "H263"},
     "funding_regime": {"H121", "H122", "H123", "H127", "H132", "H140", "H141", "H142", "H143", "H144", "H174", "H175", "H238"},
     "momentum": {"H125"},
     "cross_asset": {"H126"},
@@ -119,7 +120,8 @@ SUPPORTED_IDS_BY_FAMILY: dict[str, set[str]] = {
                "H195", "H196", "H197",
                "H221", "H222", "H223", "H224",
                "H225", "H226", "H227", "H228", "H239",
-               "H240", "H241", "H243", "H244", "H246", "H247", "H248", "H249"},
+               "H240", "H241", "H243", "H244", "H246", "H247", "H248", "H249",
+               "H264"},
     "vol_compression": {"H237"},
     "direction_split": {
         "H215", "H216", "H217", "H218", "H219", "H220",
@@ -873,6 +875,25 @@ def build_signal(
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
             return pd.Series(out, index=x.index)
 
+        if hypothesis_id == "H262":
+            # OV-1 LONG isolation: OI accelerating + ETH slope flips UP → LONG only.
+            # OV-1 (H252) fires both directions; ML-surfaced as BEARISH.
+            # Isolates LONG side to test if it has independent edge (Coinbase-tradeable).
+            # ONE TEST ONLY — if fails, OV mechanism is SHORT-only.
+            require_columns(x, hypothesis_id, ["eth_slope_sign_1h", "oi_contracts_btc"])
+            eth_sign = x["eth_slope_sign_1h"]
+            bullish_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.eq(1)
+            oi = x["oi_contracts_btc"]
+            oi_chg_now = oi - oi.shift(12)
+            oi_chg_prev = oi.shift(12) - oi.shift(24)
+            oi_accelerating = oi_chg_now.gt(oi_chg_prev)
+            candidate = bullish_flip & oi_accelerating
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
     if family == "shock_structure":
         if hypothesis_id == "H27":
             tr = x["high_btc"] - x["low_btc"]
@@ -1277,6 +1298,27 @@ def build_signal(
             if idx:
                 out_idx = np.asarray(idx, dtype=int)
                 out[out_idx] = eth_sign.to_numpy(dtype=float)[out_idx]
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H263":
+            # CD-1 LONG isolation: corr decoupling + ETH slope flips UP → LONG only.
+            # CD-1 (H257) fires both directions; ML-surfaced as BEARISH.
+            # Isolates LONG side to test if it has independent edge (Coinbase-tradeable).
+            # ONE TEST ONLY — if fails, CD mechanism is SHORT-only.
+            require_columns(x, hypothesis_id, ["ret1_btc", "ret1_eth", "eth_slope_sign_1h"])
+            r_btc = x["ret1_btc"].fillna(0)
+            r_eth = x["ret1_eth"].fillna(0)
+            corr_2h = r_btc.rolling(24).corr(r_eth).fillna(0)
+            _w = 8640  # ~30d rolling window
+            corr_p20 = corr_2h.rolling(_w, min_periods=500).quantile(0.20)
+            decoupling = corr_2h.lt(corr_p20)
+            eth_sign = x["eth_slope_sign_1h"]
+            bullish_flip = eth_sign.ne(eth_sign.shift(1)) & eth_sign.eq(1)
+            candidate = bullish_flip & decoupling
+            idx = dedup_idx(candidate, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
             return pd.Series(out, index=x.index)
 
     if family == "range_structure":
@@ -1976,6 +2018,22 @@ def build_signal(
             vel_threshold = oi_vel.rolling(_w, min_periods=100).quantile(0.80)
             above_threshold = oi_vel.gt(vel_threshold)
             onset = above_threshold & (~above_threshold.shift(1).fillna(False))
+            idx = dedup_idx(onset, gap=int(horizon))
+            out = np.zeros(len(x), dtype=float)
+            if idx:
+                out[np.asarray(idx, dtype=int)] = 1.0
+            return pd.Series(out, index=x.index)
+
+        if hypothesis_id == "H264":
+            # LQ-6 LONG counterpart: active liq + short-liq dominant → LONG.
+            # LQ-6 fires SHORT when long-liq dominates (liq_imbalance_btc >= 0.65).
+            # Mirror: short-liq dominant (<= 0.35) = forced short covering → price up.
+            # ONE TEST ONLY at h=12. Do not iterate threshold if it fails.
+            require_columns(x, hypothesis_id, ["total_liq_btc_pct", "liq_imbalance_btc"])
+            active_liq = total_liq_pct.ge(0.70)
+            short_dominant = x["liq_imbalance_btc"].le(0.35)
+            condition = active_liq & short_dominant
+            onset = condition & (~condition.shift(1).fillna(False))
             idx = dedup_idx(onset, gap=int(horizon))
             out = np.zeros(len(x), dtype=float)
             if idx:

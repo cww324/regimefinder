@@ -76,6 +76,11 @@ queue:
 - H259
 - H260
 - H261
+- H262
+- H263
+- H264
+- H265
+- H266
 notes: "H237-H239 added 2026-03-11: pre-committed economic hypotheses (vol compression\n\
   gate, funding persistence SHORT, OI expansion cascade). Written from economic logic\n\
   only, independent of ML discovery track.\nH242 added 2026-03-11: ML-surfaced hypothesis.\

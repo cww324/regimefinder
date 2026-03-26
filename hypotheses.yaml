@@ -7492,3 +7492,117 @@ hypotheses:
     horizon_bars: 24
   allowed_variants: []
   status: active
+
+- id: H262
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: OV-1 LONG isolation — OI accelerating + ETH slope flips UP → LONG, h=24.
+  rationale: |
+    OV-1 (H252) confirmed 18.4 bps net at h=24 firing in both directions via eth_sign.
+    OV-1 was ML-surfaced as BEARISH — the SHORT side is what drove the discovery.
+    This tests whether the LONG side (OI accelerating + bullish ETH flip) also has
+    independent edge, or if the OV-1 aggregate is driven entirely by SHORT performance.
+    If LONG side passes, we have a Coinbase-tradeable version of the OV mechanism.
+  WHY: |
+    OI accelerating + bullish ETH flip = fresh leveraged longs entering with directional
+    momentum. Fuel + direction filter. Economically distinct from just watching the flip.
+    ONE TEST ONLY — if LONG side fails, the OV mechanism is SHORT-only.
+  RULES:
+  - ETH slope flips UP (eth_slope_sign_1h changes from <= 0 to +1).
+  - OI acceleration: oi_chg_now > oi_chg_prev (OI grew faster in last hour than prior hour).
+  - Both true simultaneously = LONG entry. Hold 24 bars (2h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+    entry_lag: 0
+  allowed_variants: []
+  status: active
+
+- id: H263
+  family: cross_asset_divergence
+  class: tradeable_hypothesis
+  description: CD-1 LONG isolation — corr decoupling + ETH slope flips UP → LONG, h=12.
+  rationale: |
+    CD-1 (H257) confirmed 14.1 bps net at h=12 firing in both directions via eth_sign.
+    CD-1 was ML-surfaced as BEARISH — the SHORT side drove the discovery.
+    This tests whether the LONG side (low BTC-ETH corr + bullish ETH flip) also has
+    independent edge, or if the CD-1 aggregate is dominated by SHORT performance.
+    If LONG side passes, we have a Coinbase-tradeable version of the CD mechanism.
+  WHY: |
+    Corr decoupling means BTC and ETH are diverging — one is moving independently.
+    When ETH then flips UP during a decoupling event, it may signal ETH (and BTC)
+    reasserting upward direction. Economically symmetric to the SHORT version.
+    ONE TEST ONLY — if LONG side fails, the CD mechanism is SHORT-only.
+  RULES:
+  - BTC-ETH 2h rolling correlation below its 30d p20 (decoupling event).
+  - ETH slope flips UP (eth_slope_sign_1h changes from <= 0 to +1).
+  - Both true simultaneously = LONG entry. Hold 12 bars (1h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 0
+  allowed_variants: []
+  status: active
+
+- id: H265
+  family: cross_asset_regime
+  class: tradeable_hypothesis
+  description: H262 (OV-1 LONG, h=24) — 1-bar execution lag replication.
+  rationale: |
+    H262 (OI accel + ETH flip UP → LONG, h=24) PASSed 13/19 folds at 18.3 bps net.
+    Standard lag replication: enter on close[t+1] instead of close[t].
+    If edge persists with 1-bar lag, signal is execution-realistic and OV-2 is confirmed.
+  WHY: Same as H262. Only entry timing changes.
+  RULES:
+  - Same as H262: OI accelerating + ETH slope flips UP → LONG.
+  - Entry on close[t+1] (1-bar execution lag). Hold 24 bars from entry.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 24
+    entry_lag: 1
+  allowed_variants: []
+  status: active
+
+- id: H264
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: LQ-6 LONG counterpart — active liq + short-liq dominant → LONG, h=12.
+  rationale: |
+    LQ-6 (H247) fires SHORT when total liq is active AND long-liq dominates (>= 65%).
+    This tests the mirror: when liq is active AND short-liq dominates (<= 35% long),
+    do short squeezes drive price up? Short liquidations = forced short covering = demand.
+    LQ-2/LQ-5 test raw short_liq_btc percentile; this uses the signed imbalance ratio
+    (liq_imbalance_btc) — a slightly different feature capturing relative dominance.
+  WHY: |
+    Forced short covering creates mechanical buy pressure. If short liquidations are
+    dominant during an active liq event, the path of least resistance is up.
+    ONE TEST ONLY at h=12 (matching LQ-6 confirmed horizon). Do not iterate threshold.
+  RULES:
+  - total_liq_btc_pct >= 0.70 (active liquidation event).
+  - liq_imbalance_btc <= 0.35 (short-liq dominant: <= 35% of liq is long-side).
+  - Onset (first bar of condition) = LONG entry. Hold 12 bars (1h).
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 0
+  allowed_variants: []
+  status: active
+
+- id: H266
+  family: oi_liq
+  class: tradeable_hypothesis
+  description: H264 (LQ-6 LONG, h=12) — 1-bar execution lag replication.
+  rationale: |
+    H264 (short-liq dominant → LONG, h=12) PASSed 17/17 folds at 27.2 bps net.
+    Standard lag replication: enter on close[t+1] instead of close[t].
+    If edge persists with 1-bar lag, signal is execution-realistic and LQ-7 is confirmed.
+  WHY: Same as H264. Only entry timing changes.
+  RULES:
+  - Same as H264: total_liq_btc_pct >= 0.70, liq_imbalance_btc <= 0.35, onset → LONG.
+  - Entry on close[t+1] (1-bar execution lag). Hold 12 bars from entry.
+  parameters:
+    lookback_days: 365
+    horizon_bars: 12
+    entry_lag: 1
+  allowed_variants: []
+  status: active
